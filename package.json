@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "EXPO_NO_TELEMETRY=1 expo start --port 8081 --clear --web",
+    "dev": "EXPO_NO_TELEMETRY=1 EAS_NO_VCS=1 expo start --port 8081 --clear --web --offline",
     "eas": "eas",
     "build:web": "expo export --platform web",
     "lint": "expo lint",

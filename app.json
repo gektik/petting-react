@@ -72,10 +72,7 @@
     "extra": {
       "googleWebClientId": "526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k.apps.googleusercontent.com",
       "facebookAppId": "773562691876253",
-      "router": {},
-      "eas": {
-        "projectId": "7a6a7689-fe7e-43ca-8c4a-c87591465256"
-      }
+      "router": {}
     }
   }
 }
