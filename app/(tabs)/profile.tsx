@@ -27,13 +27,13 @@ export default function ProfileScreen() {
         {
           text: 'Çıkış Yap',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
             // Basit logout - localStorage'ı temizle ve yönlendir
             if (typeof window !== 'undefined') {
               localStorage.clear();
             }
             // Context'i sıfırla
-            logout();
+            await logout();
             // Welcome sayfasına yönlendir
             router.replace('/welcome');
           },
