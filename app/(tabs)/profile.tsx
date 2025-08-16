@@ -19,10 +19,6 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   const handleLogout = () => {
-    console.log('Logout button clicked!');
-    Alert.alert('Test', 'Logout button is working!');
-    return;
-    
     Alert.alert(
       'Çıkış Yap',
       'Hesabınızdan çıkmak istediğinize emin misiniz?',
