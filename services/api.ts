@@ -6,7 +6,7 @@ import { mockPets, mockMatches, mockChats, mockAdoptionListings } from './mockDa
 import { Pet, Match, Chat, AdoptionListing } from '../types';
 
 const BASE_URL = 'https://pet.kervanbey.com/api';
-const USE_MOCK_DATA = false; // Gerçek API kullan
+const USE_MOCK_DATA = true; // Mock data kullan (CORS hatası için)
 
 export interface AuthResponse {
   isSuccess: boolean;
