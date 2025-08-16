@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, Mail, Lock, Eye, EyeOff, Chrome } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginRequest } from '@/services/api';
+import { apiService } from '@/services/api';
 import { socialAuthService } from '@/services/socialAuth';
 
 export default function LoginScreen() {
@@ -82,10 +83,12 @@ export default function LoginScreen() {
         };
         
         // Auth context'i güncelle
+        const { updateUser } = useAuth();
         if (Platform.OS === 'web') {
           localStorage.setItem('auth_token', response.token);
           localStorage.setItem('user_data', JSON.stringify(userData));
         } else {
+          const AsyncStorage = await import('@react-native-async-storage/async-storage');
           await AsyncStorage.setItem('auth_token', response.token);
           await AsyncStorage.setItem('user_data', JSON.stringify(userData));
         }
@@ -123,10 +126,12 @@ export default function LoginScreen() {
         };
         
         // Auth context'i güncelle
+        const { updateUser } = useAuth();
         if (Platform.OS === 'web') {
           localStorage.setItem('auth_token', response.token);
           localStorage.setItem('user_data', JSON.stringify(userData));
         } else {
+          const AsyncStorage = await import('@react-native-async-storage/async-storage');
           await AsyncStorage.setItem('auth_token', response.token);
           await AsyncStorage.setItem('user_data', JSON.stringify(userData));
         }
