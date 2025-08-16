@@ -10,7 +10,7 @@
     "lint": "expo lint",
     "build:android": "EAS_NO_VCS=1 EAS_NO_CACHE=1 EAS_DISABLE_GIT_HOOKS=1 npx eas build --platform android --profile production --non-interactive --wait --retry 3",
     "build:android:local": "expo run:android --variant release",
-    "prebuild": "expo prebuild --clean",
+    "prebuild": "CI=1 expo prebuild --clean",
     "build:android:preview": "EAS_NO_VCS=1 EAS_NO_CACHE=1 npx eas build --platform android --profile preview --non-interactive",
     "ios": "expo run:ios",
     "android": "expo run:android"
