@@ -157,6 +157,9 @@ class ApiService {
         const mockResponse: AuthResponse = {
           isSuccess: true,
           token: 'mock_token_' + Date.now(),
+          userId: 'mock_user_id',
+          username: data.username,
+          email: data.email,
           user: {
             id: 'mock_user_id',
             email: data.email,
@@ -227,9 +230,12 @@ class ApiService {
         const mockResponse: AuthResponse = {
           isSuccess: true,
           token: 'mock_token_' + Date.now(),
+          userId: 'mock_user_id',
+          username: data.login.includes('@') ? 'Test User' : data.login,
+          email: data.login.includes('@') ? data.login : 'test@example.com',
           user: {
             id: 'mock_user_id',
-            email: data.login,
+            email: data.login.includes('@') ? data.login : 'test@example.com',
             firstName: 'Test User',
             lastName: ''
           }

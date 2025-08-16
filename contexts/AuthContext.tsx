@@ -104,32 +104,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.isSuccess) {
         console.log('AuthContext: Login başarılı, kullanıcı verisi oluşturuluyor...');
         const userData: User = {
-          id: response.userId,
-          username: response.username,
-          email: response.email,
+          id: response.userId || response.user?.id || 'unknown',
+          username: response.username || response.user?.firstName || 'Unknown User',
+          email: response.email || response.user?.email || 'unknown@example.com',
         };
         
         console.log('AuthContext: Kullanıcı verisi:', userData);
         if (isMountedRef.current) {
           setUser(userData);
         }
+        
+        // Storage'a kaydet
         if (Platform.OS === 'web') {
           localStorage.setItem('user_data', JSON.stringify(userData));
         } else {
+          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
           await AsyncStorage.setItem('user_data', JSON.stringify(userData));
         }
+        
+        // Token expiration kaydet
         if (response.tokenExpiration || response.tokenExpirationDate) {
           const expiration = response.tokenExpiration || response.tokenExpirationDate;
           if (Platform.OS === 'web') {
             localStorage.setItem('token_expiration', expiration);
           } else {
+            const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
             await AsyncStorage.setItem('token_expiration', expiration);
           }
         }
         console.log('AuthContext: Kullanıcı verisi kaydedildi');
       } else {
         console.log('AuthContext: Login başarısız');
-        throw new Error('Login failed');
+        throw new Error(response.errors?.[0] || 'Giriş başarısız');
       }
     } catch (error) {
       console.error('AuthContext: Login hatası:', error);
@@ -151,9 +157,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (response.isSuccess) {
         const userData: User = {
-          id: response.userId,
-          username: response.username,
-          email: response.email,
+          id: response.userId || response.user?.id || 'unknown',
+          username: response.username || response.user?.firstName || data.username,
+          email: response.email || response.user?.email || data.email,
         };
         
         if (isMountedRef.current) {
@@ -162,6 +168,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (Platform.OS === 'web') {
           localStorage.setItem('user_data', JSON.stringify(userData));
         } else {
+          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
           await AsyncStorage.setItem('user_data', JSON.stringify(userData));
         }
         if (response.tokenExpiration || response.tokenExpirationDate) {
@@ -169,11 +176,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (Platform.OS === 'web') {
             localStorage.setItem('token_expiration', expiration);
           } else {
+            const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
             await AsyncStorage.setItem('token_expiration', expiration);
           }
         }
       } else {
-        throw new Error('Registration failed');
+        throw new Error(response.errors?.[0] || 'Kayıt başarısız');
       }
     } catch (error) {
       throw error;
@@ -199,6 +207,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         localStorage.removeItem('token_expiration');
         console.log('AuthContext: Web storage temizlendi');
       } else {
+        const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
         await AsyncStorage.multiRemove(['auth_token', 'user_data', 'token_expiration']);
         console.log('AuthContext: AsyncStorage temizlendi');
       }
