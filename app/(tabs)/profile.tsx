@@ -28,6 +28,25 @@ export default function ProfileScreen() {
           text: 'Çıkış Yap',
           style: 'destructive',
           onPress: () => {
+            // Basit logout - localStorage'ı temizle ve yönlendir
+            if (typeof window !== 'undefined') {
+              localStorage.clear();
+            }
+            // Context'i sıfırla
+            logout();
+            // Welcome sayfasına yönlendir
+            router.replace('/welcome');
+          },
+        },
+      ]
+    );
+      'Hesabınızdan çıkmak istediğinize emin misiniz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Çıkış Yap',
+          style: 'destructive',
+          onPress: () => {
             logout().then(() => {
               router.replace('/welcome');
             }).catch((error) => {
