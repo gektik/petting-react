@@ -37,14 +37,26 @@ export default function ExploreScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [matchFound, setMatchFound] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
   
   const position = useRef(new Animated.ValueXY()).current;
   const rotation = useRef(new Animated.Value(0)).current;
+  const drawerAnimation = useRef(new Animated.Value(-300)).current;
 
   useEffect(() => {
     loadPets();
     loadUserPets();
   }, []);
+
+  const toggleDrawer = () => {
+    const toValue = showDrawer ? -300 : 0;
+    Animated.timing(drawerAnimation, {
+      toValue,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+    setShowDrawer(!showDrawer);
+  };
 
   const loadPets = async () => {
     try {
@@ -176,6 +188,13 @@ export default function ExploreScreen() {
     extrapolate: 'clamp',
   });
 
+  const swipeDirection = position.x._value > 50 ? 'right' : position.x._value < -50 ? 'left' : null;
+  const swipeOpacity = position.x.interpolate({
+    inputRange: [-150, -50, 50, 150],
+    outputRange: [1, 0, 0, 1],
+    extrapolate: 'clamp',
+  });
+
   const renderPetSelector = ({ item }: { item: Pet }) => (
     <TouchableOpacity
       style={[
@@ -232,7 +251,7 @@ export default function ExploreScreen() {
         <View style={styles.headerRow}>
           <TouchableOpacity
             style={styles.menuButton}
-            onPress={() => router.push('/sha1-info')}
+            onPress={toggleDrawer}
           >
             <Menu size={24} color="#1F2937" />
           </TouchableOpacity>
@@ -298,6 +317,8 @@ export default function ExploreScreen() {
                   pet={pet}
                   onLike={handleLike}
                   onPass={handlePass}
+                  swipeDirection={swipeDirection}
+                  swipeOpacity={swipeOpacity}
                 />
                 
                 <Animated.View
@@ -418,6 +439,43 @@ export default function ExploreScreen() {
           </LinearGradient>
         </View>
       )}
+
+      {/* Side Drawer */}
+      {showDrawer && (
+        <TouchableOpacity 
+          style={styles.drawerOverlay} 
+          activeOpacity={1} 
+          onPress={toggleDrawer}
+        />
+      )}
+      <Animated.View style={[styles.drawer, { left: drawerAnimation }]}>
+        <LinearGradient
+          colors={['#6366F1', '#8B5CF6']}
+          style={styles.drawerHeader}
+        >
+          <Image 
+            source={{ uri: user?.profilePhoto || 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=150' }} 
+            style={styles.drawerAvatar} 
+          />
+          <Text style={styles.drawerUsername}>{user?.username}</Text>
+          <Text style={styles.drawerEmail}>{user?.email}</Text>
+        </LinearGradient>
+        
+        <View style={styles.drawerMenu}>
+          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); /* Navigate to my pets */ }}>
+            <Text style={styles.drawerMenuText}>Hayvanlarım</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); /* Navigate to matches */ }}>
+            <Text style={styles.drawerMenuText}>Eşleşmelerim</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); /* Navigate to chats */ }}>
+            <Text style={styles.drawerMenuText}>Sohbetlerim</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); /* Navigate to settings */ }}>
+            <Text style={styles.drawerMenuText}>Ayarlar</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
     </LinearGradient>
   );
 }
@@ -780,5 +838,68 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
+  },
+  drawerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 998,
+  },
+  drawer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 280,
+    backgroundColor: '#FFFFFF',
+    zIndex: 999,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 2,
+      height: 0,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  drawerHeader: {
+    paddingTop: 60,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  drawerAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 15,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  drawerUsername: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 5,
+  },
+  drawerEmail: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  drawerMenu: {
+    paddingTop: 20,
+  },
+  drawerMenuItem: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  drawerMenuText: {
+    fontSize: 16,
+    color: '#1F2937',
+    fontWeight: '500',
   },
 });

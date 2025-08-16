@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MapPin, Calendar, Heart, X } from 'lucide-react-native';
@@ -16,12 +17,21 @@ interface PetCardProps {
   onLike?: () => void;
   onPass?: () => void;
   showActions?: boolean;
+  swipeDirection?: 'left' | 'right' | null;
+  swipeOpacity?: Animated.AnimatedAddition;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = screenWidth - 32;
 
-export function PetCard({ pet, onLike, onPass, showActions = true }: PetCardProps) {
+export function PetCard({ 
+  pet, 
+  onLike, 
+  onPass, 
+  showActions = true, 
+  swipeDirection,
+  swipeOpacity 
+}: PetCardProps) {
   return (
     <View style={styles.card}>
       <Image
@@ -34,6 +44,21 @@ export function PetCard({ pet, onLike, onPass, showActions = true }: PetCardProp
         colors={['transparent', 'rgba(0,0,0,0.7)']}
         style={styles.gradient}
       />
+      
+      {/* Swipe Indicators */}
+      {swipeDirection === 'right' && swipeOpacity && (
+        <Animated.View style={[styles.swipeIndicator, styles.likeIndicator, { opacity: swipeOpacity }]}>
+          <Heart size={40} color="#10B981" fill="#10B981" />
+          <Text style={styles.swipeText}>BEĞENDİM</Text>
+        </Animated.View>
+      )}
+      
+      {swipeDirection === 'left' && swipeOpacity && (
+        <Animated.View style={[styles.swipeIndicator, styles.passIndicator, { opacity: swipeOpacity }]}>
+          <X size={40} color="#EF4444" />
+          <Text style={styles.swipeText}>GEÇ</Text>
+        </Animated.View>
+      )}
       
       <View style={styles.content}>
         <View style={styles.header}>
@@ -114,6 +139,33 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 200,
+  },
+  swipeIndicator: {
+    position: 'absolute',
+    top: '40%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderRadius: 15,
+    borderWidth: 3,
+    zIndex: 10,
+  },
+  likeIndicator: {
+    right: 30,
+    borderColor: '#10B981',
+    transform: [{ rotate: '-15deg' }],
+  },
+  passIndicator: {
+    left: 30,
+    borderColor: '#EF4444',
+    transform: [{ rotate: '15deg' }],
+  },
+  swipeText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 5,
   },
   content: {
     position: 'absolute',

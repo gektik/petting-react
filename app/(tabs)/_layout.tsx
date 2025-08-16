@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Heart, ShoppingBag, Chrome as Home, Activity, FileText } from 'lucide-react-native';
+import { ShoppingBag, Chrome as Home, Activity, FileText } from 'lucide-react-native';
+import { Platform } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -12,9 +13,11 @@ export default function TabLayout() {
           backgroundColor: '#FFFFFF',
           borderTopColor: '#E5E7EB',
           borderTopWidth: 1,
-          paddingBottom: 30,
+          paddingBottom: Platform.OS === 'ios' ? 30 : 10,
           paddingTop: 2, 
-          height: 95,
+          height: Platform.OS === 'ios' ? 95 : 70,
+          position: 'absolute',
+          bottom: 0,
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -29,15 +32,6 @@ export default function TabLayout() {
           title: 'Keşfet',
           tabBarIcon: ({ size, color }) => (
             <Home size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="matches"
-        options={{
-          title: 'Eşleşmeler',
-          tabBarIcon: ({ size, color }) => (
-            <Heart size={size} color={color} />
           ),
         }}
       />
@@ -66,6 +60,28 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color }) => (
             <ShoppingBag size={size} color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="matches"
+        options={{
+          title: 'Eşleşmeler',
+          tabBarIcon: ({ size, color }) => (
+            <Home size={size} color={color} />
+          ),
+          href: null, // Bu tab'ı gizle
+        }}
+      />
+      <Tabs.Screen
+        name="chats"
+        options={{
+          href: null, // Bu tab'ı gizle
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          href: null, // Bu tab'ı gizle
         }}
       />
     </Tabs>
