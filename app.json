@@ -1,0 +1,81 @@
+{
+  "expo": {
+    "name": "bolt-expo-nativewind",
+    "slug": "bolt-expo-nativewind",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "enabled": false
+    },
+    "android": {
+      "package": "com.petting.app",
+      "permissions": [
+        "android.permission.INTERNET"
+      ]
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.petting.app",
+      "infoPlist": {
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
+          }
+        ]
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "webClientId": "526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k.apps.googleusercontent.com",
+          "iosUrlScheme": "com.googleusercontent.apps.526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k"
+        }
+      ],
+      [
+        "react-native-fbsdk-next",
+        {
+          "appID": "773562691876253",
+          "clientToken": "773562691876253",
+          "displayName": "Petting",
+          "scheme": "fb773562691876253",
+          "advertiserIDCollectionEnabled": false,
+          "autoLogAppEventsEnabled": false,
+          "isAutoInitEnabled": true,
+          "iosUserTrackingPermission": "This identifier will be used to deliver personalized ads to you."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "googleWebClientId": "526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k.apps.googleusercontent.com",
+      "facebookAppId": "773562691876253",
+      "router": {},
+      "eas": {
+        "projectId": "7a6a7689-fe7e-43ca-8c4a-c87591465256"
+      }
+    }
+  }
+}

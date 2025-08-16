@@ -1,0 +1,41 @@
+{
+  "cli": {
+    "version": ">= 5.9.0",
+    "requireCommit": false,
+    "promptToConfigurePushNotifications": false
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EAS_NO_VCS": "1",
+        "EAS_BUILD_TIMEOUT": "7200",
+        "EAS_BUILD_RETRY_COUNT": "5"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EAS_NO_VCS": "1",
+        "EAS_BUILD_TIMEOUT": "7200",
+        "EAS_BUILD_RETRY_COUNT": "5"
+      }
+    },
+    "production": {
+      "env": {
+        "EAS_NO_VCS": "1",
+        "EAS_BUILD_TIMEOUT": "7200",
+        "EAS_BUILD_RETRY_COUNT": "5"
+      },
+      "android": {
+        "buildType": "apk",
+        "image": "latest",
+        "node": "20.x.x"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
