@@ -15,7 +15,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, Mail, Lock, Eye, EyeOff, Chrome } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginRequest } from '@/services/api';
-import { apiService } from '@/services/api';
 import { socialAuthService } from '@/services/socialAuth';
 
 export default function LoginScreen() {

@@ -4,7 +4,7 @@ import { mockPets, mockMatches, mockChats, mockAdoptionListings } from './mockDa
 import { Pet, Match, Chat, AdoptionListing } from '../types';
 
 const BASE_URL = 'https://pet.kervanbey.com/api';
-const USE_MOCK_DATA = true; // Mock data kullan (CORS hatası için)
+const USE_MOCK_DATA = false; // Gerçek API kullan
 
 export interface AuthResponse {
   isSuccess: boolean;
@@ -150,27 +150,6 @@ class ApiService {
   // Authentication methods
   async register(data: RegisterRequest): Promise<AuthResponse> {
     try {
-      // Development için mock response
-      if (USE_MOCK_DATA) {
-        console.log('Mock register for:', data.username);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-        const mockResponse: AuthResponse = {
-          isSuccess: true,
-          token: 'mock_token_' + Date.now(),
-          userId: 'mock_user_id',
-          username: data.username,
-          email: data.email,
-          user: {
-            id: 'mock_user_id',
-            email: data.email,
-            firstName: data.username,
-            lastName: ''
-          }
-        };
-        await this.saveTokenToStorage(mockResponse.token);
-        return mockResponse;
-      }
-
       console.log('Register attempt:', { username: data.username, email: data.email });
       console.log('API Base URL:', BASE_URL);
       console.log('Full register URL:', `${BASE_URL}/auth/register`);
@@ -223,27 +202,6 @@ class ApiService {
 
   async login(data: LoginRequest): Promise<AuthResponse> {
     try {
-      // Development için mock response
-      if (USE_MOCK_DATA) {
-        console.log('Mock login for:', data.login);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-        const mockResponse: AuthResponse = {
-          isSuccess: true,
-          token: 'mock_token_' + Date.now(),
-          userId: 'mock_user_id',
-          username: data.login.includes('@') ? 'Test User' : data.login,
-          email: data.login.includes('@') ? data.login : 'test@example.com',
-          user: {
-            id: 'mock_user_id',
-            email: data.login.includes('@') ? data.login : 'test@example.com',
-            firstName: 'Test User',
-            lastName: ''
-          }
-        };
-        await this.saveTokenToStorage(mockResponse.token);
-        return mockResponse;
-      }
-
       console.log('Login attempt:', { login: data.login });
       console.log('API Base URL:', BASE_URL);
       console.log('Full login URL:', `${BASE_URL}/auth/login`);
@@ -293,24 +251,6 @@ class ApiService {
 
   async googleLogin(token: string): Promise<AuthResponse> {
     try {
-      // Development için mock response
-      if (USE_MOCK_DATA) {
-        console.log('Mock Google login');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const mockResponse: AuthResponse = {
-          isSuccess: true,
-          token: 'mock_google_token_' + Date.now(),
-          user: {
-            id: 'mock_google_user_id',
-            email: 'google.user@example.com',
-            firstName: 'Google User',
-            lastName: ''
-          }
-        };
-        await this.saveTokenToStorage(mockResponse.token);
-        return mockResponse;
-      }
-
       console.log('Google login attempt with token:', token.substring(0, 20) + '...');
       const response: AxiosResponse<AuthResponse> = await this.api.post('/auth/google-mobile', {
         token,
@@ -357,24 +297,6 @@ class ApiService {
 
   async facebookLogin(token: string): Promise<AuthResponse> {
     try {
-      // Development için mock response
-      if (USE_MOCK_DATA) {
-        console.log('Mock Facebook login');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const mockResponse: AuthResponse = {
-          isSuccess: true,
-          token: 'mock_facebook_token_' + Date.now(),
-          user: {
-            id: 'mock_facebook_user_id',
-            email: 'facebook.user@example.com',
-            firstName: 'Facebook User',
-            lastName: ''
-          }
-        };
-        await this.saveTokenToStorage(mockResponse.token);
-        return mockResponse;
-      }
-
       console.log('Facebook login attempt with token:', token.substring(0, 20) + '...');
       const response: AxiosResponse<AuthResponse> = await this.api.post('/auth/facebook-mobile', {
         token,
