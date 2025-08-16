@@ -123,7 +123,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (Platform.OS === 'web') {
             localStorage.setItem('token_expiration', expiration);
           } else {
-            const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
             await AsyncStorage.setItem('token_expiration', expiration);
           }
         }
@@ -240,7 +239,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (Platform.OS === 'web') {
         localStorage.setItem('user_data', JSON.stringify(newUser));
       } else {
-        AsyncStorage.setItem('user_data', JSON.stringify(newUser));
+        import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
+          AsyncStorage.setItem('user_data', JSON.stringify(newUser))
+        );
       }
     }
   };
