@@ -28,8 +28,12 @@ export default function ProfileScreen() {
           text: 'Çıkış Yap',
           style: 'destructive',
           onPress: () => {
-            logout();
-            router.replace('/auth/login');
+            logout().then(() => {
+              router.replace('/welcome');
+            }).catch((error) => {
+              console.error('Logout error:', error);
+              router.replace('/welcome');
+            });
           },
         },
       ]

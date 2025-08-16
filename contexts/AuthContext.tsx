@@ -184,26 +184,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
+      console.log('AuthContext: Logout başlatılıyor...');
       if (isMountedRef.current) {
         setIsLoading(true);
       }
       await apiService.logout();
+      console.log('AuthContext: API logout tamamlandı');
       if (Platform.OS === 'web') {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_data');
         localStorage.removeItem('token_expiration');
+        console.log('AuthContext: Web storage temizlendi');
       } else {
         await AsyncStorage.multiRemove(['auth_token', 'user_data', 'token_expiration']);
+        console.log('AuthContext: AsyncStorage temizlendi');
       }
       if (isMountedRef.current) {
         setUser(null);
+        console.log('AuthContext: User state temizlendi');
       }
     } catch (error) {
       console.error('Error during logout:', error);
+      // Hata olsa bile user'ı temizle
+      if (isMountedRef.current) {
+        setUser(null);
+      }
+      if (Platform.OS === 'web') {
+        localStorage.clear();
+      }
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false);
       }
+      console.log('AuthContext: Logout işlemi tamamlandı');
     }
   };
 

@@ -27,9 +27,13 @@ export default function ProfileScreen() {
         {
           text: 'Çıkış Yap',
           style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/auth/login');
+          onPress: () => {
+            logout().then(() => {
+              router.replace('/welcome');
+            }).catch((error) => {
+              console.error('Logout error:', error);
+              router.replace('/welcome');
+            });
           },
         },
       ]
