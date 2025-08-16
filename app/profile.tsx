@@ -27,8 +27,8 @@ export default function ProfileScreen() {
         {
           text: 'Çıkış Yap',
           style: 'destructive',
-          onPress: () => {
-            logout();
+          onPress: async () => {
+            await logout();
             router.replace('/auth/login');
           },
         },
