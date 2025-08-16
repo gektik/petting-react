@@ -24,6 +24,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login: authLogin } = useAuth();
+  const { updateUser } = useAuth();
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -82,8 +83,6 @@ export default function LoginScreen() {
           email: response.user?.email || response.email || 'google@example.com',
         };
         
-        // Auth context'i güncelle
-        const { updateUser } = useAuth();
         if (Platform.OS === 'web') {
           localStorage.setItem('auth_token', response.token);
           localStorage.setItem('user_data', JSON.stringify(userData));
@@ -125,8 +124,6 @@ export default function LoginScreen() {
           email: response.user?.email || response.email || 'facebook@example.com',
         };
         
-        // Auth context'i güncelle
-        const { updateUser } = useAuth();
         if (Platform.OS === 'web') {
           localStorage.setItem('auth_token', response.token);
           localStorage.setItem('user_data', JSON.stringify(userData));

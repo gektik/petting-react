@@ -27,6 +27,7 @@ export default function RegisterScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
+  const { updateUser } = useAuth();
   const router = useRouter();
 
   const handleRegister = async () => {
@@ -89,8 +90,6 @@ export default function RegisterScreen() {
           email: response.user?.email || response.email || 'google@example.com',
         };
         
-        // Auth context'i güncelle
-        const { updateUser } = useAuth();
         if (Platform.OS === 'web') {
           localStorage.setItem('auth_token', response.token);
           localStorage.setItem('user_data', JSON.stringify(userData));
@@ -132,8 +131,6 @@ export default function RegisterScreen() {
           email: response.user?.email || response.email || 'facebook@example.com',
         };
         
-        // Auth context'i güncelle
-        const { updateUser } = useAuth();
         if (Platform.OS === 'web') {
           localStorage.setItem('auth_token', response.token);
           localStorage.setItem('user_data', JSON.stringify(userData));
