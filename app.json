@@ -48,7 +48,8 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "webClientId": "526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k.apps.googleusercontent.com"
+          "webClientId": "526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k.apps.googleusercontent.com",
+          "iosUrlScheme": "com.googleusercontent.apps.526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k"
         }
       ],
       [
