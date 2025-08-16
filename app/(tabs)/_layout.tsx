@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { ShoppingBag, Chrome as Home, Activity, FileText } from 'lucide-react-native';
+import { ShoppingBag, Chrome as Home, Activity, FileText, Heart } from 'lucide-react-native';
 import { Platform } from 'react-native';
 
 export default function TabLayout() {
@@ -67,9 +67,8 @@ export default function TabLayout() {
         options={{
           title: 'Eşleşmeler',
           tabBarIcon: ({ size, color }) => (
-            <Home size={size} color={color} />
+            <Heart size={size} color={color} />
           ),
-          href: null, // Bu tab'ı gizle
         }}
       />
       <Tabs.Screen

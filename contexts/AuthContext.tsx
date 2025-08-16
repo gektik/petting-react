@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { apiService, AuthResponse, RegisterRequest, LoginRequest, SocialLoginRequest } from '@/services/api';
 
@@ -57,7 +56,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Check if token exists
       const token = Platform.OS === 'web' 
         ? localStorage.getItem('auth_token')
-        : await AsyncStorage.getItem('auth_token');
+        : await import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
+            AsyncStorage.getItem('auth_token')
+          );
       if (!token) {
         if (isMountedRef.current) {
           setIsLoading(false);
@@ -68,7 +69,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Check if user data exists in storage
       const userData = Platform.OS === 'web'
         ? localStorage.getItem('user_data')
-        : await AsyncStorage.getItem('user_data');
+        : await import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
+            AsyncStorage.getItem('user_data')
+          );
       if (userData) {
         const parsedUser = JSON.parse(userData);
         if (isMountedRef.current) {

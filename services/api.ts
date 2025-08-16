@@ -1,7 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import NetInfo from '@react-native-community/netinfo';
 import { mockPets, mockMatches, mockChats, mockAdoptionListings } from './mockData';
 import { Pet, Match, Chat, AdoptionListing } from '../types';
 
@@ -97,16 +95,22 @@ class ApiService {
   }
 
   private setupNetworkListener() {
-    NetInfo.addEventListener(state => {
-      this.isOnline = state.isConnected ?? false;
-    });
+    if (Platform.OS !== 'web') {
+      import('@react-native-community/netinfo').then(({ default: NetInfo }) => {
+        NetInfo.addEventListener(state => {
+          this.isOnline = state.isConnected ?? false;
+        });
+      });
+    }
   }
 
   private async loadTokenFromStorage() {
     try {
       const token = Platform.OS === 'web'
         ? localStorage.getItem('auth_token')
-        : await AsyncStorage.getItem('auth_token');
+        : await import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
+            AsyncStorage.getItem('auth_token')
+          );
       if (token) {
         this.token = token;
       }
@@ -120,6 +124,7 @@ class ApiService {
       if (Platform.OS === 'web') {
         localStorage.setItem('auth_token', token);
       } else {
+        const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
         await AsyncStorage.setItem('auth_token', token);
       }
       this.token = token;
@@ -133,6 +138,7 @@ class ApiService {
       if (Platform.OS === 'web') {
         localStorage.removeItem('auth_token');
       } else {
+        const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
         await AsyncStorage.removeItem('auth_token');
       }
       this.token = null;
