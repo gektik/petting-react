@@ -40,23 +40,6 @@ export default function ProfileScreen() {
         },
       ]
     );
-      'Hesabınızdan çıkmak istediğinize emin misiniz?',
-      [
-        { text: 'İptal', style: 'cancel' },
-        {
-          text: 'Çıkış Yap',
-          style: 'destructive',
-          onPress: () => {
-            logout().then(() => {
-              router.replace('/welcome');
-            }).catch((error) => {
-              console.error('Logout error:', error);
-              router.replace('/welcome');
-            });
-          },
-        },
-      ]
-    );
   };
 
   const menuItems = [
