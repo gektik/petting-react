@@ -17,7 +17,7 @@ export default function TabLayout() {
           paddingTop: 5,
           height: Platform.OS === 'ios' ? 90 : 70,
           position: 'absolute',
-          bottom: Platform.OS === 'ios' ? 70 : 70,
+          bottom: 40,
           left: 0,
           right: 0,
           borderRadius: 0,
