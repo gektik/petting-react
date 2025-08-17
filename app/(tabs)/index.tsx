@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: 100,
-    marginTop: -70,
+    marginTop: -100,
   },
   animatedCard: {
     position: 'absolute',
