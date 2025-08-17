@@ -17,7 +17,8 @@ export default function TabLayout() {
           paddingTop: 5,
           height: Platform.OS === 'ios' ? 80 : 60,
           position: 'absolute',
-          bottom: Platform.OS === 'ios' ? 10 : 10,
+          bottom: Platform.OS === 'ios' ? 20 : 20,
+          paddingBottom: Platform.OS === 'ios' ? 30 : 15,
         },
         tabBarLabelStyle: {
           fontSize: 12,
