@@ -36,6 +36,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="matches"
+        options={{
+          title: 'Eşleşmeler',
+          tabBarIcon: ({ size, color }) => (
+            <Heart size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="listings"
         options={{
           title: 'İlanlar',
@@ -59,15 +68,6 @@ export default function TabLayout() {
           title: 'Market',
           tabBarIcon: ({ size, color }) => (
             <ShoppingBag size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="matches"
-        options={{
-          title: 'Eşleşmeler',
-          tabBarIcon: ({ size, color }) => (
-            <Heart size={size} color={color} />
           ),
         }}
       />
