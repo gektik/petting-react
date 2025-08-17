@@ -17,7 +17,7 @@ export default function TabLayout() {
           paddingTop: 5,
           height: Platform.OS === 'ios' ? 90 : 70,
           position: 'absolute',
-          bottom: Platform.OS === 'ios' ? 70 : 70,
+          bottom: 50,
           left: 0,
           right: 0,
           borderRadius: 0,
@@ -29,6 +29,9 @@ export default function TabLayout() {
           shadowOpacity: 0.1,
           shadowRadius: 4,
           elevation: 8,
+          // Alt tarafın beyaz olması için
+          borderBottomWidth: 50,
+          borderBottomColor: '#FFFFFF',
         },
         tabBarLabelStyle: {
           fontSize: 12,
