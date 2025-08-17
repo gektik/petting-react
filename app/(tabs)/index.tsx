@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 60,
     paddingHorizontal: 24,
-    paddingBottom: 1,
+    paddingBottom: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -543,6 +543,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
+    marginBottom: 0,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -609,7 +610,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: 100,
-    marginTop: -40,
+    marginTop: -50,
   },
   animatedCard: {
     position: 'absolute',
