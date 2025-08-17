@@ -15,7 +15,7 @@ export default function TabLayout() {
           borderTopWidth: 1,
           paddingBottom: Platform.OS === 'ios' ? 30 : 15,
           paddingTop: 5,
-          height: Platform.OS === 'ios' ? 90 : 70,
+          height: Platform.OS === 'ios' ? 120 : 100,
           borderRadius: 0,
           shadowColor: '#000',
           shadowOffset: {
@@ -29,7 +29,7 @@ export default function TabLayout() {
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
-          marginTop: 54,
+          marginTop: 8,
         },
       }}
     >
