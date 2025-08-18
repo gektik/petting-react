@@ -18,6 +18,7 @@ import { ArrowLeft, Camera, Save, Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { apiService } from '@/services/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 
 interface AddPetForm {
   name: string;
@@ -37,6 +38,7 @@ export default function AddPetScreen() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
   const [form, setForm] = useState<AddPetForm>({
     name: '',
     petTypeID: 1, // 1: Kedi, 2: Köpek
@@ -126,6 +128,108 @@ export default function AddPetScreen() {
     if (selectedDate) {
       setForm({ ...form, birthDate: selectedDate });
     }
+  };
+
+  const pickImage = async () => {
+    try {
+      setImageLoading(true);
+      
+      // İzin iste
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gerekli.');
+        return;
+      }
+
+      // Resim seç
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: false,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const selectedImage = result.assets[0];
+        console.log('Seçilen resim:', selectedImage);
+        
+        // Geçici olarak local URI'yi kullan
+        // Gerçek uygulamada bu resmi sunucuya yüklemen gerekir
+        setForm({ 
+          ...form, 
+          profilePictureURL: selectedImage.uri 
+        });
+        
+        Alert.alert(
+          'Resim Seçildi', 
+          'Resim başarıyla seçildi. Gerçek uygulamada bu resim sunucuya yüklenecek.',
+          [{ text: 'Tamam' }]
+        );
+      }
+    } catch (error) {
+      console.error('Resim seçme hatası:', error);
+      Alert.alert('Hata', 'Resim seçilirken bir hata oluştu.');
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      setImageLoading(true);
+      
+      // Kamera izni iste
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
+        return;
+      }
+
+      // Fotoğraf çek
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: false,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const takenPhoto = result.assets[0];
+        console.log('Çekilen fotoğraf:', takenPhoto);
+        
+        // Geçici olarak local URI'yi kullan
+        setForm({ 
+          ...form, 
+          profilePictureURL: takenPhoto.uri 
+        });
+        
+        Alert.alert(
+          'Fotoğraf Çekildi', 
+          'Fotoğraf başarıyla çekildi. Gerçek uygulamada bu resim sunucuya yüklenecek.',
+          [{ text: 'Tamam' }]
+        );
+      }
+    } catch (error) {
+      console.error('Fotoğraf çekme hatası:', error);
+      Alert.alert('Hata', 'Fotoğraf çekilirken bir hata oluştu.');
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const showImageOptions = () => {
+    Alert.alert(
+      'Fotoğraf Seç',
+      'Fotoğrafı nereden seçmek istiyorsunuz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        { text: 'Galeriden Seç', onPress: pickImage },
+        { text: 'Fotoğraf Çek', onPress: takePhoto },
+      ]
+    );
   };
 
   const handleSave = async () => {
@@ -294,11 +398,23 @@ export default function AddPetScreen() {
                 source={{ uri: form.profilePictureURL }} 
                 style={styles.photo} 
               />
-              <TouchableOpacity style={styles.cameraButton}>
-                <Camera size={20} color="#FFFFFF" />
+              <TouchableOpacity 
+                style={styles.cameraButton}
+                onPress={showImageOptions}
+                disabled={imageLoading}
+              >
+                {imageLoading ? (
+                  <ActivityIndicator size={16} color="#FFFFFF" />
+                ) : (
+                  <Camera size={20} color="#FFFFFF" />
+                )}
               </TouchableOpacity>
             </View>
-            <Text style={styles.photoText}>Fotoğraf ekle</Text>
+            <TouchableOpacity onPress={showImageOptions} disabled={imageLoading}>
+              <Text style={styles.photoText}>
+                {imageLoading ? 'Yükleniyor...' : 'Fotoğraf ekle'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Form */}

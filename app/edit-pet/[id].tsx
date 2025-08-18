@@ -21,6 +21,7 @@ import { Pet } from '@/types';
 import { apiService } from '@/services/api';
 import { mockPets } from '@/services/mockData';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 
 interface EditPetForm {
   name: string;
@@ -42,6 +43,8 @@ export default function EditPetScreen() {
   const [saving, setSaving] = useState(false);
   const [pet, setPet] = useState<Pet | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [currentImageUri, setCurrentImageUri] = useState<string>('');
   const [form, setForm] = useState<EditPetForm>({
     name: '',
     petTypeID: 1,
@@ -152,6 +155,7 @@ export default function EditPetScreen() {
         };
         
         setPet(convertedPet);
+        setCurrentImageUri(convertedPet.photos[0]);
         
         // Parse birth date
         let birthDate = new Date();
@@ -232,6 +236,101 @@ export default function EditPetScreen() {
     }
   };
 
+  const pickImage = async () => {
+    try {
+      setImageLoading(true);
+      
+      // İzin iste
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gerekli.');
+        return;
+      }
+
+      // Resim seç
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: false,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const selectedImage = result.assets[0];
+        console.log('Seçilen resim:', selectedImage);
+        
+        // Geçici olarak local URI'yi kullan
+        setCurrentImageUri(selectedImage.uri);
+        
+        Alert.alert(
+          'Resim Seçildi', 
+          'Resim başarıyla seçildi. Gerçek uygulamada bu resim sunucuya yüklenecek.',
+          [{ text: 'Tamam' }]
+        );
+      }
+    } catch (error) {
+      console.error('Resim seçme hatası:', error);
+      Alert.alert('Hata', 'Resim seçilirken bir hata oluştu.');
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      setImageLoading(true);
+      
+      // Kamera izni iste
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
+        return;
+      }
+
+      // Fotoğraf çek
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: false,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const takenPhoto = result.assets[0];
+        console.log('Çekilen fotoğraf:', takenPhoto);
+        
+        // Geçici olarak local URI'yi kullan
+        setCurrentImageUri(takenPhoto.uri);
+        
+        Alert.alert(
+          'Fotoğraf Çekildi', 
+          'Fotoğraf başarıyla çekildi. Gerçek uygulamada bu resim sunucuya yüklenecek.',
+          [{ text: 'Tamam' }]
+        );
+      }
+    } catch (error) {
+      console.error('Fotoğraf çekme hatası:', error);
+      Alert.alert('Hata', 'Fotoğraf çekilirken bir hata oluştu.');
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const showImageOptions = () => {
+    Alert.alert(
+      'Fotoğraf Seç',
+      'Fotoğrafı nereden seçmek istiyorsunuz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        { text: 'Galeriden Seç', onPress: pickImage },
+        { text: 'Fotoğraf Çek', onPress: takePhoto },
+      ]
+    );
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -252,7 +351,7 @@ export default function EditPetScreen() {
         isNeutered: form.isNeutered,
         description: form.description.trim(), // UTF-8 encoding will be handled by axios
         color: form.color,
-        profilePictureURL: pet?.photos[0] || '',
+        profilePictureURL: currentImageUri || pet?.photos[0] || '',
         isActiveForMatching: form.isActiveForMatching,
       };
       
@@ -436,12 +535,24 @@ export default function EditPetScreen() {
           {/* Profil Fotoğrafı */}
           <View style={styles.photoSection}>
             <View style={styles.photoContainer}>
-              <Image source={{ uri: pet.photos[0] }} style={styles.photo} />
-              <TouchableOpacity style={styles.cameraButton}>
-                <Camera size={20} color="#FFFFFF" />
+              <Image source={{ uri: currentImageUri || pet.photos[0] }} style={styles.photo} />
+              <TouchableOpacity 
+                style={styles.cameraButton}
+                onPress={showImageOptions}
+                disabled={imageLoading}
+              >
+                {imageLoading ? (
+                  <ActivityIndicator size={16} color="#FFFFFF" />
+                ) : (
+                  <Camera size={20} color="#FFFFFF" />
+                )}
               </TouchableOpacity>
             </View>
-            <Text style={styles.photoText}>Fotoğrafı değiştir</Text>
+            <TouchableOpacity onPress={showImageOptions} disabled={imageLoading}>
+              <Text style={styles.photoText}>
+                {imageLoading ? 'Yükleniyor...' : 'Fotoğrafı değiştir'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Form */}
