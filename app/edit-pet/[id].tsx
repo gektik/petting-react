@@ -21,7 +21,6 @@ import { Pet } from '@/types';
 import { apiService } from '@/services/api';
 import { mockPets } from '@/services/mockData';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Platform } from 'react-native';
 
 interface EditPetForm {
   name: string;
