@@ -4,9 +4,9 @@
     "slug": "bolt-expo-nativewind",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "myapp",
+    "scheme": "petting",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "icon": "./assets/images/icon.png",
     "assetBundlePatterns": [
       "**/*"
@@ -42,12 +42,8 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "single",
+      "output": "static",
       "favicon": "./assets/images/favicon.png"
-    },
-    "packagerOpts": {
-      "port": 8081,
-      "host": "localhost"
     },
     "plugins": [
       "expo-router",
