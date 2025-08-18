@@ -126,8 +126,11 @@ export default function ProfileScreen() {
             <TouchableOpacity
               key={index}
               style={styles.menuItem}
-              onPress={item.onPress}
-              activeOpacity={0.7}
+              onPress={() => {
+                console.log('Menu item pressed:', item.title);
+                item.onPress();
+              }}
+              activeOpacity={0.8}
             >
               <View style={styles.menuIconContainer}>
                 <item.icon size={24} color="#6366F1" />
@@ -141,8 +144,11 @@ export default function ProfileScreen() {
           
           <TouchableOpacity
             style={[styles.menuItem, styles.logoutItem]}
-            onPress={handleLogout}
-            activeOpacity={0.7}
+            onPress={() => {
+              console.log('Logout pressed');
+              handleLogout();
+            }}
+            activeOpacity={0.8}
           >
             <View style={[styles.menuIconContainer, styles.logoutIconContainer]}>
               <LogOut size={24} color="#EF4444" />
@@ -256,6 +262,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 80,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
