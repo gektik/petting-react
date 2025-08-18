@@ -148,7 +148,7 @@ export default function MyPetsScreen() {
           style={[styles.actionButton, styles.editButton]}
           onPress={() => handleEditPet(item)}
         >
-          <Edit3 size={18} color="#6366F1" />
+          <Edit size={18} color="#6366F1" />
         </TouchableOpacity>
         
         <TouchableOpacity
