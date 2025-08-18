@@ -366,7 +366,8 @@ class ApiService {
       console.log('API: Request URL:', `${BASE_URL}/pets/my-pets`);
       const response = await this.api.get('/pets/my-pets');
       console.log('API: getUserPets yanıtı:', response.data);
-      return response.data.data || [];
+      // API direkt array döndürüyor, .data wrapper'ı yok
+      return response.data || [];
     } catch (error: any) {
       console.error('API: getUserPets hatası:', {
         message: error.message,
@@ -378,9 +379,7 @@ class ApiService {
         isNetworkError: !error.response,
         fullError: error
       });
-      // Fallback to mock data for now
-      console.log('API: Mock data\'ya fallback yapılıyor...');
-      return mockPets.slice(0, 2);
+      throw error;
     }
   }
 
