@@ -15,16 +15,23 @@ import { ArrowLeft, CreditCard as Edit3, Trash2, Plus } from 'lucide-react-nativ
 import { useRouter } from 'expo-router';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
-import { mockPets } from '@/services/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function MyPetsScreen() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    loadMyPets();
-  }, []);
+    if (!isLoading) {
+      if (isAuthenticated) {
+        loadMyPets();
+      } else {
+        router.replace('/auth/login');
+      }
+    }
+  }, [isAuthenticated, isLoading]);
 
   const loadMyPets = async () => {
     try {
