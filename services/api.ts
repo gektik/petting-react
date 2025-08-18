@@ -379,6 +379,8 @@ class ApiService {
         data: error.response?.data,
       });
       throw error;
+    }
+  }
   async getChats(): Promise<Chat[]> {
     await new Promise(resolve => setTimeout(resolve, 500));
     return mockChats;
