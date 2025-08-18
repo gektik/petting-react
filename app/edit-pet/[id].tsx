@@ -188,7 +188,7 @@ export default function EditPetScreen() {
         petTypeID: 1, // Kedi için sabit değer
         breedID: getBreedID(form.breedName),
         gender: form.gender,
-        birthDate: form.birthDate.toISOString().split('T')[0], // YYYY-MM-DD formatında
+        birthDate: form.birthDate.toISOString(), // ISO datetime formatında
         isNeutered: form.isNeutered,
         description: form.description.trim(),
         color: form.color,

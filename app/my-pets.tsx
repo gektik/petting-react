@@ -12,7 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ArrowLeft, Pencil, Trash2, Plus, CreditCard as Edit } from 'lucide-react-native';
+import { ArrowLeft, Pencil, Trash2, Plus } from 'lucide-react-native';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -148,7 +148,6 @@ export default function MyPetsScreen() {
           style={[styles.actionButton, styles.editButton]}
           onPress={() => handleEditPet(item)}
         >
-          <Edit size={18} color="#6366F1" />
           <Pencil size={18} color="#6366F1" />
         </TouchableOpacity>
         
