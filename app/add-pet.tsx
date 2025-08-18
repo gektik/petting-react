@@ -70,8 +70,8 @@ export default function AddPetScreen() {
   ];
 
   const dogBreeds = [
-    { id: 11, name: 'Labrador' },
-    { id: 12, name: 'Golden Retriever' },
+    { id: 11, name: 'Golden Retriever' },
+    { id: 12, name: 'Labrador' },
     { id: 13, name: 'German Shepherd' },
     { id: 14, name: 'Husky' },
     { id: 15, name: 'Bulldog' },
