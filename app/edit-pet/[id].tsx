@@ -138,10 +138,21 @@ export default function EditPetScreen() {
           console.log('No birthDate from API, using current date');
         }
         
+        // API'den gelen cins ismini hardcoded listede bul
+        const petTypeID = foundPet.species === 'cat' ? 1 : 2;
+        const availableBreeds = petTypeID === 1 ? catBreeds : dogBreeds;
+        const matchingBreed = availableBreeds.find(breed => 
+          breed.name.toLowerCase() === foundPet.breed.toLowerCase()
+        );
+        
+        console.log('API breed name:', foundPet.breed);
+        console.log('Available breeds:', availableBreeds.map(b => b.name));
+        console.log('Matching breed found:', matchingBreed);
+        
         console.log('Setting form data:', {
           name: foundPet.name,
-          petTypeID: foundPet.species === 'cat' ? 1 : 2,
-          breedID: foundPet.species === 'cat' ? 1 : 8,
+          petTypeID: petTypeID,
+          breedID: matchingBreed ? matchingBreed.id : (petTypeID === 1 ? 1 : 8),
           breedName: foundPet.breed,
           birthDate: birthDate,
           gender: foundPet.gender === 'male' ? 1 : 0,
@@ -153,8 +164,8 @@ export default function EditPetScreen() {
 
         setForm({
           name: foundPet.name,
-          petTypeID: foundPet.species === 'cat' ? 1 : 2,
-          breedID: foundPet.species === 'cat' ? 1 : 8,
+          petTypeID: petTypeID,
+          breedID: matchingBreed ? matchingBreed.id : (petTypeID === 1 ? 1 : 8),
           breedName: foundPet.breed,
           birthDate: birthDate,
           gender: foundPet.gender === 'male' ? 1 : 0,
@@ -164,7 +175,11 @@ export default function EditPetScreen() {
           isActiveForMatching: foundPet.isActive,
         });
         
-        console.log('Final form color set to:', foundPet.color || colors[0]);
+        console.log('Final form data set:', {
+          breedID: matchingBreed ? matchingBreed.id : (petTypeID === 1 ? 1 : 8),
+          breedName: foundPet.breed,
+          color: foundPet.color || colors[0]
+        });
       } else {
         console.log('Pet not found with ID:', id);
         Alert.alert('Hata', 'Hayvan bulunamadı.');
