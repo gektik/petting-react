@@ -54,7 +54,8 @@ export default function ProfileScreen() {
       title: 'Hayvanlarım',
       subtitle: 'Hayvan profillerinizi yönetin',
       onPress: () => {
-        console.log('Hayvanlarım butonuna tıklandı');
+        console.log('Hayvanlarım butonuna tıklandı!');
+        Alert.alert('Test', 'Buton çalışıyor!');
         router.push('/my-pets');
       },
     },
