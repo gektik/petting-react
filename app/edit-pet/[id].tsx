@@ -261,14 +261,27 @@ export default function EditPetScreen() {
         const selectedImage = result.assets[0];
         console.log('Seçilen resim:', selectedImage);
         
-        // Geçici olarak local URI'yi kullan
-        setCurrentImageUri(selectedImage.uri);
-        
-        Alert.alert(
-          'Resim Seçildi', 
-          'Resim başarıyla seçildi. Gerçek uygulamada bu resim sunucuya yüklenecek.',
-          [{ text: 'Tamam' }]
-        );
+        try {
+          // Resmi API'ye yükle
+          console.log('Resim API\'ye yükleniyor...');
+          const uploadResult = await apiService.uploadImage(selectedImage.uri, id);
+          console.log('Resim yükleme sonucu:', uploadResult);
+          
+          // Resim URI'sini güncelle
+          setCurrentImageUri(uploadResult.imageUrl);
+          
+          Alert.alert('Başarılı', 'Resim başarıyla yüklendi!');
+        } catch (uploadError) {
+          console.error('Resim yükleme hatası:', uploadError);
+          Alert.alert(
+            'Yükleme Hatası', 
+            'Resim yüklenirken hata oluştu. Lütfen tekrar deneyin.',
+            [
+              { text: 'Tamam' },
+              { text: 'Tekrar Dene', onPress: pickImage }
+            ]
+          );
+        }
       }
     } catch (error) {
       console.error('Resim seçme hatası:', error);
@@ -302,14 +315,28 @@ export default function EditPetScreen() {
         const takenPhoto = result.assets[0];
         console.log('Çekilen fotoğraf:', takenPhoto);
         
-        // Geçici olarak local URI'yi kullan
-        setCurrentImageUri(takenPhoto.uri);
-        
-        Alert.alert(
-          'Fotoğraf Çekildi', 
-          'Fotoğraf başarıyla çekildi. Gerçek uygulamada bu resim sunucuya yüklenecek.',
-          [{ text: 'Tamam' }]
-        );
+        try {
+          // Fotoğrafı API'ye yükle
+          console.log('Fotoğraf API\'ye yükleniyor...');
+          const uploadResult = await apiService.uploadImage(takenPhoto.uri, id);
+          console.log('Fotoğraf yükleme sonucu:', uploadResult);
+          
+          // Resim URI'sini güncelle
+          setCurrentImageUri(uploadResult.imageUrl);
+          
+          Alert.alert('Başarılı', 'Fotoğraf başarıyla yüklendi!');
+        } catch (uploadError) {
+          console.error('Fotoğraf yükleme hatası:', uploadError);
+          Alert.alert(
+            'Yükleme Hatası', 
+            'Fotoğraf yüklenirken hata oluştu. Lütfen tekrar deneyin.',
+            [
+              { text: 'Tamam' },
+              { text: 'Tekrar Dene', onPress: takePhoto }
+            ]
+          );
+        }
+      }
       }
     } catch (error) {
       console.error('Fotoğraf çekme hatası:', error);

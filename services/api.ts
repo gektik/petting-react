@@ -417,6 +417,48 @@ class ApiService {
     }
   }
 
+  // Image upload method
+  async uploadImage(imageUri: string, petId?: string): Promise<{ imageUrl: string }> {
+    try {
+      console.log('API: uploadImage çağrılıyor...', { imageUri: imageUri.substring(0, 50) + '...', petId });
+      
+      // Create FormData for multipart/form-data upload
+      const formData = new FormData();
+      
+      // Add the image file
+      const filename = `pet_${Date.now()}.jpg`;
+      formData.append('file', {
+        uri: imageUri,
+        type: 'image/jpeg',
+        name: filename,
+      } as any);
+      
+      // Add petId if provided
+      if (petId) {
+        formData.append('petId', petId);
+      }
+      
+      console.log('API: FormData hazırlandı:', { filename, petId });
+      
+      const response = await this.api.post('/upload/pet-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 30000, // 30 seconds for image upload
+      });
+      
+      console.log('API: uploadImage yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API: uploadImage hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
+
   // Pet update method
   async updatePet(petId: string, petData: any): Promise<any> {
     try {
