@@ -68,6 +68,23 @@ class ApiService {
     this.setupNetworkListener();
   }
 
+  // Resim URL'ini düzelt - /wwwroot/ ekle
+  private fixImageUrl(url: string): string {
+    if (!url) return url;
+    
+    // Eğer URL zaten wwwroot içeriyorsa dokunma
+    if (url.includes('/wwwroot/')) {
+      return url;
+    }
+    
+    // /uploads/ ile başlıyorsa /wwwroot/ ekle
+    if (url.includes('/uploads/')) {
+      return url.replace('/uploads/', '/wwwroot/uploads/');
+    }
+    
+    return url;
+  }
+
   // Method to set unauthorized callback
   setUnauthorizedCallback(callback: (() => void) | null) {
     this.onUnauthorized = callback;
@@ -333,7 +350,7 @@ class ApiService {
           age: apiPet.age || 0,
           gender: apiPet.gender === 0 ? 'female' : 'male',
           neutered: apiPet.isNeutered || false,
-          photos: apiPet.photos || (apiPet.profilePictureURL ? [apiPet.profilePictureURL] : ['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400']),
+          photos: apiPet.photos || (apiPet.profilePictureURL ? [this.fixImageUrl(apiPet.profilePictureURL)] : ['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400']),
           description: apiPet.description || '',
           color: apiPet.color || '',
           ownerId: (apiPet.userID || apiPet.ownerId || '').toString(),
@@ -468,7 +485,20 @@ class ApiService {
       });
       
       console.log('API: uploadImage yanıtı:', response.data);
-      return response.data;
+      
+      // Dönen URL'yi düzelt
+      const result = response.data;
+      if (result.imageUrl) {
+        result.imageUrl = this.fixImageUrl(result.imageUrl);
+      }
+      if (result.url) {
+        result.url = this.fixImageUrl(result.url);
+      }
+      if (result.profilePictureURL) {
+        result.profilePictureURL = this.fixImageUrl(result.profilePictureURL);
+      }
+      
+      return result;
     } catch (error: any) {
       console.error('API: uploadImage hatası:', {
         message: error.message,
