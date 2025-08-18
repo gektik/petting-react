@@ -27,21 +27,21 @@ export default function MyPetsScreen() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated) {
+      if (isAuthenticated && user) {
         loadMyPets();
       } else {
         router.replace('/auth/login');
       }
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, user]);
 
   // Sayfa odaklandığında listeyi yenile (düzenleme sonrası için)
   useFocusEffect(
     React.useCallback(() => {
-      if (isAuthenticated && !isLoading) {
+      if (isAuthenticated && !isLoading && user) {
         loadMyPets();
       }
-    }, [isAuthenticated, isLoading])
+    }, [isAuthenticated, isLoading, user])
   );
 
   const loadMyPets = async () => {

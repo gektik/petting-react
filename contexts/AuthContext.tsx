@@ -70,6 +70,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
           token = await AsyncStorage.getItem('auth_token');
         }
+        
+        // Treat empty string as null
+        if (token === '') {
+          token = null;
+        }
       } catch (storageError) {
         console.warn('Storage access error:', storageError);
       }
@@ -78,6 +83,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       apiService.setAuthToken(token);
       
       if (!token) {
+        // Explicitly set user to null when no valid token
+        if (isMountedRef.current) {
+          setUser(null);
+        }
         if (isMountedRef.current) {
           setIsLoading(false);
         }
