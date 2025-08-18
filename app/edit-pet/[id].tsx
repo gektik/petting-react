@@ -143,14 +143,46 @@ export default function EditPetScreen() {
       setSaving(true);
       
       const updateData = {
-        petID: parseInt(id!),
         name: form.name.trim(),
-        breedName: form.breedName,
-        age: form.age,
+        petTypeID: 1, // Kedi için sabit değer
+        breedID: getBreedID(form.breedName),
         gender: form.gender,
+        birthDate: new Date().toISOString(), // Mevcut tarih kullan
         isNeutered: form.isNeutered,
         description: form.description.trim(),
         color: form.color,
+        profilePictureURL: pet.photos[0] || null,
+        isActiveForMatching: form.isActiveForMatching,
+      };
+
+      // Breed ID mapping helper function
+      const getBreedID = (breedName: string): number => {
+        const breedMap: { [key: string]: number } = {
+          'Scottish Fold': 1,
+          'British Shorthair': 2,
+          'Tekir': 4,
+          'Van Kedisi': 5,
+          'Ankara Kedisi': 6,
+          'Persian': 7,
+          'Maine Coon': 8,
+          'Siamese': 9,
+          'Ragdoll': 10,
+          'Bengal': 11,
+        };
+        return breedMap[breedName] || 1;
+      };
+
+      const updateData = {
+        name: form.name.trim(),
+        petTypeID: 1, // Kedi için sabit değer
+        breedID: getBreedID(form.breedName),
+        age: form.age,
+        gender: form.gender,
+        birthDate: new Date().toISOString(), // Mevcut tarih kullan
+        isNeutered: form.isNeutered,
+        description: form.description.trim(),
+        color: form.color,
+        profilePictureURL: pet.photos[0] || null,
         isActiveForMatching: form.isActiveForMatching,
       };
 
