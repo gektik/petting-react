@@ -61,7 +61,8 @@ export default function MyPetsScreen() {
   };
 
   const handleEditPet = (pet: Pet) => {
-    Alert.alert('Düzenle', `${pet.name} düzenleme özelliği yakında gelecek.`);
+    console.log('Editing pet:', pet.name, 'ID:', pet.id);
+    router.push(`/edit-pet/${pet.id}`);
   };
 
   const handleDeletePet = (pet: Pet) => {
