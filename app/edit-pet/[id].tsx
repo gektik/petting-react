@@ -19,7 +19,9 @@ import { ArrowLeft, Camera, Save, Calendar } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
+import { mockPets } from '@/services/mockData';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Platform } from 'react-native';
 
 interface EditPetForm {
   name: string;
@@ -86,7 +88,30 @@ export default function EditPetScreen() {
     try {
       setLoading(true);
       console.log('Loading pet data for ID:', id);
-      const pets = await apiService.getUserPets();
+      
+      let pets;
+      if (Platform.OS === 'web') {
+        // Use mock data for web platform to avoid CORS issues
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+        pets = mockPets.map(pet => ({
+          petID: parseInt(pet.id),
+          name: pet.name,
+          breedName: pet.breed,
+          age: pet.age,
+          gender: pet.gender === 'male' ? 1 : 0,
+          isNeutered: pet.neutered,
+          profilePictureURL: pet.photos[0],
+          description: pet.description,
+          color: pet.color,
+          userID: pet.ownerId,
+          isActiveForMatching: pet.isActive,
+          createdDate: pet.createdAt,
+          birthDate: new Date(Date.now() - pet.age * 365 * 24 * 60 * 60 * 1000).toISOString(),
+        }));
+      } else {
+        pets = await apiService.getUserPets();
+      }
+      
       console.log('All pets from API:', pets);
       
       const foundPet = pets.find(p => p.petID.toString() === id);
