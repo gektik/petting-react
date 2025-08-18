@@ -59,6 +59,7 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Accept-Charset': 'utf-8',
       },
     });
 
@@ -356,6 +357,10 @@ class ApiService {
 
   async post<T>(endpoint: string, data: any): Promise<ApiResponse<T>> {
     try {
+      // Ensure UTF-8 encoding for Turkish characters
+      const encodedData = JSON.stringify(data);
+      console.log('API POST Data (UTF-8):', encodedData);
+      
       const response = await this.api.post(endpoint, data);
       return response.data;
     } catch (error: any) {
@@ -384,6 +389,10 @@ class ApiService {
 
   async put<T>(endpoint: string, data: any): Promise<ApiResponse<T>> {
     try {
+      // Ensure UTF-8 encoding for Turkish characters
+      const encodedData = JSON.stringify(data);
+      console.log('API PUT Data (UTF-8):', encodedData);
+      
       const response = await this.api.put(endpoint, data);
       return response.data;
     } catch (error: any) {

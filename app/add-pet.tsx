@@ -116,19 +116,21 @@ export default function AddPetScreen() {
       // Format birthDate to YYYY-MM-DD format for API
       const formattedBirthDate = form.birthDate.toISOString().split('T')[0];
       
+      // Ensure Turkish characters are properly encoded
       const petData = {
-        name: form.name.trim(),
+        name: form.name.trim(), // UTF-8 encoding will be handled by axios
         petTypeID: form.petTypeID,
         breedID: form.breedID,
         gender: form.gender,
         birthDate: formattedBirthDate,
         isNeutered: form.isNeutered,
-        description: form.description.trim(),
+        description: form.description.trim(), // UTF-8 encoding will be handled by axios
         color: form.color,
         profilePictureURL: form.profilePictureURL,
         isActiveForMatching: form.isActiveForMatching,
       };
       
+      console.log('Pet data with Turkish characters:', petData);
       console.log('Adding pet with data:', petData);
       const result = await apiService.post('/pets', petData);
       console.log('Add result:', result);

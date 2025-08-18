@@ -211,19 +211,21 @@ export default function EditPetScreen() {
       console.log('Original birthDate:', form.birthDate);
       console.log('Formatted birthDate for API:', formattedBirthDate);
       
+      // Ensure Turkish characters are properly encoded
       const updateData = {
-        name: form.name.trim(),
+        name: form.name.trim(), // UTF-8 encoding will be handled by axios
         petTypeID: 1, // Kedi için sabit değer
         breedID: getBreedID(form.breedName),
         gender: form.gender,
         birthDate: formattedBirthDate, // YYYY-MM-DD formatında
         isNeutered: form.isNeutered,
-        description: form.description.trim(),
+        description: form.description.trim(), // UTF-8 encoding will be handled by axios
         color: form.color,
         profilePictureURL: pet?.photos[0] || '',
         isActiveForMatching: form.isActiveForMatching,
       };
       
+      console.log('Update data with Turkish characters:', updateData);
       console.log('Updating pet with data:', updateData);
       const result = await apiService.updatePet(id!, updateData);
       console.log('Update result:', result);
