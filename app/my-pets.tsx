@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { ArrowLeft, CreditCard as Edit, Trash2, Plus } from 'lucide-react-native';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
