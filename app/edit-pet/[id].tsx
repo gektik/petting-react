@@ -15,15 +15,16 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Camera, Save } from 'lucide-react-native';
+import { ArrowLeft, Camera, Save, Calendar } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface EditPetForm {
   name: string;
   breedName: string;
-  age: number;
+  birthDate: Date;
   gender: 0 | 1; // 0: female, 1: male
   isNeutered: boolean;
   description: string;
@@ -37,10 +38,11 @@ export default function EditPetScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [pet, setPet] = useState<Pet | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [form, setForm] = useState<EditPetForm>({
     name: '',
     breedName: '',
-    age: 0,
+    birthDate: new Date(),
     gender: 1,
     isNeutered: false,
     description: '',
@@ -105,10 +107,15 @@ export default function EditPetScreen() {
         };
         
         setPet(convertedPet);
+        
+        // Calculate birth date from age
+        const birthDate = new Date();
+        birthDate.setFullYear(birthDate.getFullYear() - convertedPet.age);
+        
         setForm({
           name: convertedPet.name,
           breedName: convertedPet.breed,
-          age: convertedPet.age,
+          birthDate: birthDate,
           gender: convertedPet.gender === 'male' ? 1 : 0,
           isNeutered: convertedPet.neutered,
           description: convertedPet.description,
@@ -140,19 +147,42 @@ export default function EditPetScreen() {
     return breedMap[breedName] || 1;
   };
 
+  const calculateAge = (birthDate: Date): number => {
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      return age - 1;
+    }
+    return age;
+  };
+
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setForm({ ...form, birthDate: selectedDate });
+    }
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
-      
-      const birthDate = new Date();
-      birthDate.setFullYear(birthDate.getFullYear() - form.age);
       
       const updateData = {
         name: form.name.trim(),
         petTypeID: 1, // Kedi için sabit değer
         breedID: getBreedID(form.breedName),
         gender: form.gender,
-        birthDate: birthDate.toISOString(),
+        birthDate: form.birthDate.toISOString(),
         isNeutered: form.isNeutered,
         description: form.description.trim(),
         color: form.color,
@@ -306,17 +336,29 @@ export default function EditPetScreen() {
           {/* Cins */}
           {renderBreedSelector()}
 
-          {/* Yaş */}
+          {/* Doğum Tarihi */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Yaş</Text>
-            <TextInput
-              style={styles.input}
-              value={form.age.toString()}
-              onChangeText={(text) => setForm({ ...form, age: parseInt(text) || 0 })}
-              placeholder="Yaş"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="numeric"
-            />
+            <Text style={styles.label}>Doğum Tarihi</Text>
+            <TouchableOpacity
+              style={styles.datePickerButton}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Calendar size={20} color="#6366F1" />
+              <Text style={styles.datePickerText}>
+                {formatDate(form.birthDate)} ({calculateAge(form.birthDate)} yaşında)
+              </Text>
+            </TouchableOpacity>
+            
+            {showDatePicker && (
+              <DateTimePicker
+                value={form.birthDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={onDateChange}
+                maximumDate={new Date()}
+                minimumDate={new Date(2000, 0, 1)}
+              />
+            )}
           </View>
 
           {/* Cinsiyet */}
@@ -544,6 +586,22 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+  datePickerButton: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  datePickerText: {
+    fontSize: 16,
+    color: '#1F2937',
+    marginLeft: 12,
+    flex: 1,
   },
   textArea: {
     height: 100,
