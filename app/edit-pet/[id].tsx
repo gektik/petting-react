@@ -111,66 +111,6 @@ export default function EditPetScreen() {
           age: convertedPet.age,
           gender: convertedPet.gender === 'male' ? 1 : 0,
           isNeutered: convertedPet.neutered,
-          description: convertedPet.description,
-          color: convertedPet.color,
-          isActiveForMatching: convertedPet.isActive,
-        });
-      } else {
-        Alert.alert('Hata', 'Hayvan bulunamadı.');
-        router.back();
-      }
-    } catch (error) {
-      console.error('Error loading pet:', error);
-      Alert.alert('Hata', 'Hayvan bilgileri yüklenirken hata oluştu.');
-      router.back();
-    } finally {
-      // Breed ID mapping helper function
-      const getBreedID = (breedName: string): number => {
-        const breedMap: { [key: string]: number } = {
-          'Scottish Fold': 1,
-          'British Shorthair': 2,
-          'Tekir': 4,
-          'Van Kedisi': 5,
-          'Ankara Kedisi': 6,
-          'Persian': 7,
-          'Maine Coon': 8,
-          'Siamese': 9,
-          'Ragdoll': 10,
-          'Bengal': 11,
-        };
-        return breedMap[breedName] || 1;
-      };
-
-      const updateData = {
-        name: form.name.trim(),
-        petTypeID: 1, // Kedi için sabit değer
-        breedID: getBreedID(form.breedName),
-        age: form.age,
-        gender: form.gender,
-        birthDate: new Date().toISOString(), // Mevcut tarih kullan
-        isNeutered: form.isNeutered,
-        description: form.description.trim(),
-        color: form.color,
-        profilePictureURL: pet.photos[0] || null,
-        isActiveForMatching: form.isActiveForMatching,
-      };
-
-      console.log('Updating pet with data:', updateData);
-      
-      // API'ye güncelleme isteği gönder
-      const response = await apiService.updatePet(id!, updateData);
-      console.log('Update response:', response);
-      
-      Alert.alert(
-        'Başarılı',
-        'Hayvan bilgileri güncellendi.',
-        [
-          {
-            text: 'Tamam',
-            onPress: () => router.back(),
-          },
-        ]
-      );
     } catch (error) {
       console.error('Error updating pet:', error);
       Alert.alert(
