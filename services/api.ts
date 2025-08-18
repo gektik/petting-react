@@ -359,7 +359,26 @@ class ApiService {
       const response = await this.api.post(endpoint, data);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Request failed');
+      console.error('API POST Error:', {
+        endpoint,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        isNetworkError: !error.response
+      });
+      
+      if (error.response) {
+        const status = error.response.status;
+        const serverMessage = error.response.data?.message || error.response.data?.errors?.[0];
+        throw new Error(serverMessage || `Server error (${status}): ${error.response.statusText}`);
+      } else if (error.code === 'ECONNABORTED') {
+        throw new Error('Request timeout. Please check your internet connection.');
+      } else if (error.request) {
+        throw new Error('Network error. Server is temporarily unavailable.');
+      } else {
+        throw new Error(`Request failed: ${error.message}`);
+      }
     }
   }
 
