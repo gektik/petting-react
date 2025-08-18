@@ -162,9 +162,11 @@ export default function AddPetScreen() {
           console.log('Resim yükleme sonucu:', uploadResult);
           
           // Form'u güncelle
+          const newImageUrl = uploadResult.imageUrl || uploadResult.url || uploadResult.profilePictureURL;
+          console.log('Yeni resim URL\'si:', newImageUrl);
           setForm({ 
             ...form, 
-            profilePictureURL: uploadResult.imageUrl 
+            profilePictureURL: newImageUrl 
           });
           
           Alert.alert('Başarılı', 'Resim başarıyla yüklendi!');
@@ -219,9 +221,11 @@ export default function AddPetScreen() {
           console.log('Fotoğraf yükleme sonucu:', uploadResult);
           
           // Form'u güncelle
+          const newImageUrl = uploadResult.imageUrl || uploadResult.url || uploadResult.profilePictureURL;
+          console.log('Yeni fotoğraf URL\'si:', newImageUrl);
           setForm({ 
             ...form, 
-            profilePictureURL: uploadResult.imageUrl 
+            profilePictureURL: newImageUrl 
           });
           
           Alert.alert('Başarılı', 'Fotoğraf başarıyla yüklendi!');
