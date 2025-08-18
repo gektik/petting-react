@@ -337,7 +337,6 @@ export default function EditPetScreen() {
           );
         }
       }
-      }
     } catch (error) {
       console.error('Fotoğraf çekme hatası:', error);
       Alert.alert('Hata', 'Fotoğraf çekilirken bir hata oluştu.');
