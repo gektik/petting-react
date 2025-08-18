@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "expo start --web --clear",
-    "eas": "eas",
+    "eas": "eas --non-interactive",
     "build:web": "expo export --platform web",
     "lint": "expo lint",
     "build:android": "EAS_NO_VCS=1 EAS_NO_CACHE=1 EAS_DISABLE_GIT_HOOKS=1 npx eas build --platform android --profile production --non-interactive --wait --retry 3",
