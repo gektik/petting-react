@@ -51,6 +51,7 @@ class ApiService {
   private api: AxiosInstance;
   private token: string | null = null;
   private isOnline: boolean = true;
+  private onUnauthorized: (() => void) | null = null;
 
   constructor() {
     this.api = axios.create({
@@ -65,6 +66,11 @@ class ApiService {
 
     this.setupInterceptors();
     this.setupNetworkListener();
+  }
+
+  // Method to set unauthorized callback
+  setUnauthorizedCallback(callback: (() => void) | null) {
+    this.onUnauthorized = callback;
   }
 
   private setupInterceptors() {
@@ -86,8 +92,10 @@ class ApiService {
       (response) => response,
       async (error) => {
         if (error.response?.status === 401) {
-          await this.logout();
-          // Redirect to login screen
+          console.log('API: 401 hatası alındı, otomatik logout tetikleniyor...');
+          if (this.onUnauthorized) {
+            this.onUnauthorized();
+          }
         }
         return Promise.reject(error);
       }

@@ -42,8 +42,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     checkAuthStatus();
     
+    // Set up automatic logout on 401 responses
+    apiService.setUnauthorizedCallback(() => {
+      console.log('AuthContext: 401 hatası nedeniyle otomatik logout yapılıyor...');
+      logout();
+    });
+    
     return () => {
       isMountedRef.current = false;
+      // Clean up callback
+      apiService.setUnauthorizedCallback(null);
     };
   }, []);
 
