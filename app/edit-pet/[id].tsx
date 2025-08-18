@@ -188,7 +188,7 @@ export default function EditPetScreen() {
           gender: convertedPet.gender === 'male' ? 1 : 0,
           isNeutered: convertedPet.neutered,
           description: convertedPet.description,
-          color: foundPet.color || convertedPet.color || 'Beyaz',
+          color: foundPet.color || 'Beyaz',
           isActiveForMatching: convertedPet.isActive,
         });
       } else {
