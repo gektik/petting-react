@@ -64,12 +64,6 @@ export default function ProfileScreen() {
       onPress: handleMyPets,
     },
     {
-      icon: PlusCircle,
-      title: 'Yeni Hayvan Ekle',
-      subtitle: 'Yeni bir hayvan profili oluşturun',
-      onPress: handleAddPet,
-    },
-    {
       icon: Bell,
       title: 'Bildirimler',
       subtitle: 'Bildirim ayarlarınızı düzenleyin',

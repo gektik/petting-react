@@ -24,6 +24,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface EditPetForm {
   name: string;
+  petTypeID: number;
   breedName: string;
   birthDate: Date;
   gender: 0 | 1; // 0: female, 1: male
@@ -42,6 +43,7 @@ export default function EditPetScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [form, setForm] = useState<EditPetForm>({
     name: '',
+    petTypeID: 1,
     breedName: '',
     birthDate: new Date(),
     gender: 1,
@@ -51,7 +53,12 @@ export default function EditPetScreen() {
     isActiveForMatching: true,
   });
 
-  const breeds = [
+  const petTypes = [
+    { id: 1, name: 'Kedi' },
+    { id: 2, name: 'Köpek' },
+  ];
+
+  const catBreeds = [
     'Scottish Fold',
     'British Shorthair',
     'Tekir',
@@ -63,6 +70,23 @@ export default function EditPetScreen() {
     'Ragdoll',
     'Bengal',
   ];
+
+  const dogBreeds = [
+    'Golden Retriever',
+    'Labrador',
+    'German Shepherd',
+    'Husky',
+    'Bulldog',
+    'Poodle',
+    'Beagle',
+    'Rottweiler',
+    'Yorkshire Terrier',
+    'Chihuahua',
+  ];
+
+  const getCurrentBreeds = () => {
+    return form.petTypeID === 1 ? catBreeds : dogBreeds;
+  };
 
   const colors = [
     'Beyaz',
@@ -151,6 +175,7 @@ export default function EditPetScreen() {
         
         console.log('Setting form data:', {
           name: convertedPet.name,
+          petTypeID: convertedPet.species === 'cat' ? 1 : 2,
           breedName: convertedPet.breed,
           birthDate: birthDate,
           gender: convertedPet.gender === 'male' ? 1 : 0,
@@ -162,6 +187,7 @@ export default function EditPetScreen() {
 
         setForm({
           name: convertedPet.name,
+          petTypeID: convertedPet.species === 'cat' ? 1 : 2,
           breedName: convertedPet.breed,
           birthDate: birthDate,
           gender: convertedPet.gender === 'male' ? 1 : 0,
@@ -238,7 +264,7 @@ export default function EditPetScreen() {
       // Ensure Turkish characters are properly encoded
       const updateData = {
         name: form.name.trim(), // UTF-8 encoding will be handled by axios
-        petTypeID: 1, // Kedi için sabit değer
+        petTypeID: form.petTypeID,
         breedID: getBreedID(form.breedName),
         gender: form.gender,
         birthDate: formattedBirthDate, // YYYY-MM-DD formatında
@@ -277,11 +303,45 @@ export default function EditPetScreen() {
     }
   };
 
+  const handlePetTypeChange = (petTypeID: number) => {
+    const newBreeds = petTypeID === 1 ? catBreeds : dogBreeds;
+    setForm({
+      ...form,
+      petTypeID,
+      breedName: newBreeds[0], // İlk cinsi seç
+    });
+  };
+
+  const renderPetTypeSelector = () => (
+    <View style={styles.selectorContainer}>
+      <Text style={styles.label}>Hayvan Türü</Text>
+      <View style={styles.petTypeButtons}>
+        {petTypes.map((petType) => (
+          <TouchableOpacity
+            key={petType.id}
+            style={[
+              styles.petTypeButton,
+              form.petTypeID === petType.id && styles.selectedPetTypeButton,
+            ]}
+            onPress={() => handlePetTypeChange(petType.id)}
+          >
+            <Text style={[
+              styles.petTypeButtonText,
+              form.petTypeID === petType.id && styles.selectedPetTypeButtonText,
+            ]}>
+              {petType.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+
   const renderBreedSelector = () => (
     <View style={styles.selectorContainer}>
       <Text style={styles.label}>Cins</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-        {breeds.map((breed) => (
+        {getCurrentBreeds().map((breed) => (
           <TouchableOpacity
             key={breed}
             style={[
@@ -389,6 +449,9 @@ export default function EditPetScreen() {
 
           {/* Form */}
           <View style={styles.formContainer}>
+            {/* Hayvan Türü */}
+            {renderPetTypeSelector()}
+
             {/* İsim */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>İsim</Text>
@@ -734,5 +797,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  petTypeButtons: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  petTypeButton: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  selectedPetTypeButton: {
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
+  },
+  petTypeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  selectedPetTypeButtonText: {
+    color: '#FFFFFF',
   },
 });
