@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, CreditCard as Edit3, Trash2, Plus } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { ArrowLeft, Edit, Trash2, Plus } from 'lucide-react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +32,15 @@ export default function MyPetsScreen() {
       }
     }
   }, [isAuthenticated, isLoading]);
+
+  // Sayfa odaklandığında listeyi yenile (düzenleme sonrası için)
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isAuthenticated && !isLoading) {
+        loadMyPets();
+      }
+    }, [isAuthenticated, isLoading])
+  );
 
   const loadMyPets = async () => {
     try {
@@ -139,7 +148,7 @@ export default function MyPetsScreen() {
           style={[styles.actionButton, styles.editButton]}
           onPress={() => handleEditPet(item)}
         >
-          <Edit3 size={18} color="#6366F1" />
+          <Edit size={18} color="#6366F1" />
         </TouchableOpacity>
         
         <TouchableOpacity
