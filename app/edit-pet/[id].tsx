@@ -188,9 +188,11 @@ export default function EditPetScreen() {
           gender: convertedPet.gender === 'male' ? 1 : 0,
           isNeutered: convertedPet.neutered,
           description: convertedPet.description,
-          color: foundPet.color || '',
+          color: foundPet.color || colors[0], // İlk rengi default yap
           isActiveForMatching: convertedPet.isActive,
         });
+        
+        console.log('Final form color set to:', foundPet.color || colors[0]);
       } else {
         console.log('Pet not found with ID:', id);
         Alert.alert('Hata', 'Hayvan bulunamadı.');
@@ -256,6 +258,7 @@ export default function EditPetScreen() {
       
       console.log('Update data being sent to API:', updateData);
       console.log('Color value being sent:', form.color);
+      console.log('Form color before API call:', form.color);
       console.log('Updating pet with data:', updateData);
       const result = await apiService.updatePet(id!, updateData);
       console.log('Update result:', result);
@@ -365,6 +368,9 @@ export default function EditPetScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      <Text style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+        Seçili: {form.color || 'Hiçbiri'}
+      </Text>
     </View>
   );
 
