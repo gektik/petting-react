@@ -29,13 +29,32 @@ export default function MyPetsScreen() {
   const loadMyPets = async () => {
     try {
       console.log('Loading user pets...');
-      // API'den hayvanları çek
       const userPets = await apiService.getUserPets();
-      setPets(userPets);
+      console.log('API pets data:', userPets);
+      
+      // API verisini Pet tipine dönüştür
+      const convertedPets: Pet[] = userPets.map((apiPet: any) => ({
+        id: apiPet.petID.toString(),
+        name: apiPet.name,
+        species: apiPet.petTypeName.toLowerCase() === 'kedi' ? 'cat' : 'dog',
+        breed: apiPet.breedName,
+        age: apiPet.age || 0,
+        gender: apiPet.gender === 0 ? 'female' : 'male',
+        neutered: apiPet.isNeutered,
+        photos: apiPet.profilePictureURL ? [apiPet.profilePictureURL] : ['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        description: apiPet.description || '',
+        color: apiPet.color || 'Bilinmiyor',
+        ownerId: apiPet.userID,
+        isActive: apiPet.isActiveForMatching,
+        location: 'Türkiye',
+        createdAt: apiPet.createdDate,
+      }));
+      
+      setPets(convertedPets);
+      console.log('Converted pets:', convertedPets);
     } catch (error) {
       console.error('Error loading pets:', error);
-      // Hata durumunda mock data kullan
-      setPets(mockPets.slice(0, 3));
+      setPets([]);
     } finally {
       setLoading(false);
     }
