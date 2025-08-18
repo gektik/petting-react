@@ -144,7 +144,7 @@ export default function EditPetScreen() {
           neutered: foundPet.isNeutered,
           photos: foundPet.profilePictureURL ? [foundPet.profilePictureURL] : ['https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400'],
           description: foundPet.description || '',
-          color: foundPet.color || 'Beyaz',
+          color: foundPet.color || '',
           ownerId: foundPet.userID,
           isActive: foundPet.isActiveForMatching,
           location: 'Türkiye',
@@ -188,7 +188,7 @@ export default function EditPetScreen() {
           gender: convertedPet.gender === 'male' ? 1 : 0,
           isNeutered: convertedPet.neutered,
           description: convertedPet.description,
-          color: foundPet.color || 'Beyaz',
+          color: foundPet.color || '',
           isActiveForMatching: convertedPet.isActive,
         });
       } else {
