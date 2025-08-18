@@ -124,11 +124,43 @@ export default function EditPetScreen() {
     }
   };
 
+  const getBreedID = (breedName: string): number => {
+    const breedMap: { [key: string]: number } = {
+      'Scottish Fold': 1,
+      'British Shorthair': 2,
+      'Tekir': 3,
+      'Van Kedisi': 4,
+      'Ankara Kedisi': 5,
+      'Persian': 6,
+      'Maine Coon': 7,
+      'Siamese': 8,
+      'Ragdoll': 9,
+      'Bengal': 10,
+    };
+    return breedMap[breedName] || 1;
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
-      // API call to update pet
-      await apiService.updatePet(id!, form);
+      
+      const birthDate = new Date();
+      birthDate.setFullYear(birthDate.getFullYear() - form.age);
+      
+      const updateData = {
+        name: form.name.trim(),
+        petTypeID: 1, // Kedi için sabit değer
+        breedID: getBreedID(form.breedName),
+        gender: form.gender,
+        birthDate: birthDate.toISOString(),
+        isNeutered: form.isNeutered,
+        description: form.description.trim(),
+        color: form.color,
+        profilePictureURL: pet?.photos[0] || '',
+        isActiveForMatching: form.isActiveForMatching,
+      };
+      
+      await apiService.updatePet(id!, updateData);
       Alert.alert('Başarılı', 'Hayvan bilgileri güncellendi.', [
         { text: 'Tamam', onPress: () => router.back() }
       ]);
