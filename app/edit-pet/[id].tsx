@@ -372,6 +372,7 @@ export default function EditPetScreen() {
         name: form.name.trim(), // UTF-8 encoding will be handled by axios
         petTypeID: form.petTypeID,
         breedID: form.breedID,
+        breedName: form.breedName, // Cins adını da gönder
         gender: form.gender,
         birthDate: formattedBirthDate, // YYYY-MM-DD formatında
         isNeutered: form.isNeutered,
