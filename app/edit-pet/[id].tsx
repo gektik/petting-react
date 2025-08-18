@@ -124,37 +124,6 @@ export default function EditPetScreen() {
       Alert.alert('Hata', 'Hayvan bilgileri yüklenirken hata oluştu.');
       router.back();
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!form.name.trim()) {
-      Alert.alert('Hata', 'Hayvan adı boş olamaz.');
-      return;
-    }
-
-    if (!form.breedName.trim()) {
-      Alert.alert('Hata', 'Cins seçimi yapmalısınız.');
-      return;
-    }
-
-    try {
-      setSaving(true);
-      
-      const updateData = {
-        name: form.name.trim(),
-        petTypeID: 1, // Kedi için sabit değer
-        breedID: getBreedID(form.breedName),
-        gender: form.gender,
-        birthDate: new Date().toISOString(), // Mevcut tarih kullan
-        isNeutered: form.isNeutered,
-        description: form.description.trim(),
-        color: form.color,
-        profilePictureURL: pet.photos[0] || null,
-        isActiveForMatching: form.isActiveForMatching,
-      };
-
       // Breed ID mapping helper function
       const getBreedID = (breedName: string): number => {
         const breedMap: { [key: string]: number } = {
