@@ -10,6 +10,8 @@ import {
   Alert,
   ActivityIndicator,
   Switch,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -140,7 +142,6 @@ export default function EditPetScreen() {
     try {
       setSaving(true);
       
-      // API'ye güncelleme isteği gönder
       const updateData = {
         petID: parseInt(id!),
         name: form.name.trim(),
@@ -155,8 +156,9 @@ export default function EditPetScreen() {
 
       console.log('Updating pet with data:', updateData);
       
-      // Şimdilik mock update - gerçek API endpoint'i eklendiğinde değiştirilecek
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // API'ye güncelleme isteği gönder
+      const response = await apiService.api.put(`/pets/${id}`, updateData);
+      console.log('Update response:', response.data);
       
       Alert.alert(
         'Başarılı',
@@ -170,7 +172,14 @@ export default function EditPetScreen() {
       );
     } catch (error) {
       console.error('Error updating pet:', error);
-      Alert.alert('Hata', 'Güncelleme sırasında hata oluştu.');
+      Alert.alert(
+        'Hata', 
+        'Güncelleme sırasında hata oluştu. Lütfen tekrar deneyin.',
+        [
+          { text: 'Tamam' },
+          { text: 'Tekrar Dene', onPress: handleSave }
+        ]
+      );
     } finally {
       setSaving(false);
     }
@@ -246,7 +255,11 @@ export default function EditPetScreen() {
   }
 
   return (
-    <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
       <StatusBar style="dark" />
       
       <View style={styles.header}>
@@ -354,7 +367,7 @@ export default function EditPetScreen() {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Açıklama</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, styles.textAreaFocused]}
               value={form.description}
               onChangeText={(text) => setForm({ ...form, description: text })}
               placeholder="Hayvanınız hakkında bilgi verin..."
@@ -362,6 +375,8 @@ export default function EditPetScreen() {
               multiline
               numberOfLines={4}
               textAlignVertical="top"
+              returnKeyType="done"
+              blurOnSubmit={true}
             />
           </View>
 
@@ -388,7 +403,8 @@ export default function EditPetScreen() {
           </View>
         </View>
       </ScrollView>
-    </LinearGradient>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   );
 }
 

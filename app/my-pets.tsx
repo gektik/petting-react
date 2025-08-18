@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, CreditCard as Edit, Trash2, Plus } from 'lucide-react-native';
+import { ArrowLeft, Edit3, Trash2, Plus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
@@ -88,10 +88,18 @@ export default function MyPetsScreen() {
   };
 
   const renderPet = ({ item }: { item: Pet }) => (
-    <View style={styles.petCard}>
+    <TouchableOpacity 
+      style={styles.petCard}
+      onPress={() => handleEditPet(item)}
+      activeOpacity={0.7}
+    >
       <Image source={{ uri: item.photos[0] }} style={styles.petImage} />
       
-      <View style={styles.petInfo}>
+      <TouchableOpacity 
+        style={styles.petInfo}
+        onPress={() => handleEditPet(item)}
+        activeOpacity={1}
+      >
         <Text style={styles.petName}>{item.name}</Text>
         <Text style={styles.petBreed}>{item.breed}</Text>
         <Text style={styles.petDetails}>
@@ -102,14 +110,14 @@ export default function MyPetsScreen() {
             {item.description}
           </Text>
         )}
-      </View>
+      </TouchableOpacity>
       
       <View style={styles.petActions}>
         <TouchableOpacity
           style={[styles.actionButton, styles.editButton]}
           onPress={() => handleEditPet(item)}
         >
-          <Edit size={20} color="#6366F1" />
+          <Edit3 size={18} color="#6366F1" />
         </TouchableOpacity>
         
         <TouchableOpacity
@@ -119,7 +127,7 @@ export default function MyPetsScreen() {
           <Trash2 size={20} color="#EF4444" />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   if (loading) {

@@ -364,6 +364,23 @@ class ApiService {
       throw new Error(error.response?.data?.message || 'Request failed');
     }
   }
+
+  // Pet update method
+  async updatePet(petId: string, petData: any): Promise<any> {
+    try {
+      console.log('API: updatePet çağrılıyor...', { petId, petData });
+      const response = await this.api.put(`/pets/${petId}`, petData);
+      console.log('API: updatePet yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API: updatePet hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
 }
 
 export const apiService = new ApiService();
