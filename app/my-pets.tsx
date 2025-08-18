@@ -48,6 +48,15 @@ export default function MyPetsScreen() {
     try {
       console.log('Loading user pets...');
       
+      // Check if token exists before making API call
+      const hasToken = await apiService.getToken();
+      if (!hasToken) {
+        console.log('No token found, skipping pet loading');
+        setPets([]);
+        setLoading(false);
+        return;
+      }
+      
       let petsToDisplay: Pet[];
       
       if (Platform.OS === 'web') {
