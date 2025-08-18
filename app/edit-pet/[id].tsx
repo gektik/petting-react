@@ -245,6 +245,15 @@ export default function EditPetScreen() {
          
           setCurrentImageUri(newImageUrl);
           
+          // Pet bilgilerini hemen güncelle
+          try {
+            console.log('Pet profil resmi güncelleniyor...');
+            await apiService.updatePet(id!, { profilePictureURL: newImageUrl });
+            console.log('Pet profil resmi başarıyla güncellendi');
+          } catch (updateError) {
+            console.error('Pet profil resmi güncellenirken hata:', updateError);
+          }
+          
           Alert.alert('Başarılı', 'Resim başarıyla yüklendi!');
         } catch (uploadError) {
           console.error('Resim yükleme hatası:', uploadError);
@@ -305,6 +314,15 @@ export default function EditPetScreen() {
          }
          
           setCurrentImageUri(newImageUrl);
+          
+          // Pet bilgilerini hemen güncelle
+          try {
+            console.log('Pet profil resmi güncelleniyor...');
+            await apiService.updatePet(id!, { profilePictureURL: newImageUrl });
+            console.log('Pet profil resmi başarıyla güncellendi');
+          } catch (updateError) {
+            console.error('Pet profil resmi güncellenirken hata:', updateError);
+          }
           
           Alert.alert('Başarılı', 'Fotoğraf başarıyla yüklendi!');
         } catch (uploadError) {
