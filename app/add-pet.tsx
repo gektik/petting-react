@@ -39,7 +39,7 @@ export default function AddPetScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [form, setForm] = useState<AddPetForm>({
     name: '',
-    petTypeID: 1, // Kedi için sabit
+    petTypeID: 1, // 1: Kedi, 2: Köpek
     breedID: 1,
     breedName: 'Scottish Fold',
     birthDate: new Date(),
@@ -51,7 +51,12 @@ export default function AddPetScreen() {
     profilePictureURL: 'https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400',
   });
 
-  const breeds = [
+  const petTypes = [
+    { id: 1, name: 'Kedi' },
+    { id: 2, name: 'Köpek' },
+  ];
+
+  const catBreeds = [
     { id: 1, name: 'Scottish Fold' },
     { id: 2, name: 'British Shorthair' },
     { id: 3, name: 'Tekir' },
@@ -64,6 +69,22 @@ export default function AddPetScreen() {
     { id: 10, name: 'Bengal' },
   ];
 
+  const dogBreeds = [
+    { id: 11, name: 'Golden Retriever' },
+    { id: 12, name: 'Labrador' },
+    { id: 13, name: 'German Shepherd' },
+    { id: 14, name: 'Husky' },
+    { id: 15, name: 'Bulldog' },
+    { id: 16, name: 'Poodle' },
+    { id: 17, name: 'Beagle' },
+    { id: 18, name: 'Rottweiler' },
+    { id: 19, name: 'Yorkshire Terrier' },
+    { id: 20, name: 'Chihuahua' },
+  ];
+
+  const getCurrentBreeds = () => {
+    return form.petTypeID === 1 ? catBreeds : dogBreeds;
+  };
   const colors = [
     'Beyaz',
     'Siyah',
@@ -77,6 +98,20 @@ export default function AddPetScreen() {
     'Üç Renkli',
   ];
 
+  const handlePetTypeChange = (petTypeID: number) => {
+    const newBreeds = petTypeID === 1 ? catBreeds : dogBreeds;
+    const defaultImage = petTypeID === 1 
+      ? 'https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400'
+      : 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400';
+    
+    setForm({
+      ...form,
+      petTypeID,
+      breedID: newBreeds[0].id,
+      breedName: newBreeds[0].name,
+      profilePictureURL: defaultImage,
+    });
+  };
   const calculateAge = (birthDate: Date): number => {
     const today = new Date();
     const age = today.getFullYear() - birthDate.getFullYear();
@@ -161,11 +196,35 @@ export default function AddPetScreen() {
     });
   };
 
+  const renderPetTypeSelector = () => (
+    <View style={styles.selectorContainer}>
+      <Text style={styles.label}>Hayvan Türü *</Text>
+      <View style={styles.petTypeButtons}>
+        {petTypes.map((petType) => (
+          <TouchableOpacity
+            key={petType.id}
+            style={[
+              styles.petTypeButton,
+              form.petTypeID === petType.id && styles.selectedPetTypeButton,
+            ]}
+            onPress={() => handlePetTypeChange(petType.id)}
+          >
+            <Text style={[
+              styles.petTypeButtonText,
+              form.petTypeID === petType.id && styles.selectedPetTypeButtonText,
+            ]}>
+              {petType.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
   const renderBreedSelector = () => (
     <View style={styles.selectorContainer}>
       <Text style={styles.label}>Cins</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-        {breeds.map((breed) => (
+        {getCurrentBreeds().map((breed) => (
           <TouchableOpacity
             key={breed.id}
             style={[
@@ -241,7 +300,7 @@ export default function AddPetScreen() {
           <View style={styles.photoSection}>
             <View style={styles.photoContainer}>
               <Image 
-                source={{ uri: 'https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400' }} 
+                source={{ uri: form.profilePictureURL }} 
                 style={styles.photo} 
               />
               <TouchableOpacity style={styles.cameraButton}>
@@ -253,6 +312,9 @@ export default function AddPetScreen() {
 
           {/* Form */}
           <View style={styles.formContainer}>
+            {/* Hayvan Türü */}
+            {renderPetTypeSelector()}
+
             {/* İsim */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>İsim *</Text>
@@ -570,6 +632,32 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   selectedGenderButtonText: {
+    color: '#FFFFFF',
+  },
+  petTypeButtons: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  petTypeButton: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  selectedPetTypeButton: {
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
+  },
+  petTypeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  selectedPetTypeButtonText: {
     color: '#FFFFFF',
   },
   switchContainer: {
