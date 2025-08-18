@@ -72,15 +72,12 @@ class ApiService {
   private fixImageUrl(url: string): string {
     if (!url) return url;
     
-    // Eğer URL zaten wwwroot içeriyorsa dokunma
-    if (url.includes('/wwwroot/')) {
-      return url;
+    // Eğer URL zaten wwwroot içeriyorsa /wwwroot/ kısmını kaldır
+    if (url.includes('/wwwroot/uploads/')) {
+      return url.replace('/wwwroot/uploads/', '/uploads/');
     }
     
-    // /uploads/ ile başlıyorsa /wwwroot/ ekle
-    if (url.includes('/uploads/')) {
-      return url.replace('/uploads/', '/wwwroot/uploads/');
-    }
+    // URL'yi olduğu gibi döndür - API'den gelen format doğru
     
     return url;
   }
