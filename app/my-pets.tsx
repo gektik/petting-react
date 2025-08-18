@@ -83,7 +83,7 @@ export default function MyPetsScreen() {
       console.log('Final pets data:', petsToDisplay);
     } catch (error) {
       // Suppress 401 errors as they are handled by AuthContext
-      if (!(error.response && error.response.status === 401)) {
+      if (!(error?.response && error.response.status === 401)) {
         console.error('Error loading pets:', error);
       }
       setPets([]);
