@@ -413,8 +413,10 @@ class ApiService {
   async updatePet(petId: string, petData: any): Promise<any> {
     try {
       console.log('API: updatePet çağrılıyor...', { petId, petData });
+      console.log('API: Renk değeri gönderiliyor:', petData.color);
       const response = await this.api.put(`/pets/${petId}`, petData);
       console.log('API: updatePet yanıtı:', response.data);
+      console.log('API: Dönen renk değeri:', response.data.color);
       return response.data;
     } catch (error: any) {
       console.error('API: updatePet hatası:', {

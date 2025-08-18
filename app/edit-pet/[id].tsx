@@ -263,6 +263,16 @@ export default function EditPetScreen() {
       const result = await apiService.updatePet(id!, updateData);
       console.log('Update result:', result);
       
+      // API renk alanını kaydetmiyorsa uyarı ver
+      if (updateData.color && result.color === null) {
+        console.warn('⚠️ API renk alanını kaydetmiyor! Gönderilen:', updateData.color, 'Dönen:', result.color);
+        Alert.alert(
+          'Uyarı', 
+          'Renk bilgisi kaydedilemedi. API renk alanını desteklemiyor olabilir.',
+          [{ text: 'Tamam' }]
+        );
+      }
+      
       Alert.alert('Başarılı', 'Hayvan bilgileri güncellendi.', [
         { text: 'Tamam', onPress: () => router.back() }
       ]);
