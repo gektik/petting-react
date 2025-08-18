@@ -45,6 +45,10 @@
       "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
+    "packagerOpts": {
+      "port": 8081,
+      "host": "localhost"
+    },
     "plugins": [
       "expo-router",
       "expo-font",
