@@ -111,6 +111,27 @@ export default function EditPetScreen() {
           age: convertedPet.age,
           gender: convertedPet.gender === 'male' ? 1 : 0,
           isNeutered: convertedPet.neutered,
+          description: convertedPet.description,
+          color: convertedPet.color,
+          isActiveForMatching: convertedPet.isActive,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading pet data:', error);
+      Alert.alert('Hata', 'Hayvan bilgileri yüklenirken hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      // API call to update pet
+      await apiService.updatePet(id!, form);
+      Alert.alert('Başarılı', 'Hayvan bilgileri güncellendi.', [
+        { text: 'Tamam', onPress: () => router.back() }
+      ]);
     } catch (error) {
       console.error('Error updating pet:', error);
       Alert.alert(
@@ -495,6 +516,9 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     paddingTop: 12,
+  },
+  textAreaFocused: {
+    borderColor: '#6366F1',
   },
   selectorContainer: {
     marginBottom: 20,
