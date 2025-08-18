@@ -144,7 +144,7 @@ export default function EditPetScreen() {
           neutered: foundPet.isNeutered,
           photos: foundPet.profilePictureURL ? [foundPet.profilePictureURL] : ['https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400'],
           description: foundPet.description || '',
-          color: foundPet.color || '',
+          color: foundPet.color || 'Beyaz',
           ownerId: foundPet.userID,
           isActive: foundPet.isActiveForMatching,
           location: 'Türkiye',
