@@ -81,9 +81,24 @@ export default function MyPetsScreen() {
         {
           text: 'Sil',
           style: 'destructive',
-          onPress: () => {
-            setPets(prevPets => prevPets.filter(p => p.id !== pet.id));
-            Alert.alert('Başarılı', `${pet.name} silindi.`);
+          onPress: async () => {
+            try {
+              console.log('Deleting pet:', pet.name, 'ID:', pet.id);
+              await apiService.deletePet(pet.id);
+              setPets(prevPets => prevPets.filter(p => p.id !== pet.id));
+              Alert.alert('Başarılı', `${pet.name} başarıyla silindi.`);
+            } catch (error) {
+              console.error('Delete pet error:', error);
+              const errorMessage = error instanceof Error ? error.message : 'Hayvan silinirken bir hata oluştu.';
+              Alert.alert(
+                'Silme Hatası',
+                errorMessage,
+                [
+                  { text: 'Tamam', style: 'default' },
+                  { text: 'Tekrar Dene', onPress: () => handleDeletePet(pet), style: 'cancel' }
+                ]
+              );
+            }
           },
         },
       ]

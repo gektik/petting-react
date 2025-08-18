@@ -328,6 +328,22 @@ class ApiService {
     }
   }
 
+  // Pet delete method
+  async deletePet(petId: string): Promise<any> {
+    try {
+      console.log('API: deletePet çağrılıyor...', { petId });
+      const response = await this.api.delete(`/pets/${petId}`);
+      console.log('API: deletePet yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API: deletePet hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
   // Generic API methods
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
     try {
