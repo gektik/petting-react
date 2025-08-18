@@ -381,6 +381,23 @@ class ApiService {
       throw error;
     }
   }
+};
+
+// Create instance of ApiService
+export const apiService = new ApiService();
+
+// Mock API methods for features not yet implemented
+const mockApiMethods = {
+  async getPetsForMatching(): Promise<Pet[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return mockPets;
+  },
+
+  async getMatches(): Promise<Match[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return mockMatches;
+  },
+
   async getChats(): Promise<Chat[]> {
     await new Promise(resolve => setTimeout(resolve, 500));
     return mockChats;
@@ -406,6 +423,3 @@ apiService.getMatches = mockApiMethods.getMatches;
 apiService.getChats = mockApiMethods.getChats;
 apiService.getAdoptionListings = mockApiMethods.getAdoptionListings;
 apiService.likePet = mockApiMethods.likePet;
-
-// Ensure getUserPets method is available on the instance
-(apiService as any).getUserPets = ApiService.prototype.getUserPets.bind(apiService);
