@@ -45,6 +45,11 @@ export default function ProfileScreen() {
     router.push('/my-pets');
   };
 
+  const handleAddPet = () => {
+    console.log('Yeni hayvan ekleme sayfasına yönlendiriliyor...');
+    router.push('/add-pet');
+  };
+
   const menuItems = [
     {
       icon: Edit,
@@ -57,6 +62,12 @@ export default function ProfileScreen() {
       title: 'Hayvanlarım',
       subtitle: 'Hayvan profillerinizi yönetin',
       onPress: handleMyPets,
+    },
+    {
+      icon: PlusCircle,
+      title: 'Yeni Hayvan Ekle',
+      subtitle: 'Yeni bir hayvan profili oluşturun',
+      onPress: handleAddPet,
     },
     {
       icon: Bell,

@@ -397,6 +397,23 @@ class ApiService {
       throw error;
     }
   }
+
+  // Pet create method
+  async createPet(petData: any): Promise<any> {
+    try {
+      console.log('API: createPet çağrılıyor...', { petData });
+      const response = await this.api.post('/pets', petData);
+      console.log('API: createPet yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API: createPet hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
 };
 
 // Create instance of ApiService

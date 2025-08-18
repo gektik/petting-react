@@ -115,7 +115,8 @@ export default function MyPetsScreen() {
   };
 
   const handleAddPet = () => {
-    Alert.alert('Yeni Hayvan', 'Hayvan ekleme özelliği yakında gelecek.');
+    console.log('Yeni hayvan ekleme sayfasına yönlendiriliyor...');
+    router.push('/add-pet');
   };
 
   const renderPet = ({ item }: { item: Pet }) => (

@@ -16,6 +16,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="+not-found" />
         <Stack.Screen name="my-pets" />
+        <Stack.Screen name="add-pet" />
       </Stack>
       <StatusBar style="auto" />
     </AuthProvider>
