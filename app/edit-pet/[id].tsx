@@ -157,7 +157,7 @@ export default function EditPetScreen() {
       console.log('Updating pet with data:', updateData);
       
       // API'ye güncelleme isteği gönder
-      const response = await apiService.api.put(`/pets/${id}`, updateData);
+      const response = await apiService.api.post(`/pets/${id}`, updateData);
       console.log('Update response:', response.data);
       
       Alert.alert(
