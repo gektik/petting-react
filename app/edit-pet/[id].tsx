@@ -85,11 +85,14 @@ export default function EditPetScreen() {
   const loadPetData = async () => {
     try {
       setLoading(true);
+      console.log('Loading pet data for ID:', id);
       const pets = await apiService.getUserPets();
+      console.log('All pets from API:', pets);
+      
       const foundPet = pets.find(p => p.petID.toString() === id);
+      console.log('Found pet:', foundPet);
       
       if (foundPet) {
-        console.log('Found pet data:', foundPet);
         const convertedPet: Pet = {
           id: foundPet.petID.toString(),
           name: foundPet.name,
@@ -109,19 +112,17 @@ export default function EditPetScreen() {
         
         setPet(convertedPet);
         
-        // Parse birth date from API data
+        // Parse birth date
         let birthDate = new Date();
         if (foundPet.birthDate) {
           console.log('API birthDate:', foundPet.birthDate);
           birthDate = new Date(foundPet.birthDate);
           console.log('Parsed birthDate:', birthDate);
         } else {
-          console.log('No birthDate from API, calculating from age:', foundPet.age);
-          // Fallback: calculate from age if birthDate is null
-          birthDate.setFullYear(birthDate.getFullYear() - (foundPet.age || 1));
+          console.log('No birthDate from API, using current date');
         }
         
-        console.log('Final form data will be:', {
+        console.log('Setting form data:', {
           name: convertedPet.name,
           breedName: convertedPet.breed,
           birthDate: birthDate,
@@ -200,6 +201,7 @@ export default function EditPetScreen() {
   const handleSave = async () => {
     try {
       setSaving(true);
+      console.log('Starting save process...');
       
       // Format birthDate to YYYY-MM-DD format for API
       const formattedBirthDate = form.birthDate.toISOString().split('T')[0];
@@ -220,12 +222,13 @@ export default function EditPetScreen() {
       };
       
       console.log('Updating pet with data:', updateData);
-      await apiService.updatePet(id!, updateData);
-      console.log('Pet updated successfully');
+      const result = await apiService.updatePet(id!, updateData);
+      console.log('Update result:', result);
+      
       Alert.alert('Başarılı', 'Hayvan bilgileri güncellendi.', [
         { text: 'Tamam', onPress: () => router.back() }
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating pet:', error);
       console.error('Error details:', {
         message: error.message,
@@ -320,161 +323,159 @@ export default function EditPetScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
-      <StatusBar style="dark" />
-      
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#1F2937" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Hayvanı Düzenle</Text>
-        <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator size={20} color="#FFFFFF" />
-          ) : (
-            <Save size={20} color="#FFFFFF" />
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profil Fotoğrafı */}
-        <View style={styles.photoSection}>
-          <View style={styles.photoContainer}>
-            <Image source={{ uri: pet.photos[0] }} style={styles.photo} />
-            <TouchableOpacity style={styles.cameraButton}>
-              <Camera size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.photoText}>Fotoğrafı değiştir</Text>
+        <StatusBar style="dark" />
+        
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#1F2937" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Hayvanı Düzenle</Text>
+          <TouchableOpacity
+            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+            onPress={handleSave}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator size={20} color="#FFFFFF" />
+            ) : (
+              <Save size={20} color="#FFFFFF" />
+            )}
+          </TouchableOpacity>
         </View>
 
-        {/* Form */}
-        <View style={styles.formContainer}>
-          {/* İsim */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>İsim</Text>
-            <TextInput
-              style={styles.input}
-              value={form.name}
-              onChangeText={(text) => setForm({ ...form, name: text })}
-              placeholder="Hayvan adı"
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
-
-          {/* Cins */}
-          {renderBreedSelector()}
-
-          {/* Doğum Tarihi */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Doğum Tarihi</Text>
-            <TouchableOpacity
-              style={styles.datePickerButton}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Calendar size={20} color="#6366F1" />
-              <Text style={styles.datePickerText}>
-                {formatDate(form.birthDate)} ({calculateAge(form.birthDate)} yaşında)
-              </Text>
-            </TouchableOpacity>
-            
-            {showDatePicker && (
-              <DateTimePicker
-                value={form.birthDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={onDateChange}
-                maximumDate={new Date()}
-                minimumDate={new Date(2000, 0, 1)}
-              />
-            )}
-          </View>
-
-          {/* Cinsiyet */}
-          <View style={styles.genderContainer}>
-            <Text style={styles.label}>Cinsiyet</Text>
-            <View style={styles.genderButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.genderButton,
-                  form.gender === 1 && styles.selectedGenderButton,
-                ]}
-                onPress={() => setForm({ ...form, gender: 1 })}
-              >
-                <Text style={[
-                  styles.genderButtonText,
-                  form.gender === 1 && styles.selectedGenderButtonText,
-                ]}>
-                  Erkek
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.genderButton,
-                  form.gender === 0 && styles.selectedGenderButton,
-                ]}
-                onPress={() => setForm({ ...form, gender: 0 })}
-              >
-                <Text style={[
-                  styles.genderButtonText,
-                  form.gender === 0 && styles.selectedGenderButtonText,
-                ]}>
-                  Dişi
-                </Text>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Profil Fotoğrafı */}
+          <View style={styles.photoSection}>
+            <View style={styles.photoContainer}>
+              <Image source={{ uri: pet.photos[0] }} style={styles.photo} />
+              <TouchableOpacity style={styles.cameraButton}>
+                <Camera size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
+            <Text style={styles.photoText}>Fotoğrafı değiştir</Text>
           </View>
 
-          {/* Renk */}
-          {renderColorSelector()}
+          {/* Form */}
+          <View style={styles.formContainer}>
+            {/* İsim */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>İsim</Text>
+              <TextInput
+                style={styles.input}
+                value={form.name}
+                onChangeText={(text) => setForm({ ...form, name: text })}
+                placeholder="Hayvan adı"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
 
-          {/* Açıklama */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Açıklama</Text>
-            <TextInput
-              style={[styles.input, styles.textArea, styles.textAreaFocused]}
-              value={form.description}
-              onChangeText={(text) => setForm({ ...form, description: text })}
-              placeholder="Hayvanınız hakkında bilgi verin..."
-              placeholderTextColor="#9CA3AF"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              returnKeyType="done"
-              blurOnSubmit={true}
-            />
-          </View>
+            {/* Cins */}
+            {renderBreedSelector()}
 
-          {/* Kısırlaştırma */}
-          <View style={styles.switchContainer}>
-            <Text style={styles.label}>Kısırlaştırıldı mı?</Text>
-            <Switch
-              value={form.isNeutered}
-              onValueChange={(value) => setForm({ ...form, isNeutered: value })}
-              trackColor={{ false: '#E5E7EB', true: '#6366F1' }}
-              thumbColor={form.isNeutered ? '#FFFFFF' : '#F3F4F6'}
-            />
-          </View>
+            {/* Doğum Tarihi */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Doğum Tarihi</Text>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Calendar size={20} color="#6366F1" />
+                <Text style={styles.datePickerText}>
+                  {formatDate(form.birthDate)} ({calculateAge(form.birthDate)} yaşında)
+                </Text>
+              </TouchableOpacity>
+              
+              {showDatePicker && (
+                <DateTimePicker
+                  value={form.birthDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onDateChange}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(2000, 0, 1)}
+                />
+              )}
+            </View>
 
-          {/* Eşleşme için aktif */}
-          <View style={styles.switchContainer}>
-            <Text style={styles.label}>Eşleşme için aktif</Text>
-            <Switch
-              value={form.isActiveForMatching}
-              onValueChange={(value) => setForm({ ...form, isActiveForMatching: value })}
-              trackColor={{ false: '#E5E7EB', true: '#6366F1' }}
-              thumbColor={form.isActiveForMatching ? '#FFFFFF' : '#F3F4F6'}
-            />
+            {/* Cinsiyet */}
+            <View style={styles.genderContainer}>
+              <Text style={styles.label}>Cinsiyet</Text>
+              <View style={styles.genderButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.genderButton,
+                    form.gender === 1 && styles.selectedGenderButton,
+                  ]}
+                  onPress={() => setForm({ ...form, gender: 1 })}
+                >
+                  <Text style={[
+                    styles.genderButtonText,
+                    form.gender === 1 && styles.selectedGenderButtonText,
+                  ]}>
+                    Erkek
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.genderButton,
+                    form.gender === 0 && styles.selectedGenderButton,
+                  ]}
+                  onPress={() => setForm({ ...form, gender: 0 })}
+                >
+                  <Text style={[
+                    styles.genderButtonText,
+                    form.gender === 0 && styles.selectedGenderButtonText,
+                  ]}>
+                    Dişi
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Renk */}
+            {renderColorSelector()}
+
+            {/* Açıklama */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Açıklama</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={form.description}
+                onChangeText={(text) => setForm({ ...form, description: text })}
+                placeholder="Hayvanınız hakkında bilgi verin..."
+                placeholderTextColor="#9CA3AF"
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Kısırlaştırma */}
+            <View style={styles.switchContainer}>
+              <Text style={styles.label}>Kısırlaştırıldı mı?</Text>
+              <Switch
+                value={form.isNeutered}
+                onValueChange={(value) => setForm({ ...form, isNeutered: value })}
+                trackColor={{ false: '#E5E7EB', true: '#6366F1' }}
+                thumbColor={form.isNeutered ? '#FFFFFF' : '#F3F4F6'}
+              />
+            </View>
+
+            {/* Eşleşme için aktif */}
+            <View style={styles.switchContainer}>
+              <Text style={styles.label}>Eşleşme için aktif</Text>
+              <Switch
+                value={form.isActiveForMatching}
+                onValueChange={(value) => setForm({ ...form, isActiveForMatching: value })}
+                trackColor={{ false: '#E5E7EB', true: '#6366F1' }}
+                thumbColor={form.isActiveForMatching ? '#FFFFFF' : '#F3F4F6'}
+              />
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
       </LinearGradient>
     </KeyboardAvoidingView>
   );
@@ -642,9 +643,6 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     paddingTop: 12,
-  },
-  textAreaFocused: {
-    borderColor: '#6366F1',
   },
   selectorContainer: {
     marginBottom: 20,
