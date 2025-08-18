@@ -236,8 +236,13 @@ export default function EditPetScreen() {
           console.log('Resim yükleme sonucu:', uploadResult);
           
           // Resim URI'sini güncelle
-          const newImageUrl = uploadResult.imageUrl || uploadResult.url || uploadResult.profilePictureURL;
+         const newImageUrl = uploadResult.imageUrl;
           console.log('Yeni resim URL\'si:', newImageUrl);
+         
+         if (!newImageUrl) {
+           throw new Error('Upload başarılı ama resim URL\'si alınamadı');
+         }
+         
           setCurrentImageUri(newImageUrl);
           
           Alert.alert('Başarılı', 'Resim başarıyla yüklendi!');
@@ -292,8 +297,13 @@ export default function EditPetScreen() {
           console.log('Fotoğraf yükleme sonucu:', uploadResult);
           
           // Resim URI'sini güncelle
-          const newImageUrl = uploadResult.imageUrl || uploadResult.url || uploadResult.profilePictureURL;
+         const newImageUrl = uploadResult.imageUrl;
           console.log('Yeni fotoğraf URL\'si:', newImageUrl);
+         
+         if (!newImageUrl) {
+           throw new Error('Upload başarılı ama fotoğraf URL\'si alınamadı');
+         }
+         
           setCurrentImageUri(newImageUrl);
           
           Alert.alert('Başarılı', 'Fotoğraf başarıyla yüklendi!');

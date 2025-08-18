@@ -485,20 +485,40 @@ class ApiService {
       });
       
       console.log('API: uploadImage yanıtı:', response.data);
+     console.log('API: Upload response format check:', {
+       hasImageUrl: !!response.data.imageUrl,
+       hasUrl: !!response.data.url,
+       hasProfilePictureURL: !!response.data.profilePictureURL,
+       rawResponse: response.data
+     });
       
-      // Dönen URL'yi düzelt
-      const result = response.data;
-      if (result.imageUrl) {
-        result.imageUrl = this.fixImageUrl(result.imageUrl);
-      }
-      if (result.url) {
-        result.url = this.fixImageUrl(result.url);
-      }
-      if (result.profilePictureURL) {
-        result.profilePictureURL = this.fixImageUrl(result.profilePictureURL);
-      }
-      
-      return result;
+     // API'den dönen response formatını kontrol et ve normalize et
+     const result = response.data;
+     let finalImageUrl = '';
+     
+     // Öncelik sırası: imageUrl > url > profilePictureURL
+     if (result.imageUrl) {
+       finalImageUrl = this.fixImageUrl(result.imageUrl);
+       console.log('API: imageUrl kullanılıyor:', finalImageUrl);
+     } else if (result.url) {
+       finalImageUrl = this.fixImageUrl(result.url);
+       console.log('API: url kullanılıyor:', finalImageUrl);
+     } else if (result.profilePictureURL) {
+       finalImageUrl = this.fixImageUrl(result.profilePictureURL);
+       console.log('API: profilePictureURL kullanılıyor:', finalImageUrl);
+     } else {
+       console.error('API: Hiçbir URL field\'ı bulunamadı!', result);
+       throw new Error('Upload başarılı ama resim URL\'si döndürülmedi');
+     }
+     
+     // Standardize edilmiş format döndür
+     return {
+       imageUrl: finalImageUrl,
+       // Backward compatibility için diğer field'ları da ekle
+       url: finalImageUrl,
+       profilePictureURL: finalImageUrl,
+       ...result
+     };
     } catch (error: any) {
       console.error('API: uploadImage hatası:', {
         message: error.message,
