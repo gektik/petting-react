@@ -41,7 +41,7 @@ export default function AddPetScreen() {
     name: '',
     petTypeID: 1, // 1: Kedi, 2: Köpek
     breedID: 1,
-    breedName: 'Scottish Fold',
+    breedName: 'Tekir',
     birthDate: new Date(),
     gender: 1,
     isNeutered: false,
@@ -57,12 +57,12 @@ export default function AddPetScreen() {
   ];
 
   const catBreeds = [
-    { id: 1, name: 'Scottish Fold' },
-    { id: 2, name: 'British Shorthair' },
-    { id: 3, name: 'Tekir' },
-    { id: 4, name: 'Van Kedisi' },
-    { id: 5, name: 'Ankara Kedisi' },
-    { id: 6, name: 'Persian' },
+    { id: 1, name: 'Tekir' },
+    { id: 2, name: 'Van Kedisi' },
+    { id: 3, name: 'Ankara Kedisi' },
+    { id: 4, name: 'Persian' },
+    { id: 5, name: 'British Shorthair' },
+    { id: 6, name: 'Scottish Fold' },
     { id: 7, name: 'Maine Coon' },
     { id: 8, name: 'Siamese' },
     { id: 9, name: 'Ragdoll' },
@@ -70,8 +70,8 @@ export default function AddPetScreen() {
   ];
 
   const dogBreeds = [
-    { id: 11, name: 'Golden Retriever' },
-    { id: 12, name: 'Labrador' },
+    { id: 11, name: 'Labrador' },
+    { id: 12, name: 'Golden Retriever' },
     { id: 13, name: 'German Shepherd' },
     { id: 14, name: 'Husky' },
     { id: 15, name: 'Bulldog' },
