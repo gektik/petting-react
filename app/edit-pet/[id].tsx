@@ -137,7 +137,7 @@ export default function EditPetScreen() {
         const convertedPet: Pet = {
           id: foundPet.petID.toString(),
           name: foundPet.name,
-          species: 'cat',
+          species: foundPet.petTypeID === 1 ? 'cat' : 'dog',
           breed: foundPet.breedName,
           age: foundPet.age || 0,
           gender: foundPet.gender === 0 ? 'female' : 'male',
@@ -168,7 +168,7 @@ export default function EditPetScreen() {
         
         console.log('Setting form data:', {
           name: convertedPet.name,
-          petTypeID: convertedPet.species === 'cat' ? 1 : 2,
+          petTypeID: foundPet.petTypeID || (convertedPet.species === 'cat' ? 1 : 2),
           breedID: foundPet.breedID || (convertedPet.species === 'cat' ? 1 : 11),
           breedName: convertedPet.breed,
           birthDate: birthDate,
@@ -181,7 +181,7 @@ export default function EditPetScreen() {
 
         setForm({
           name: convertedPet.name,
-          petTypeID: convertedPet.species === 'cat' ? 1 : 2,
+          petTypeID: foundPet.petTypeID || (convertedPet.species === 'cat' ? 1 : 2),
           breedID: foundPet.breedID || (convertedPet.species === 'cat' ? 1 : 8),
           breedName: convertedPet.breed,
           birthDate: birthDate,

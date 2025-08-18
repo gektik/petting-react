@@ -64,7 +64,7 @@ export default function MyPetsScreen() {
         petsToDisplay = userPets.map((apiPet: any) => ({
           id: apiPet.petID.toString(),
           name: apiPet.name,
-          species: apiPet.petTypeName.toLowerCase() === 'kedi' ? 'cat' : 'dog',
+          species: apiPet.petTypeID === 1 ? 'cat' : 'dog',
           breed: apiPet.breedName,
           age: apiPet.age || 0,
           gender: apiPet.gender === 0 ? 'female' : 'male',
