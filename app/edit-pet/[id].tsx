@@ -114,9 +114,12 @@ export default function EditPetScreen() {
         
         // Parse birth date
         let birthDate = new Date();
-        if (foundPet.birthDate) {
+        if (foundPet.birthDate && foundPet.birthDate !== null) {
           console.log('API birthDate:', foundPet.birthDate);
-          birthDate = new Date(foundPet.birthDate);
+          const parsedDate = new Date(foundPet.birthDate);
+          if (!isNaN(parsedDate.getTime())) {
+            birthDate = parsedDate;
+          }
           console.log('Parsed birthDate:', birthDate);
         } else {
           console.log('No birthDate from API, using current date');
