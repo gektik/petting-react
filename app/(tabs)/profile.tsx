@@ -28,18 +28,21 @@ export default function ProfileScreen() {
           text: 'Çıkış Yap',
           style: 'destructive',
           onPress: () => {
-            // Basit logout - localStorage'ı temizle ve yönlendir
-            if (typeof window !== 'undefined') {
-              localStorage.clear();
-            }
-            // Context'i sıfırla
-            logout();
-            // Welcome sayfasına yönlendir
-            router.replace('/welcome');
+            logout().then(() => {
+              router.replace('/welcome');
+            }).catch((error) => {
+              console.error('Logout error:', error);
+              router.replace('/welcome');
+            });
           },
         },
       ]
     );
+  };
+
+  const handleMyPets = () => {
+    console.log('Hayvanlarım butonuna tıklandı');
+    router.push('/my-pets');
   };
 
   const menuItems = [
@@ -53,11 +56,7 @@ export default function ProfileScreen() {
       icon: PlusCircle,
       title: 'Hayvanlarım',
       subtitle: 'Hayvan profillerinizi yönetin',
-      onPress: () => {
-        console.log('Hayvanlarım butonuna tıklandı!');
-        Alert.alert('Test', 'Hayvanlarım butonuna tıklandı!');
-        router.push('/my-pets');
-      },
+      onPress: handleMyPets,
     },
     {
       icon: Bell,
@@ -89,24 +88,6 @@ export default function ProfileScreen() {
     <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Test butonu */}
-      <TouchableOpacity
-        style={{
-          position: 'absolute',
-          top: 100,
-          right: 20,
-          backgroundColor: 'red',
-          padding: 20,
-          zIndex: 1000,
-        }}
-        onPress={() => {
-          console.log('TEST BUTTON CLICKED!');
-          Alert.alert('Test', 'Test butonu çalışıyor!');
-        }}
-      >
-        <Text style={{ color: 'white' }}>TEST</Text>
-      </TouchableOpacity>
-      
       <ScrollView showsVerticalScrollIndicator={false}>
         <LinearGradient
           colors={['#6366F1', '#8B5CF6']}
@@ -125,9 +106,6 @@ export default function ProfileScreen() {
             
             <Text style={styles.username}>{user?.username}</Text>
             <Text style={styles.email}>{user?.email}</Text>
-            {user?.location && (
-              <Text style={styles.location}>{user.location}</Text>
-            )}
           </View>
         </LinearGradient>
 
@@ -147,14 +125,9 @@ export default function ProfileScreen() {
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={[styles.menuItem, { zIndex: 10 }]}
-              onPress={() => {
-                console.log('Menu item clicked:', item.title);
-                Alert.alert('Test', `${item.title} butonuna tıklandı!`);
-                if (item.title === 'Hayvanlarım') {
-                  router.push('/my-pets');
-                }
-              }}
+              style={styles.menuItem}
+              onPress={item.onPress}
+              activeOpacity={0.7}
             >
               <View style={styles.menuIconContainer}>
                 <item.icon size={24} color="#6366F1" />
@@ -167,12 +140,9 @@ export default function ProfileScreen() {
           ))}
           
           <TouchableOpacity
-            style={[styles.menuItem, styles.logoutItem, { zIndex: 10 }]}
-            onPress={() => {
-              console.log('Logout button clicked');
-              Alert.alert('Test', 'Çıkış yap butonuna tıklandı!');
-              handleLogout();
-            }}
+            style={[styles.menuItem, styles.logoutItem]}
+            onPress={handleLogout}
+            activeOpacity={0.7}
           >
             <View style={[styles.menuIconContainer, styles.logoutIconContainer]}>
               <LogOut size={24} color="#EF4444" />
@@ -234,10 +204,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.9)',
     marginBottom: 4,
-  },
-  location: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
   },
   statsContainer: {
     flexDirection: 'row',
