@@ -53,7 +53,7 @@ export default function ProfileScreen() {
       icon: PlusCircle,
       title: 'Hayvanlarım',
       subtitle: 'Hayvan profillerinizi yönetin',
-      onPress: () => Alert.alert('Bilgi', 'Hayvan yönetimi özelliği yakında gelecek.'),
+      onPress: () => router.push('/my-pets'),
     },
     {
       icon: Bell,

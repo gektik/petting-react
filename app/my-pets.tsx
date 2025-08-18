@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, CreditCard as Edit, Trash2, Plus } from 'lucide-react-native';
+import { ArrowLeft, Edit, Trash2, Plus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
@@ -61,6 +61,10 @@ export default function MyPetsScreen() {
         },
       ]
     );
+  };
+
+  const handleAddPet = () => {
+    Alert.alert('Yeni Hayvan', 'Hayvan ekleme özelliği yakında gelecek.');
   };
 
   const renderPet = ({ item }: { item: Pet }) => (
@@ -121,7 +125,7 @@ export default function MyPetsScreen() {
         <Text style={styles.headerTitle}>Hayvanlarım</Text>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => Alert.alert('Bilgi', 'Hayvan ekleme özelliği yakında gelecek.')}
+          onPress={handleAddPet}
         >
           <Plus size={24} color="#6366F1" />
         </TouchableOpacity>
@@ -135,7 +139,7 @@ export default function MyPetsScreen() {
           </Text>
           <TouchableOpacity
             style={styles.addPetButton}
-            onPress={() => Alert.alert('Bilgi', 'Hayvan ekleme özelliği yakında gelecek.')}
+            onPress={handleAddPet}
           >
             <LinearGradient
               colors={['#6366F1', '#8B5CF6']}
