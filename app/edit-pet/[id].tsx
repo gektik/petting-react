@@ -167,7 +167,7 @@ export default function EditPetScreen() {
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
+    setShowDatePicker(false);
     if (selectedDate) {
       setForm({ ...form, birthDate: selectedDate });
     }
@@ -182,7 +182,7 @@ export default function EditPetScreen() {
         petTypeID: 1, // Kedi için sabit değer
         breedID: getBreedID(form.breedName),
         gender: form.gender,
-        birthDate: form.birthDate.toISOString(),
+        birthDate: form.birthDate.toISOString().split('T')[0], // YYYY-MM-DD formatında
         isNeutered: form.isNeutered,
         description: form.description.trim(),
         color: form.color,
