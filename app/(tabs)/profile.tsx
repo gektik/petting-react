@@ -130,7 +130,13 @@ export default function ProfileScreen() {
             <TouchableOpacity
               key={index}
               style={styles.menuItem}
-              onPress={item.onPress}
+              onPress={() => {
+                console.log('Menu item clicked:', item.title);
+                Alert.alert('Test', `${item.title} butonuna tıklandı!`);
+                if (item.title === 'Hayvanlarım') {
+                  router.push('/my-pets');
+                }
+              }}
             >
               <View style={styles.menuIconContainer}>
                 <item.icon size={24} color="#6366F1" />
@@ -144,7 +150,11 @@ export default function ProfileScreen() {
           
           <TouchableOpacity
             style={[styles.menuItem, styles.logoutItem]}
-            onPress={handleLogout}
+            onPress={() => {
+              console.log('Logout button clicked');
+              Alert.alert('Test', 'Çıkış yap butonuna tıklandı!');
+              handleLogout();
+            }}
           >
             <View style={[styles.menuIconContainer, styles.logoutIconContainer]}>
               <LogOut size={24} color="#EF4444" />
