@@ -108,9 +108,6 @@ export default function EditPetScreen() {
         
         setPet(convertedPet);
         
-        // Calculate birth date from age
-        const birthDate = new Date();
-        birthDate.setFullYear(birthDate.getFullYear() - convertedPet.age);
         // Parse birth date from API data
         let birthDate = new Date();
         if (foundPet.birthDate) {
