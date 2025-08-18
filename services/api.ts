@@ -369,7 +369,7 @@ class ApiService {
   async updatePet(petId: string, petData: any): Promise<any> {
     try {
       console.log('API: updatePet çağrılıyor...', { petId, petData });
-      const response = await this.api.patch(`/Pets/${petId}`, petData);
+      const response = await this.api.put(`/Pets/${petId}`, petData);
       console.log('API: updatePet yanıtı:', response.data);
       return response.data;
     } catch (error: any) {
@@ -379,24 +379,6 @@ class ApiService {
         data: error.response?.data,
       });
       throw error;
-    }
-  }
-}
-
-export const apiService = new ApiService();
-
-// Mock data methods - these will be replaced with real API calls
-export const mockApiMethods = {
-  async getPetsForMatching(): Promise<Pet[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockPets;
-  },
-
-  async getMatches(): Promise<Match[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockMatches;
-  },
-
   async getChats(): Promise<Chat[]> {
     await new Promise(resolve => setTimeout(resolve, 500));
     return mockChats;
