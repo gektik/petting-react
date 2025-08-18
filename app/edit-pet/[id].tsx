@@ -111,6 +111,14 @@ export default function EditPetScreen() {
         // Calculate birth date from age
         const birthDate = new Date();
         birthDate.setFullYear(birthDate.getFullYear() - convertedPet.age);
+        // Parse birth date from API data
+        let birthDate = new Date();
+        if (foundPet.birthDate) {
+          birthDate = new Date(foundPet.birthDate);
+        } else {
+          // Fallback: calculate from age if birthDate is null
+          birthDate.setFullYear(birthDate.getFullYear() - (foundPet.age || 1));
+        }
         
         setForm({
           name: convertedPet.name,
@@ -170,6 +178,7 @@ export default function EditPetScreen() {
     setShowDatePicker(false);
     if (selectedDate) {
       setForm({ ...form, birthDate: selectedDate });
+      console.log('Date selected:', selectedDate);
     }
   };
 
@@ -190,7 +199,9 @@ export default function EditPetScreen() {
         isActiveForMatching: form.isActiveForMatching,
       };
       
+      console.log('Updating pet with data:', updateData);
       await apiService.updatePet(id!, updateData);
+      console.log('Pet updated successfully');
       Alert.alert('Başarılı', 'Hayvan bilgileri güncellendi.', [
         { text: 'Tamam', onPress: () => router.back() }
       ]);
