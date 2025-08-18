@@ -69,7 +69,7 @@ export default function MyPetsScreen() {
           age: apiPet.age || 0,
           gender: apiPet.gender === 0 ? 'female' : 'male',
           neutered: apiPet.isNeutered,
-          photos: apiPet.profilePictureURL ? [apiPet.profilePictureURL] : ['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400'],
+          photos: apiPet.profilePictureURL ? [apiPet.profilePictureURL] : apiPet.photos || ['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400'],
           description: apiPet.description || '',
           color: apiPet.color || 'Bilinmiyor',
           ownerId: apiPet.userID,

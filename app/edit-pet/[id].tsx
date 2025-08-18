@@ -145,7 +145,7 @@ export default function EditPetScreen() {
           age: foundPet.age || 0,
           gender: foundPet.gender === 0 ? 'female' : 'male',
           neutered: foundPet.isNeutered,
-          photos: foundPet.profilePictureURL ? [foundPet.profilePictureURL] : ['https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400'],
+          photos: foundPet.profilePictureURL ? [foundPet.profilePictureURL] : foundPet.photos || ['https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400'],
           description: foundPet.description || '',
           color: foundPet.color || '',
           ownerId: foundPet.userID,

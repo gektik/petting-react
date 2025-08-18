@@ -320,8 +320,25 @@ class ApiService {
       console.log('API: Request URL:', `${BASE_URL}/pets/my-pets`);
       const response = await this.api.get('/pets/my-pets');
       console.log('API: getUserPets yanıtı:', response.data);
-      // API direkt array döndürüyor, .data wrapper'ı yok
-      return response.data || [];
+      
+      // API'den gelen veriyi Pet tipine dönüştür
+      const pets = response.data || [];
+      return pets.map((apiPet: any) => ({
+        id: apiPet.petID?.toString() || apiPet.id?.toString(),
+        name: apiPet.name,
+        species: apiPet.petTypeID === 1 ? 'cat' : 'dog',
+        breed: apiPet.breedName || apiPet.breed,
+        age: apiPet.age || 0,
+        gender: apiPet.gender === 0 ? 'female' : 'male',
+        neutered: apiPet.isNeutered || false,
+        photos: apiPet.photos || (apiPet.profilePictureURL ? [apiPet.profilePictureURL] : ['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400']),
+        description: apiPet.description || '',
+        color: apiPet.color || '',
+        ownerId: apiPet.userID || apiPet.ownerId,
+        isActive: apiPet.isActiveForMatching || true,
+        location: apiPet.location || 'Türkiye',
+        createdAt: apiPet.createdDate || apiPet.createdAt,
+      }));
     } catch (error: any) {
       console.error('API: getUserPets hatası:', {
         message: error.message,
