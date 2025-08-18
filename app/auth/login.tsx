@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, Mail, Lock, Eye, EyeOff, Chrome } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginRequest } from '@/services/api';
+import { apiService } from '@/services/api';
 import { socialAuthService } from '@/services/socialAuth';
 
 export default function LoginScreen() {
@@ -76,6 +77,9 @@ export default function LoginScreen() {
       const response = await apiService.googleLogin(result.token);
       
       if (response.isSuccess && response.token) {
+        // API service'e token'ı set et
+        apiService.setAuthToken(response.token);
+        
         const userData = {
           id: response.user?.id || response.userId || 'google_user',
           username: response.user?.firstName || response.username || 'Google User',
@@ -117,6 +121,9 @@ export default function LoginScreen() {
       const response = await apiService.facebookLogin(result.token);
       
       if (response.isSuccess && response.token) {
+        // API service'e token'ı set et
+        apiService.setAuthToken(response.token);
+        
         const userData = {
           id: response.user?.id || response.userId || 'facebook_user',
           username: response.user?.firstName || response.username || 'Facebook User',
