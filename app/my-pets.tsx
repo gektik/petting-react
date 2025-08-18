@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Edit, Trash2, Plus } from 'lucide-react-native';
+import { ArrowLeft, CreditCard as Edit, Trash2, Plus } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
@@ -148,7 +148,7 @@ export default function MyPetsScreen() {
           style={[styles.actionButton, styles.editButton]}
           onPress={() => handleEditPet(item)}
         >
-          <Edit size={18} color="#6366F1" />
+          <Edit3 size={18} color="#6366F1" />
         </TouchableOpacity>
         
         <TouchableOpacity
