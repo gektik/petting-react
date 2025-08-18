@@ -24,12 +24,6 @@ config.resolver.assetExts.push(
 
 config.resolver.sourceExts.push('jsx', 'js', 'ts', 'tsx', 'json');
 
-// Transformer configuration
-config.transformer = {
-  ...config.transformer,
-  babelTransformerPath: require.resolve('metro-react-native-babel-transformer'),
-};
-
 // Clear cache and reset
 config.resetCache = true;
 
