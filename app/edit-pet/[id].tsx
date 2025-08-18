@@ -26,7 +26,7 @@ import * as ImagePicker from 'expo-image-picker';
 interface EditPetForm {
   name: string;
   petTypeID: number;
-  breedID: number;
+  breedID: number | null;
   breedName: string;
   birthDate: Date;
   gender: 0 | 1; // 0: female, 1: male
@@ -48,7 +48,7 @@ export default function EditPetScreen() {
   const [form, setForm] = useState<EditPetForm>({
     name: '',
     petTypeID: 1,
-    breedID: 1,
+    breedID: null,
     breedName: '',
     birthDate: new Date(),
     gender: 1,
@@ -152,7 +152,7 @@ export default function EditPetScreen() {
         console.log('Setting form data:', {
           name: foundPet.name,
           petTypeID: petTypeID,
-          breedID: matchingBreed ? matchingBreed.id : (petTypeID === 1 ? 1 : 8),
+          breedID: matchingBreed ? matchingBreed.id : null,
           breedName: foundPet.breed,
           birthDate: birthDate,
           gender: foundPet.gender === 'male' ? 1 : 0,
@@ -165,7 +165,7 @@ export default function EditPetScreen() {
         setForm({
           name: foundPet.name,
           petTypeID: petTypeID,
-          breedID: matchingBreed ? matchingBreed.id : (petTypeID === 1 ? 1 : 8),
+          breedID: matchingBreed ? matchingBreed.id : null,
           breedName: foundPet.breed,
           birthDate: birthDate,
           gender: foundPet.gender === 'male' ? 1 : 0,
@@ -176,7 +176,7 @@ export default function EditPetScreen() {
         });
         
         console.log('Final form data set:', {
-          breedID: matchingBreed ? matchingBreed.id : (petTypeID === 1 ? 1 : 8),
+          breedID: matchingBreed ? matchingBreed.id : null,
           breedName: foundPet.breed,
           color: foundPet.color || colors[0]
         });
@@ -493,6 +493,15 @@ export default function EditPetScreen() {
             </Text>
           </TouchableOpacity>
         ))}
+        {form.breedID === null && (
+          <TouchableOpacity
+            style={[styles.selectorItem, styles.selectedItem]}
+          >
+            <Text style={[styles.selectorText, styles.selectedText]}>
+              {form.breedName} (Özel)
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
