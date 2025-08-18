@@ -440,7 +440,7 @@ class ApiService {
       
       console.log('API: FormData hazırlandı:', { filename, petId });
       
-      const response = await this.api.post('/upload/pet-image', formData, {
+      const response = await this.api.post('/pets/upload-image', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
