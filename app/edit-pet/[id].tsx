@@ -25,6 +25,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 interface EditPetForm {
   name: string;
   petTypeID: number;
+  breedID: number;
   breedName: string;
   birthDate: Date;
   gender: 0 | 1; // 0: female, 1: male
@@ -44,6 +45,7 @@ export default function EditPetScreen() {
   const [form, setForm] = useState<EditPetForm>({
     name: '',
     petTypeID: 1,
+    breedID: 1,
     breedName: '',
     birthDate: new Date(),
     gender: 1,
@@ -59,29 +61,29 @@ export default function EditPetScreen() {
   ];
 
   const catBreeds = [
-    'Scottish Fold',
-    'British Shorthair',
-    'Tekir',
-    'Van Kedisi',
-    'Ankara Kedisi',
-    'Persian',
-    'Maine Coon',
-    'Siamese',
-    'Ragdoll',
-    'Bengal',
+    { id: 1, name: 'Scottish Fold' },
+    { id: 2, name: 'British Shorthair' },
+    { id: 3, name: 'Tekir' },
+    { id: 4, name: 'Van Kedisi' },
+    { id: 5, name: 'Ankara Kedisi' },
+    { id: 6, name: 'Persian' },
+    { id: 7, name: 'Maine Coon' },
+    { id: 8, name: 'Siamese' },
+    { id: 9, name: 'Ragdoll' },
+    { id: 10, name: 'Bengal' },
   ];
 
   const dogBreeds = [
-    'Golden Retriever',
-    'Labrador',
-    'German Shepherd',
-    'Husky',
-    'Bulldog',
-    'Poodle',
-    'Beagle',
-    'Rottweiler',
-    'Yorkshire Terrier',
-    'Chihuahua',
+    { id: 11, name: 'Golden Retriever' },
+    { id: 12, name: 'Labrador' },
+    { id: 13, name: 'German Shepherd' },
+    { id: 14, name: 'Husky' },
+    { id: 15, name: 'Bulldog' },
+    { id: 16, name: 'Poodle' },
+    { id: 17, name: 'Beagle' },
+    { id: 18, name: 'Rottweiler' },
+    { id: 19, name: 'Yorkshire Terrier' },
+    { id: 20, name: 'Chihuahua' },
   ];
 
   const getCurrentBreeds = () => {
@@ -119,6 +121,7 @@ export default function EditPetScreen() {
         pets = mockPets.map(pet => ({
           petID: parseInt(pet.id),
           name: pet.name,
+          breedID: pet.species === 'cat' ? 1 : 11, // Default breed ID based on species
           breedName: pet.breed,
           age: pet.age,
           gender: pet.gender === 'male' ? 1 : 0,
@@ -176,6 +179,7 @@ export default function EditPetScreen() {
         console.log('Setting form data:', {
           name: convertedPet.name,
           petTypeID: convertedPet.species === 'cat' ? 1 : 2,
+          breedID: foundPet.breedID || (convertedPet.species === 'cat' ? 1 : 11),
           breedName: convertedPet.breed,
           birthDate: birthDate,
           gender: convertedPet.gender === 'male' ? 1 : 0,
@@ -188,6 +192,7 @@ export default function EditPetScreen() {
         setForm({
           name: convertedPet.name,
           petTypeID: convertedPet.species === 'cat' ? 1 : 2,
+          breedID: foundPet.breedID || (convertedPet.species === 'cat' ? 1 : 11),
           breedName: convertedPet.breed,
           birthDate: birthDate,
           gender: convertedPet.gender === 'male' ? 1 : 0,
@@ -206,22 +211,6 @@ export default function EditPetScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getBreedID = (breedName: string): number => {
-    const breedMap: { [key: string]: number } = {
-      'Scottish Fold': 1,
-      'British Shorthair': 2,
-      'Tekir': 3,
-      'Van Kedisi': 4,
-      'Ankara Kedisi': 5,
-      'Persian': 6,
-      'Maine Coon': 7,
-      'Siamese': 8,
-      'Ragdoll': 9,
-      'Bengal': 10,
-    };
-    return breedMap[breedName] || 1;
   };
 
   const calculateAge = (birthDate: Date): number => {
@@ -265,7 +254,7 @@ export default function EditPetScreen() {
       const updateData = {
         name: form.name.trim(), // UTF-8 encoding will be handled by axios
         petTypeID: form.petTypeID,
-        breedID: getBreedID(form.breedName),
+        breedID: form.breedID,
         gender: form.gender,
         birthDate: formattedBirthDate, // YYYY-MM-DD formatında
         isNeutered: form.isNeutered,
@@ -308,7 +297,8 @@ export default function EditPetScreen() {
     setForm({
       ...form,
       petTypeID,
-      breedName: newBreeds[0], // İlk cinsi seç
+      breedID: newBreeds[0].id,
+      breedName: newBreeds[0].name,
     });
   };
 
@@ -343,18 +333,18 @@ export default function EditPetScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
         {getCurrentBreeds().map((breed) => (
           <TouchableOpacity
-            key={breed}
+            key={breed.id}
             style={[
               styles.selectorItem,
-              form.breedName === breed && styles.selectedItem,
+              form.breedID === breed.id && styles.selectedItem,
             ]}
-            onPress={() => setForm({ ...form, breedName: breed })}
+            onPress={() => setForm({ ...form, breedID: breed.id, breedName: breed.name })}
           >
             <Text style={[
               styles.selectorText,
-              form.breedName === breed && styles.selectedText,
+              form.breedID === breed.id && styles.selectedText,
             ]}>
-              {breed}
+              {breed.name}
             </Text>
           </TouchableOpacity>
         ))}
