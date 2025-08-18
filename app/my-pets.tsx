@@ -39,6 +39,7 @@ export default function MyPetsScreen() {
   useFocusEffect(
     React.useCallback(() => {
       if (isAuthenticated && !isLoading && user) {
+        console.log('My Pets: Sayfa odaklandı, pet listesi yenileniyor...');
         loadMyPets();
       }
     }, [isAuthenticated, isLoading, user])
@@ -68,6 +69,7 @@ export default function MyPetsScreen() {
         // Native platformlarda API çağrısı yap
         petsToDisplay = await apiService.getUserPets();
         console.log('API pets data:', petsToDisplay);
+        console.log('Pet photos URLs:', petsToDisplay.map(p => ({ name: p.name, photo: p.photos[0] })));
       }
       
       setPets(petsToDisplay);
@@ -132,7 +134,17 @@ export default function MyPetsScreen() {
       onPress={() => handleEditPet(item)}
       activeOpacity={0.7}
     >
-      <Image source={{ uri: item.photos[0] }} style={styles.petImage} />
+      <Image 
+        source={{ uri: item.photos[0] }} 
+        style={styles.petImage}
+        onError={(error) => {
+          console.log('My Pets: Resim yükleme hatası:', error.nativeEvent.error);
+          console.log('My Pets: Hatalı URL:', item.photos[0]);
+        }}
+        onLoad={() => {
+          console.log('My Pets: Resim başarıyla yüklendi:', item.photos[0]);
+        }}
+      />
       
       <TouchableOpacity 
         style={styles.petInfo}
