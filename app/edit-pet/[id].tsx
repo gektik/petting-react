@@ -61,29 +61,19 @@ export default function EditPetScreen() {
   ];
 
   const catBreeds = [
-    { id: 1, name: 'Scottish Fold' },
-    { id: 2, name: 'British Shorthair' },
-    { id: 3, name: 'Tekir' },
-    { id: 4, name: 'Van Kedisi' },
-    { id: 5, name: 'Ankara Kedisi' },
-    { id: 6, name: 'Persian' },
+    { id: 1, name: 'Tekir' },
+    { id: 2, name: 'Van Kedisi' },
+    { id: 3, name: 'Ankara Kedisi' },
+    { id: 4, name: 'Persian' },
+    { id: 5, name: 'British Shorthair' },
+    { id: 6, name: 'Scottish Fold' },
     { id: 7, name: 'Maine Coon' },
-    { id: 8, name: 'Siamese' },
-    { id: 9, name: 'Ragdoll' },
-    { id: 10, name: 'Bengal' },
   ];
 
   const dogBreeds = [
-    { id: 11, name: 'Golden Retriever' },
-    { id: 12, name: 'Labrador' },
-    { id: 13, name: 'German Shepherd' },
-    { id: 14, name: 'Husky' },
-    { id: 15, name: 'Bulldog' },
-    { id: 16, name: 'Poodle' },
-    { id: 17, name: 'Beagle' },
-    { id: 18, name: 'Rottweiler' },
-    { id: 19, name: 'Yorkshire Terrier' },
-    { id: 20, name: 'Chihuahua' },
+    { id: 8, name: 'Golden Retriever' },
+    { id: 9, name: 'Labrador Retriever' },
+    { id: 10, name: 'Alman Kurdu' },
   ];
 
   const getCurrentBreeds = () => {
@@ -192,7 +182,7 @@ export default function EditPetScreen() {
         setForm({
           name: convertedPet.name,
           petTypeID: convertedPet.species === 'cat' ? 1 : 2,
-          breedID: foundPet.breedID || (convertedPet.species === 'cat' ? 1 : 11),
+          breedID: foundPet.breedID || (convertedPet.species === 'cat' ? 1 : 8),
           breedName: convertedPet.breed,
           birthDate: birthDate,
           gender: convertedPet.gender === 'male' ? 1 : 0,

@@ -64,22 +64,12 @@ export default function AddPetScreen() {
     { id: 5, name: 'British Shorthair' },
     { id: 6, name: 'Scottish Fold' },
     { id: 7, name: 'Maine Coon' },
-    { id: 8, name: 'Siamese' },
-    { id: 9, name: 'Ragdoll' },
-    { id: 10, name: 'Bengal' },
   ];
 
   const dogBreeds = [
-    { id: 11, name: 'Golden Retriever' },
-    { id: 12, name: 'Labrador' },
-    { id: 13, name: 'German Shepherd' },
-    { id: 14, name: 'Husky' },
-    { id: 15, name: 'Bulldog' },
-    { id: 16, name: 'Poodle' },
-    { id: 17, name: 'Beagle' },
-    { id: 18, name: 'Rottweiler' },
-    { id: 19, name: 'Yorkshire Terrier' },
-    { id: 20, name: 'Chihuahua' },
+    { id: 8, name: 'Golden Retriever' },
+    { id: 9, name: 'Labrador Retriever' },
+    { id: 10, name: 'Alman Kurdu' },
   ];
 
   const getCurrentBreeds = () => {
