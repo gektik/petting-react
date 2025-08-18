@@ -167,7 +167,7 @@ export default function AddPetScreen() {
       
       console.log('Pet data with Turkish characters:', petData);
       console.log('Adding pet with data:', petData);
-      const result = await apiService.post('/pets', petData);
+      const result = await apiService.createPet(petData);
       console.log('Add result:', result);
       
       Alert.alert('Başarılı', 'Hayvan başarıyla eklendi.', [

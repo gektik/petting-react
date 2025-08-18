@@ -54,11 +54,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       
       // Check if token exists
-      const token = Platform.OS === 'web' 
-        ? localStorage.getItem('auth_token')
-        : await import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
-            AsyncStorage.getItem('auth_token')
-          );
+      let token = null;
+      try {
+        if (Platform.OS === 'web') {
+          token = localStorage.getItem('auth_token');
+        } else {
+          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+          token = await AsyncStorage.getItem('auth_token');
+        }
+      } catch (storageError) {
+        console.warn('Storage access error:', storageError);
+      }
       
       // Set token in apiService
       apiService.setAuthToken(token);
@@ -71,16 +77,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Check if user data exists in storage
-      const userData = Platform.OS === 'web'
-        ? localStorage.getItem('user_data')
-        : await import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
-            AsyncStorage.getItem('user_data')
-          );
-      if (userData) {
-        const parsedUser = JSON.parse(userData);
-        if (isMountedRef.current) {
-          setUser(parsedUser);
+      try {
+        let userData = null;
+        if (Platform.OS === 'web') {
+          userData = localStorage.getItem('user_data');
+        } else {
+          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+          userData = await AsyncStorage.getItem('user_data');
         }
+        
+        if (userData) {
+          const parsedUser = JSON.parse(userData);
+          if (isMountedRef.current) {
+            setUser(parsedUser);
+          }
+        }
+      } catch (storageError) {
+        console.warn('User data storage error:', storageError);
       }
 
       // Verify token with server (optional)
@@ -88,7 +101,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
     } catch (error) {
       console.error('Error checking auth status:', error);
-      await logout();
+      // Don't call logout on startup errors, just clear state
+      if (isMountedRef.current) {
+        setUser(null);
+        setIsLoading(false);
+      }
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false);
