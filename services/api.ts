@@ -369,7 +369,7 @@ class ApiService {
   async updatePet(petId: string, petData: any): Promise<any> {
     try {
       console.log('API: updatePet çağrılıyor...', { petId, petData });
-      const response = await this.api.put(`/Pets/${petId}`, petData);
+      const response = await this.api.put(`/pets/${petId}`, petData);
       console.log('API: updatePet yanıtı:', response.data);
       return response.data;
     } catch (error: any) {
