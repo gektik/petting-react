@@ -48,7 +48,7 @@ export default function AddPetScreen() {
     description: '',
     color: 'Beyaz',
     isActiveForMatching: true,
-    profilePictureURL: '',
+    profilePictureURL: 'https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400',
   });
 
   const breeds = [
