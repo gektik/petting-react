@@ -42,7 +42,8 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "single"
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -75,7 +76,10 @@
     "extra": {
       "googleWebClientId": "526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k.apps.googleusercontent.com",
       "facebookAppId": "773562691876253",
-      "router": {}
+      "router": {},
+      "eas": {
+        "projectId": "your-project-id"
+      }
     }
   }
 }
