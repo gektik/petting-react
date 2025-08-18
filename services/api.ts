@@ -427,7 +427,7 @@ class ApiService {
       
       // Add the image file
       const filename = `pet_${Date.now()}.jpg`;
-      formData.append('file', {
+      formData.append('image', {
         uri: imageUri,
         type: 'image/jpeg',
         name: filename,
@@ -440,7 +440,7 @@ class ApiService {
       
       console.log('API: FormData hazırlandı:', { filename, petId });
       
-      const response = await this.api.post('/pets/upload-image', formData, {
+      const response = await this.api.post(`/pets/${petId}/upload-image`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
