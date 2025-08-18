@@ -188,7 +188,7 @@ export default function EditPetScreen() {
           gender: convertedPet.gender === 'male' ? 1 : 0,
           isNeutered: convertedPet.neutered,
           description: convertedPet.description,
-          color: convertedPet.color,
+          color: foundPet.color || convertedPet.color || 'Beyaz',
           isActiveForMatching: convertedPet.isActive,
         });
       } else {
@@ -254,7 +254,8 @@ export default function EditPetScreen() {
         isActiveForMatching: form.isActiveForMatching,
       };
       
-      console.log('Update data with Turkish characters:', updateData);
+      console.log('Update data being sent to API:', updateData);
+      console.log('Color value being sent:', form.color);
       console.log('Updating pet with data:', updateData);
       const result = await apiService.updatePet(id!, updateData);
       console.log('Update result:', result);

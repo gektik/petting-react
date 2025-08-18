@@ -155,7 +155,8 @@ export default function AddPetScreen() {
         isActiveForMatching: form.isActiveForMatching,
       };
       
-      console.log('Pet data with Turkish characters:', petData);
+      console.log('Pet data being sent to API:', petData);
+      console.log('Color value being sent:', form.color);
       console.log('Adding pet with data:', petData);
       const result = await apiService.createPet(petData);
       console.log('Add result:', result);
