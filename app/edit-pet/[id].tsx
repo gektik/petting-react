@@ -111,55 +111,23 @@ export default function EditPetScreen() {
       if (Platform.OS === 'web') {
         // Use mock data for web platform to avoid CORS issues
         await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-        pets = mockPets.map(pet => ({
-          petID: parseInt(pet.id),
-          name: pet.name,
-          breedID: pet.species === 'cat' ? 1 : 11, // Default breed ID based on species
-          breedName: pet.breed,
-          age: pet.age,
-          gender: pet.gender === 'male' ? 1 : 0,
-          isNeutered: pet.neutered,
-          profilePictureURL: pet.photos[0],
-          description: pet.description,
-          color: pet.color,
-          userID: pet.ownerId,
-          isActiveForMatching: pet.isActive,
-          createdDate: pet.createdAt,
-          birthDate: new Date(Date.now() - pet.age * 365 * 24 * 60 * 60 * 1000).toISOString(),
-        }));
+        pets = mockPets;
       } else {
         pets = await apiService.getUserPets();
       }
       
       console.log('All pets from API:', pets);
       
-      const foundPet = pets.find(p => p.petID.toString() === id);
+      const foundPet = pets.find(p => p.id === id);
       console.log('Found pet:', foundPet);
       
       if (foundPet) {
-        const convertedPet: Pet = {
-          id: foundPet.petID.toString(),
-          name: foundPet.name,
-          species: foundPet.petTypeID === 1 ? 'cat' : 'dog',
-          breed: foundPet.breedName,
-          age: foundPet.age || 0,
-          gender: foundPet.gender === 0 ? 'female' : 'male',
-          neutered: foundPet.isNeutered,
-          photos: foundPet.profilePictureURL ? [foundPet.profilePictureURL] : foundPet.photos || ['https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400'],
-          description: foundPet.description || '',
-          color: foundPet.color || '',
-          ownerId: foundPet.userID,
-          isActive: foundPet.isActiveForMatching,
-          location: 'Türkiye',
-          createdAt: foundPet.createdDate,
-        };
-        
-        setPet(convertedPet);
-        setCurrentImageUri(convertedPet.photos[0]);
+        setPet(foundPet);
+        setCurrentImageUri(foundPet.photos[0]);
         
         // Parse birth date
         let birthDate = new Date();
-        if (foundPet.birthDate && foundPet.birthDate !== null) {
+        if (foundPet.birthDate) {
           console.log('API birthDate:', foundPet.birthDate);
           const parsedDate = new Date(foundPet.birthDate);
           if (!isNaN(parsedDate.getTime())) {
@@ -171,29 +139,29 @@ export default function EditPetScreen() {
         }
         
         console.log('Setting form data:', {
-          name: convertedPet.name,
-          petTypeID: foundPet.petTypeID || (convertedPet.species === 'cat' ? 1 : 2),
-          breedID: foundPet.breedID || (convertedPet.species === 'cat' ? 1 : 11),
-          breedName: convertedPet.breed,
+          name: foundPet.name,
+          petTypeID: foundPet.species === 'cat' ? 1 : 2,
+          breedID: foundPet.species === 'cat' ? 1 : 8,
+          breedName: foundPet.breed,
           birthDate: birthDate,
-          gender: convertedPet.gender === 'male' ? 1 : 0,
-          isNeutered: convertedPet.neutered,
-          description: convertedPet.description,
-          color: convertedPet.color,
-          isActiveForMatching: convertedPet.isActive,
+          gender: foundPet.gender === 'male' ? 1 : 0,
+          isNeutered: foundPet.neutered,
+          description: foundPet.description,
+          color: foundPet.color,
+          isActiveForMatching: foundPet.isActive,
         });
 
         setForm({
-          name: convertedPet.name,
-          petTypeID: foundPet.petTypeID || (convertedPet.species === 'cat' ? 1 : 2),
-          breedID: foundPet.breedID || (convertedPet.species === 'cat' ? 1 : 8),
-          breedName: convertedPet.breed,
+          name: foundPet.name,
+          petTypeID: foundPet.species === 'cat' ? 1 : 2,
+          breedID: foundPet.species === 'cat' ? 1 : 8,
+          breedName: foundPet.breed,
           birthDate: birthDate,
-          gender: convertedPet.gender === 'male' ? 1 : 0,
-          isNeutered: convertedPet.neutered,
-          description: convertedPet.description,
+          gender: foundPet.gender === 'male' ? 1 : 0,
+          isNeutered: foundPet.neutered,
+          description: foundPet.description,
           color: foundPet.color || colors[0], // İlk rengi default yap
-          isActiveForMatching: convertedPet.isActive,
+          isActiveForMatching: foundPet.isActive,
         });
         
         console.log('Final form color set to:', foundPet.color || colors[0]);

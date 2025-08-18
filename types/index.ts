@@ -23,6 +23,7 @@ export interface Pet {
   isActive: boolean;
   location?: string;
   createdAt: string;
+  birthDate?: string;
 }
 
 export interface Match {

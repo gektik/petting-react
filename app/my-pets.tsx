@@ -57,26 +57,8 @@ export default function MyPetsScreen() {
         console.log('Using mock pets for web platform:', petsToDisplay);
       } else {
         // Native platformlarda API çağrısı yap
-        const userPets = await apiService.getUserPets();
-        console.log('API pets data:', userPets);
-        
-        // API verisini Pet tipine dönüştür
-        petsToDisplay = userPets.map((apiPet: any) => ({
-          id: apiPet.petID.toString(),
-          name: apiPet.name,
-          species: apiPet.petTypeID === 1 ? 'cat' : 'dog',
-          breed: apiPet.breedName,
-          age: apiPet.age || 0,
-          gender: apiPet.gender === 0 ? 'female' : 'male',
-          neutered: apiPet.isNeutered,
-          photos: apiPet.profilePictureURL ? [apiPet.profilePictureURL] : apiPet.photos || ['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400'],
-          description: apiPet.description || '',
-          color: apiPet.color || 'Bilinmiyor',
-          ownerId: apiPet.userID,
-          isActive: apiPet.isActiveForMatching,
-          location: 'Türkiye',
-          createdAt: apiPet.createdDate,
-        }));
+        petsToDisplay = await apiService.getUserPets();
+        console.log('API pets data:', petsToDisplay);
       }
       
       setPets(petsToDisplay);
