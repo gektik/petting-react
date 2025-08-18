@@ -89,6 +89,24 @@ export default function ProfileScreen() {
     <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
       <StatusBar style="dark" />
       
+      {/* Test butonu */}
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          top: 100,
+          right: 20,
+          backgroundColor: 'red',
+          padding: 20,
+          zIndex: 1000,
+        }}
+        onPress={() => {
+          console.log('TEST BUTTON CLICKED!');
+          Alert.alert('Test', 'Test butonu çalışıyor!');
+        }}
+      >
+        <Text style={{ color: 'white' }}>TEST</Text>
+      </TouchableOpacity>
+      
       <ScrollView showsVerticalScrollIndicator={false}>
         <LinearGradient
           colors={['#6366F1', '#8B5CF6']}
@@ -129,7 +147,7 @@ export default function ProfileScreen() {
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.menuItem}
+              style={[styles.menuItem, { zIndex: 10 }]}
               onPress={() => {
                 console.log('Menu item clicked:', item.title);
                 Alert.alert('Test', `${item.title} butonuna tıklandı!`);
@@ -149,7 +167,7 @@ export default function ProfileScreen() {
           ))}
           
           <TouchableOpacity
-            style={[styles.menuItem, styles.logoutItem]}
+            style={[styles.menuItem, styles.logoutItem, { zIndex: 10 }]}
             onPress={() => {
               console.log('Logout button clicked');
               Alert.alert('Test', 'Çıkış yap butonuna tıklandı!');
