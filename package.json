@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "expo start --web --clear",
+    "start": "expo start",
+    "dev": "expo start --clear",
     "eas": "eas --non-interactive",
     "build:web": "expo export --platform web",
     "lint": "expo lint",

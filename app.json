@@ -1,85 +1,39 @@
 {
   "expo": {
-    "name": "bolt-expo-nativewind",
-    "slug": "bolt-expo-nativewind",
+    "name": "Petting",
+    "slug": "petting-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "petting",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "icon": "./assets/images/icon.png",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "updates": {
-      "enabled": false
-    },
-    "android": {
-      "package": "com.petting.app",
-      "permissions": [
-        "android.permission.INTERNET"
-      ]
-    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.petting.app",
-      "infoPlist": {
-        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
-        "SKAdNetworkItems": [
-          {
-            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
-          },
-          {
-            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
-          }
-        ]
-      }
+      "bundleIdentifier": "com.petting.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.petting.app"
     },
     "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
-      "expo-router",
-      "expo-font",
-      "expo-web-browser",
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "webClientId": "526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k.apps.googleusercontent.com",
-          "iosUrlScheme": "com.googleusercontent.apps.526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k"
-        }
-      ],
-      [
-        "react-native-fbsdk-next",
-        {
-          "appID": "773562691876253",
-          "clientToken": "773562691876253",
-          "displayName": "Petting",
-          "scheme": "fb773562691876253",
-          "advertiserIDCollectionEnabled": false,
-          "autoLogAppEventsEnabled": false,
-          "isAutoInitEnabled": true,
-          "iosUserTrackingPermission": "This identifier will be used to deliver personalized ads to you."
-        }
-      ]
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "googleWebClientId": "526975076575-gtmr3jtv5a7af5hq7bo9jkh8dc04789k.apps.googleusercontent.com",
-      "facebookAppId": "773562691876253",
-      "router": {},
-      "eas": {
-        "projectId": "your-project-id"
-      }
     }
   }
 }
