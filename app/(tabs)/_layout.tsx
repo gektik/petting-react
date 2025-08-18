@@ -81,13 +81,19 @@ export default function TabLayout() {
       <Tabs.Screen
         name="chats"
         options={{
-          href: null, // Bu tab'ı gizle
+          title: 'Sohbetler',
+          tabBarIcon: ({ size, color }) => (
+            <MessageSquare size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          href: null, // Bu tab'ı gizle
+          title: 'Profil',
+          tabBarIcon: ({ size, color }) => (
+            <User size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
