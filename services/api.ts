@@ -85,7 +85,7 @@ class ApiService {
       (response) => response,
       async (error) => {
         if (error.response?.status === 401) {
-          await this.clearToken();
+          await this.logout();
           // Redirect to login screen
         }
         return Promise.reject(error);
