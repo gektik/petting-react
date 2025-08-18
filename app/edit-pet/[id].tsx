@@ -89,7 +89,7 @@ export default function EditPetScreen() {
       const foundPet = pets.find(p => p.petID.toString() === id);
       
       if (foundPet) {
-       console.log('Found pet data:', foundPet);
+        console.log('Found pet data:', foundPet);
         const convertedPet: Pet = {
           id: foundPet.petID.toString(),
           name: foundPet.name,
@@ -112,25 +112,25 @@ export default function EditPetScreen() {
         // Parse birth date from API data
         let birthDate = new Date();
         if (foundPet.birthDate) {
-         console.log('API birthDate:', foundPet.birthDate);
+          console.log('API birthDate:', foundPet.birthDate);
           birthDate = new Date(foundPet.birthDate);
-         console.log('Parsed birthDate:', birthDate);
+          console.log('Parsed birthDate:', birthDate);
         } else {
-         console.log('No birthDate from API, calculating from age:', foundPet.age);
+          console.log('No birthDate from API, calculating from age:', foundPet.age);
           // Fallback: calculate from age if birthDate is null
           birthDate.setFullYear(birthDate.getFullYear() - (foundPet.age || 1));
         }
         
-       console.log('Final form data will be:', {
-         name: convertedPet.name,
-         breedName: convertedPet.breed,
-         birthDate: birthDate,
-         gender: convertedPet.gender === 'male' ? 1 : 0,
-         isNeutered: convertedPet.neutered,
-         description: convertedPet.description,
-         color: convertedPet.color,
-         isActiveForMatching: convertedPet.isActive,
-       });
+        console.log('Final form data will be:', {
+          name: convertedPet.name,
+          breedName: convertedPet.breed,
+          birthDate: birthDate,
+          gender: convertedPet.gender === 'male' ? 1 : 0,
+          isNeutered: convertedPet.neutered,
+          description: convertedPet.description,
+          color: convertedPet.color,
+          isActiveForMatching: convertedPet.isActive,
+        });
 
         setForm({
           name: convertedPet.name,
@@ -142,6 +142,9 @@ export default function EditPetScreen() {
           color: convertedPet.color,
           isActiveForMatching: convertedPet.isActive,
         });
+      } else {
+        console.log('Pet not found with ID:', id);
+        Alert.alert('Hata', 'Hayvan bulunamadı.');
       }
     } catch (error) {
       console.error('Error loading pet data:', error);
@@ -198,17 +201,17 @@ export default function EditPetScreen() {
     try {
       setSaving(true);
       
-     // Format birthDate to YYYY-MM-DD format for API
-     const formattedBirthDate = form.birthDate.toISOString().split('T')[0];
-     console.log('Original birthDate:', form.birthDate);
-     console.log('Formatted birthDate for API:', formattedBirthDate);
-     
+      // Format birthDate to YYYY-MM-DD format for API
+      const formattedBirthDate = form.birthDate.toISOString().split('T')[0];
+      console.log('Original birthDate:', form.birthDate);
+      console.log('Formatted birthDate for API:', formattedBirthDate);
+      
       const updateData = {
         name: form.name.trim(),
         petTypeID: 1, // Kedi için sabit değer
         breedID: getBreedID(form.breedName),
         gender: form.gender,
-       birthDate: formattedBirthDate, // YYYY-MM-DD formatında
+        birthDate: formattedBirthDate, // YYYY-MM-DD formatında
         isNeutered: form.isNeutered,
         description: form.description.trim(),
         color: form.color,
@@ -224,11 +227,11 @@ export default function EditPetScreen() {
       ]);
     } catch (error) {
       console.error('Error updating pet:', error);
-     console.error('Error details:', {
-       message: error.message,
-       status: error.response?.status,
-       data: error.response?.data,
-     });
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
       Alert.alert(
         'Hata', 
         'Güncelleme sırasında hata oluştu. Lütfen tekrar deneyin.',
