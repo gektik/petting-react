@@ -59,6 +59,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         : await import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
             AsyncStorage.getItem('auth_token')
           );
+      
+      // Set token in apiService
+      apiService.setAuthToken(token);
+      
       if (!token) {
         if (isMountedRef.current) {
           setIsLoading(false);
@@ -114,6 +118,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(userData);
         }
         
+        // Save token to storage and set in apiService
+        if (Platform.OS === 'web') {
+          localStorage.setItem('auth_token', response.token);
+        } else {
+          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+          await AsyncStorage.setItem('auth_token', response.token);
+        }
+        apiService.setAuthToken(response.token);
+        
         // Storage'a kaydet
         if (Platform.OS === 'web') {
           localStorage.setItem('user_data', JSON.stringify(userData));
@@ -165,6 +178,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (isMountedRef.current) {
           setUser(userData);
         }
+        
+        // Save token to storage and set in apiService
+        if (Platform.OS === 'web') {
+          localStorage.setItem('auth_token', response.token);
+        } else {
+          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+          await AsyncStorage.setItem('auth_token', response.token);
+        }
+        apiService.setAuthToken(response.token);
+        
         if (Platform.OS === 'web') {
           localStorage.setItem('user_data', JSON.stringify(userData));
         } else {
@@ -201,6 +224,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       await apiService.logout();
       console.log('AuthContext: API logout tamamlandı');
+      
+      // Clear token from apiService
+      apiService.setAuthToken(null);
+      
       if (Platform.OS === 'web') {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_data');
@@ -218,6 +245,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       console.error('Error during logout:', error);
       // Hata olsa bile user'ı temizle
+      apiService.setAuthToken(null);
       if (isMountedRef.current) {
         setUser(null);
       }

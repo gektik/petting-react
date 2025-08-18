@@ -64,7 +64,6 @@ class ApiService {
 
     this.setupInterceptors();
     this.setupNetworkListener();
-    this.loadTokenFromStorage();
   }
 
   private setupInterceptors() {
@@ -104,47 +103,9 @@ class ApiService {
     }
   }
 
-  private async loadTokenFromStorage() {
-    try {
-      const token = Platform.OS === 'web'
-        ? localStorage.getItem('auth_token')
-        : await import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
-            AsyncStorage.getItem('auth_token')
-          );
-      if (token) {
-        this.token = token;
-      }
-    } catch (error) {
-      console.error('Error loading token from storage:', error);
-    }
-  }
-
-  private async saveTokenToStorage(token: string) {
-    try {
-      if (Platform.OS === 'web') {
-        localStorage.setItem('auth_token', token);
-      } else {
-        const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-        await AsyncStorage.setItem('auth_token', token);
-      }
-      this.token = token;
-    } catch (error) {
-      console.error('Error saving token to storage:', error);
-    }
-  }
-
-  private async clearToken() {
-    try {
-      if (Platform.OS === 'web') {
-        localStorage.removeItem('auth_token');
-      } else {
-        const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-        await AsyncStorage.removeItem('auth_token');
-      }
-      this.token = null;
-    } catch (error) {
-      console.error('Error clearing token:', error);
-    }
+  // Public method to set auth token from AuthContext
+  setAuthToken(token: string | null) {
+    this.token = token;
   }
 
   // Authentication methods
@@ -157,10 +118,6 @@ class ApiService {
       console.log('Register attempt:', { username: data.username, email: data.email });
       const response: AxiosResponse<AuthResponse> = await this.api.post('/auth/register', data);
       console.log('API Response:', response.data);
-      
-      if (response.data.isSuccess && response.data.token) {
-        await this.saveTokenToStorage(response.data.token);
-      }
       
       return response.data;
     } catch (error: any) {
@@ -209,10 +166,6 @@ class ApiService {
       const response: AxiosResponse<AuthResponse> = await this.api.post('/auth/login', data);
       console.log('API Response:', response.data);
       
-      if (response.data.isSuccess && response.data.token) {
-        await this.saveTokenToStorage(response.data.token);
-      }
-      
       return response.data;
     } catch (error: any) {
       console.error('Login error details:', {
@@ -258,10 +211,6 @@ class ApiService {
       });
       console.log('Google API Response:', response.data);
       
-      if (response.data.isSuccess && response.data.token) {
-        await this.saveTokenToStorage(response.data.token);
-      }
-      
       return response.data;
     } catch (error: any) {
       console.error('Google login error details:', {
@@ -304,10 +253,6 @@ class ApiService {
       });
       console.log('Facebook API Response:', response.data);
       
-      if (response.data.isSuccess && response.data.token) {
-        await this.saveTokenToStorage(response.data.token);
-      }
-      
       return response.data;
     } catch (error: any) {
       console.error('Facebook login error details:', {
@@ -342,7 +287,7 @@ class ApiService {
   }
 
   async logout(): Promise<void> {
-    await this.clearToken();
+    this.token = null;
   }
 
   // Utility methods
