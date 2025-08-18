@@ -102,7 +102,7 @@ export default function EditPetScreen() {
           isActive: foundPet.isActiveForMatching,
           location: 'Türkiye',
           createdAt: foundPet.createdDate,
-        };
+        });
         
         setPet(convertedPet);
         setForm({
