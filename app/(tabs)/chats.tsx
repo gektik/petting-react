@@ -189,7 +189,10 @@ export default function ChatsScreen() {
     const otherParticipant = item.participants[1]; // Assume first is current user
     
     return (
-      <TouchableOpacity style={styles.chatCard}>
+      <TouchableOpacity 
+        style={styles.chatCard}
+        onPress={() => router.push(`/chat/${item.id}`)}
+      >
         <View style={styles.avatarContainer}>
           <Image
             source={{ uri: otherParticipant.profilePhoto }}
