@@ -631,7 +631,7 @@ class ApiService {
   async updateUserProfile(profileData: any): Promise<any> {
     try {
       console.log('👤 API: updateUserProfile çağrılıyor...', profileData);
-      const response = await this.api.put('/api/users/me', profileData);
+      const response = await this.api.put('/users/me', profileData);
       console.log('👤 API: updateUserProfile yanıtı:', response.data);
       
       return response.data;
