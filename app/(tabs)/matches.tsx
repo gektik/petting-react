@@ -14,6 +14,7 @@ import { MessageCircle, MapPin, X, Heart, Users, ThumbsUp, SkipForward } from 'l
 import { Match, Pet } from '@/types';
 import { apiService } from '@/services/api';
 import { mockPets } from '@/services/mockData';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface MatchWithPet extends Match {
   matchedPet: Pet;
@@ -22,6 +23,7 @@ interface MatchWithPet extends Match {
 type TabType = 'matches' | 'likes' | 'passes';
 
 export default function MatchesScreen() {
+  const { theme, isDark } = useTheme();
   const [matches, setMatches] = useState<MatchWithPet[]>([]);
   const [likes, setLikes] = useState<Pet[]>([]);
   const [passes, setPasses] = useState<Pet[]>([]);
