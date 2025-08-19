@@ -40,13 +40,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isMountedRef = useRef(true);
 
   useEffect(() => {
-    checkAuthStatus();
-    
-    // Set up automatic logout on 401 responses
+    // Set up automatic logout on 401 responses FIRST
     apiService.setUnauthorizedCallback(() => {
       console.log('AuthContext: 401 hatası nedeniyle otomatik logout yapılıyor...');
       logout();
     });
+    
+    checkAuthStatus();
     
     return () => {
       isMountedRef.current = false;

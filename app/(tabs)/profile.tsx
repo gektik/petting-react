@@ -21,7 +21,7 @@ import { mockPets } from '@/services/mockData';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout, updateUser, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const [petsCount, setPetsCount] = React.useState<number>(0);
   const [loadingPets, setLoadingPets] = React.useState(true);
@@ -31,8 +31,11 @@ export default function ProfileScreen() {
   );
 
   React.useEffect(() => {
-    loadPetsCount();
-  }, []);
+    // Only load pets count when authentication is confirmed
+    if (!isLoading && isAuthenticated && user) {
+      loadPetsCount();
+    }
+  }, [isLoading, isAuthenticated, user]);
 
   React.useEffect(() => {
     if (user?.profilePhoto) {
