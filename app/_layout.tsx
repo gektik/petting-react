@@ -32,6 +32,12 @@ export default function RootLayout() {
             <Stack.Screen name="profile" />
             <Stack.Screen name="add-listing" />
             <Stack.Screen name="edit-listing/[id]" />
+            <Stack.Screen name="health/add-record" />
+            <Stack.Screen name="health/appointments" />
+            <Stack.Screen name="health/book-appointment" />
+            <Stack.Screen name="health/reminders" />
+            <Stack.Screen name="health/add-reminder" />
+            <Stack.Screen name="health/edit-record/[id]" />
           </Stack>
           <StatusBar style="auto" />
         </AuthProvider>

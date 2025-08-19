@@ -10,6 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { Activity, Calendar, Pill, Stethoscope, Plus, Heart, CircleAlert as AlertCircle, Clock } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface HealthRecord {
@@ -25,6 +26,7 @@ interface HealthRecord {
 }
 
 export default function HealthScreen() {
+  const router = useRouter();
   const { theme, isDark } = useTheme();
   const [healthRecords] = useState<HealthRecord[]>([
     {
@@ -103,21 +105,21 @@ export default function HealthScreen() {
       title: 'Kayıt Ekle',
       subtitle: 'Yeni sağlık kaydı',
       color: '#6366F1',
-      onPress: () => console.log('Add health record'),
+      onPress: () => router.push('/health/add-record'),
     },
     {
       icon: Calendar,
       title: 'Randevu Al',
       subtitle: 'Veteriner randevusu',
       color: '#10B981',
-      onPress: () => console.log('Book appointment'),
+      onPress: () => router.push('/health/book-appointment'),
     },
     {
       icon: Clock,
       title: 'Hatırlatıcılar',
       subtitle: 'Aşı ve ilaç takibi',
       color: '#F59E0B',
-      onPress: () => console.log('View reminders'),
+      onPress: () => router.push('/health/reminders'),
     },
   ];
 
@@ -157,7 +159,11 @@ export default function HealthScreen() {
         <View style={styles.recordsContainer}>
           <Text style={styles.sectionTitle}>Son Kayıtlar</Text>
           {healthRecords.map((record) => (
-            <TouchableOpacity key={record.id} style={styles.recordCard}>
+            <TouchableOpacity 
+              key={record.id} 
+              style={styles.recordCard}
+              onPress={() => router.push(`/health/edit-record/${record.id}`)}
+            >
               <Image source={{ uri: record.petImage }} style={styles.petImage} />
               
               <View style={styles.recordInfo}>
