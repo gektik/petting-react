@@ -122,6 +122,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         await apiService.getUserPets();
         console.log('AuthContext: Token validation successful');
+        console.log('AuthContext: Final user state after validation:', user);
       } catch (validationError: any) {
         console.log('AuthContext: Token validation failed, clearing auth state');
         // Token is invalid, clear everything

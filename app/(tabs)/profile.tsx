@@ -36,7 +36,10 @@ export default function ProfileScreen() {
 
   React.useEffect(() => {
     if (user?.profilePhoto) {
+      console.log('Profile Screen: Kullanıcı profil resmi güncelleniyor:', user.profilePhoto);
       setCurrentProfileImage(user.profilePhoto);
+    } else {
+      console.log('Profile Screen: Kullanıcı profil resmi yok, default kullanılıyor');
     }
   }, [user?.profilePhoto]);
 
