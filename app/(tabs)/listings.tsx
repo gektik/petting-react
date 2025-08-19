@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 import { MapPin, Calendar, Plus } from 'lucide-react-native';
 import { AdoptionListing, Pet } from '@/types';
 import { apiService } from '@/services/api';
@@ -23,6 +24,7 @@ interface AdoptionListingWithPet extends AdoptionListing {
 
 export default function ListingsScreen() {
   const { theme, isDark } = useTheme();
+  const router = useRouter();
   const [listings, setListings] = useState<AdoptionListingWithPet[]>([]);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [loading, setLoading] = useState(true);
@@ -114,12 +116,13 @@ export default function ListingsScreen() {
           Sahiplendirme ve hizmet ilanları
         </Text>
         
+        <TouchableOpacity 
+          style={styles.addButton}
           onPress={() => router.push('/add-listing')}
-        <TouchableOpacity style={styles.addButton}>
+        >
           <LinearGradient
             colors={['#6366F1', '#8B5CF6']}
             style={styles.addButtonGradient}
-            onPress={() => router.push('/add-listing')}
           >
             <Plus size={24} color="#FFFFFF" />
           </LinearGradient>
