@@ -105,13 +105,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         if (userData) {
           const parsedUser = JSON.parse(userData);
-          console.log('AuthContext: Storage\'dan yüklenen kullanıcı verisi:', parsedUser);
-          console.log('AuthContext: Profil resmi URL\'si:', parsedUser.profilePhoto);
           if (isMountedRef.current) {
             setUser(parsedUser);
           }
-        } else {
-          console.log('AuthContext: Storage\'da kullanıcı verisi bulunamadı');
         }
       } catch (storageError) {
         console.warn('User data storage error:', storageError);
