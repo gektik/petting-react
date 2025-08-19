@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { ShoppingBag, Chrome as Home, Activity, FileText, Heart, MessageSquare, User } from 'lucide-react-native';
+import { ShoppingBag, Compass, Activity, FileText, Heart } from 'lucide-react-native';
 import { Platform } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -41,7 +41,7 @@ export default function TabLayout() {
         options={{
           title: 'Keşfet',
           tabBarIcon: ({ size, color }) => (
-            <Home size={size} color={color} />
+            <Compass size={size} color={color} />
           ),
         }}
       />
