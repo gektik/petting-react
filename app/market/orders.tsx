@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Package, Truck, CheckCircle, Clock, RotateCcw, ShoppingBag } from 'lucide-react-native';
+import { ArrowLeft, Package, Truck, CircleCheck as CheckCircle, Clock, RotateCcw, ShoppingBag } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 
