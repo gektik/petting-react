@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Users, Activity, FileText, MessageCircle, ShoppingBag } from 'lucide-react-native';
+import { ShoppingBag, Users, Activity, FileText, Heart } from 'lucide-react-native';
 import { Platform } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -46,20 +46,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="chats"
+        name="listings"
         options={{
-          title: 'Sohbetler',
+          title: 'İlanlar',
           tabBarIcon: ({ size, color }) => (
-            <MessageCircle size={size} color={color} />
+            <FileText size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="market"
+        name="health"
         options={{
-          title: 'Market',
+          title: 'Sağlık',
           tabBarIcon: ({ size, color }) => (
-            <ShoppingBag size={size} color={color} />
+            <Activity size={size} color={color} />
           ),
         }}
       />
