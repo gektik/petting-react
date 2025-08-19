@@ -177,7 +177,6 @@ export default function RegisterScreen() {
             <Text style={styles.subtitle}>Hesap oluşturun ve keşfetmeye başlayın</Text>
           </View>
 
-          <View style={styles.formContainer}>
           <View style={[styles.formContainer, { backgroundColor: isDark ? theme.colors.surface : 'rgba(255, 255, 255, 0.95)' }]}>
             <View style={styles.inputContainer}>
               <Mail size={20} color="#6366F1" style={styles.inputIcon} />
