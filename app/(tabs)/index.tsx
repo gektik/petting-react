@@ -465,14 +465,17 @@ export default function ExploreScreen() {
           <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); /* Navigate to my pets */ }}>
             <Text style={styles.drawerMenuText}>Hayvanlarım</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); /* Navigate to matches */ }}>
+          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); router.push('/(tabs)/matches'); }}>
             <Text style={styles.drawerMenuText}>Eşleşmelerim</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); /* Navigate to chats */ }}>
+          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); router.push('/(tabs)/chats'); }}>
             <Text style={styles.drawerMenuText}>Sohbetlerim</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); /* Navigate to settings */ }}>
+          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); router.push('/settings'); }}>
             <Text style={styles.drawerMenuText}>Ayarlar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); router.push('/my-pets'); }}>
+            <Text style={styles.drawerMenuText}>Hayvanlarım</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>

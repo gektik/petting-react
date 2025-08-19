@@ -263,19 +263,25 @@ export default function ProfileScreen() {
       icon: Bell,
       title: 'Bildirimler',
       subtitle: 'Bildirim ayarlarınızı düzenleyin',
-      onPress: () => Alert.alert('Bilgi', 'Bildirim ayarları özelliği yakında gelecek.'),
+      onPress: () => router.push('/notifications'),
     },
     {
       icon: Shield,
       title: 'Gizlilik',
       subtitle: 'Gizlilik ve güvenlik ayarları',
-      onPress: () => Alert.alert('Bilgi', 'Gizlilik ayarları özelliği yakında gelecek.'),
+      onPress: () => router.push('/privacy-settings'),
     },
     {
       icon: HelpCircle,
       title: 'Yardım',
       subtitle: 'SSS ve destek',
-      onPress: () => Alert.alert('Bilgi', 'Yardım merkezi özelliği yakında gelecek.'),
+      onPress: () => router.push('/help-center'),
+    },
+    {
+      icon: Settings,
+      title: 'Ayarlar',
+      subtitle: 'Uygulama ayarları',
+      onPress: () => router.push('/settings'),
     },
   ];
 

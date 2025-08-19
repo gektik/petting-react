@@ -21,6 +21,11 @@ export default function RootLayout() {
           <Stack.Screen name="add-pet" />
           <Stack.Screen name="edit-pet/[id]" />
           <Stack.Screen name="edit-profile" />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="privacy-settings" />
+          <Stack.Screen name="help-center" />
+          <Stack.Screen name="notifications" />
+          <Stack.Screen name="sha1-info" />
         </Stack>
         <StatusBar style="auto" />
       </AuthProvider>
