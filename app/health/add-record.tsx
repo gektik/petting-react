@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Save, Calendar, Stethoscope, Pill, Heart, AlertCircle } from 'lucide-react-native';
+import { ArrowLeft, Save, Calendar, Stethoscope, Pill, Heart, CircleAlert as AlertCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
