@@ -366,6 +366,7 @@ export default function ProfileScreen() {
       </ScrollView>
     </LinearGradient>
   );
+}
 
 const styles = StyleSheet.create({
   container: {
