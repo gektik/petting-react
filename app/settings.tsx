@@ -23,6 +23,114 @@ export default function SettingsScreen() {
   const [locationSharing, setLocationSharing] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingTop: 50,
+      paddingHorizontal: 24,
+      paddingBottom: 20,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: theme.colors.surface,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+    },
+    placeholder: {
+      width: 44,
+    },
+    settingsGroup: {
+      marginBottom: 24,
+      paddingHorizontal: 16,
+    },
+    groupTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 12,
+      paddingHorizontal: 8,
+    },
+    groupContainer: {
+      borderRadius: 16,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    settingItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: isDark ? '#374151' : '#F3F4F6',
+    },
+    settingIconContainer: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: '#F0F4FF',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 16,
+    },
+    logoutIconContainer: {
+      backgroundColor: '#FEF2F2',
+    },
+    settingTextContainer: {
+      flex: 1,
+    },
+    settingTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginBottom: 4,
+      color: theme.colors.text,
+    },
+    settingSubtitle: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+    },
+    logoutItem: {
+      borderRadius: 16,
+      marginHorizontal: 16,
+      marginBottom: 32,
+      borderBottomWidth: 0,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    logoutText: {
+      color: '#EF4444',
+    },
+  });
+
   const handleLogout = () => {
     Alert.alert(
       'Çıkış Yap',
@@ -177,109 +285,3 @@ export default function SettingsScreen() {
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 50,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: theme.colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  placeholder: {
-    width: 44,
-  },
-  settingsGroup: {
-    marginBottom: 24,
-    paddingHorizontal: 16,
-  },
-  groupTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    paddingHorizontal: 8,
-  },
-  groupContainer: {
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  settingIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F0F4FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  logoutIconContainer: {
-    backgroundColor: '#FEF2F2',
-  },
-  settingTextContainer: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  settingSubtitle: {
-    fontSize: 14,
-  },
-  logoutItem: {
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginBottom: 32,
-    borderBottomWidth: 0,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  logoutText: {
-    color: '#EF4444',
-  },
-});
