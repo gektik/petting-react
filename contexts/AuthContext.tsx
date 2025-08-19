@@ -114,7 +114,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Verify token with server (optional)
-      // You can add a /auth/verify endpoint to check token validity
+      // Validate token by making an authenticated request
+      try {
+        await apiService.getUserPets();
+        console.log('AuthContext: Token validation successful');
+      } catch (validationError: any) {
+        console.log('AuthContext: Token validation failed, clearing auth state');
+        // Token is invalid, clear everything
+        apiService.setAuthToken(null);
+        if (Platform.OS === 'web') {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_data');
+          localStorage.removeItem('token_expiration');
+        } else {
+          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+          await AsyncStorage.multiRemove(['auth_token', 'user_data', 'token_expiration']);
+        }
+        if (isMountedRef.current) {
+          setUser(null);
+        }
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
+        return;
+      }
       
     } catch (error) {
       console.error('Error checking auth status:', error);
