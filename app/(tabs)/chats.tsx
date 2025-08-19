@@ -11,12 +11,14 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { MessageCircle } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { Chat } from '@/types';
 import { apiService } from '@/services/api';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function ChatsScreen() {
   const { theme, isDark } = useTheme();
+  const router = useRouter();
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
 
