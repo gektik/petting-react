@@ -224,7 +224,18 @@ export default function EditProfileScreen() {
         profilePhoto: currentProfileImage,
       };
       
-      updateUser(updatedUser);
+      // API'den dönen güncel bilgileri kullan
+      const finalUserData = {
+        ...updatedUser,
+        // API'den gelen güncel bilgileri kullan
+        firstName: result.firstName || updatedUser.firstName,
+        lastName: result.lastName || updatedUser.lastName,
+        location: result.location || updatedUser.location,
+        bio: result.bio || updatedUser.bio,
+        profilePhoto: result.profilePictureURL || currentProfileImage,
+      };
+      
+      updateUser(finalUserData);
       
       Alert.alert('Başarılı', 'Profil bilgileriniz güncellendi.', [
         { text: 'Tamam', onPress: () => router.back() }
