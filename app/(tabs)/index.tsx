@@ -584,6 +584,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
     lineHeight: 16,
+    color: '#6366F1',
   },
   filterIcon: {
     marginLeft: 8,
