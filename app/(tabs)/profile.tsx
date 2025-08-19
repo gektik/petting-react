@@ -21,7 +21,7 @@ import { mockPets } from '@/services/mockData';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const router = useRouter();
   const [petsCount, setPetsCount] = React.useState<number>(0);
   const [loadingPets, setLoadingPets] = React.useState(true);
@@ -32,7 +32,11 @@ export default function ProfileScreen() {
 
   React.useEffect(() => {
     loadPetsCount();
-  }, []);
+    // User'dan gelen profil resmini kullan
+    if (user?.profilePhoto) {
+      setCurrentProfileImage(user.profilePhoto);
+    }
+  }, [user?.profilePhoto]);
 
   const loadPetsCount = async () => {
     try {
@@ -97,6 +101,9 @@ export default function ProfileScreen() {
          
           setCurrentProfileImage(newImageUrl);
           
+          // AuthContext'teki user verisini güncelle
+          updateUser({ profilePhoto: newImageUrl });
+          
           Alert.alert('Başarılı', 'Profil resmi başarıyla güncellendi!');
         } catch (uploadError) {
           console.error('Profil resmi yükleme hatası:', uploadError);
@@ -157,6 +164,9 @@ export default function ProfileScreen() {
           }
          
           setCurrentProfileImage(newImageUrl);
+          
+          // AuthContext'teki user verisini güncelle
+          updateUser({ profilePhoto: newImageUrl });
           
           Alert.alert('Başarılı', 'Profil fotoğrafı başarıyla güncellendi!');
         } catch (uploadError) {
