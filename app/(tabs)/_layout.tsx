@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { ShoppingBag, Compass, Activity, FileText, Heart } from 'lucide-react-native';
+import { ShoppingBag, Users, Activity, FileText, Heart } from 'lucide-react-native';
 import { Platform } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -41,16 +41,7 @@ export default function TabLayout() {
         options={{
           title: 'Keşfet',
           tabBarIcon: ({ size, color }) => (
-            <Compass size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="matches"
-        options={{
-          title: 'Eşleşmeler',
-          tabBarIcon: ({ size, color }) => (
-            <Heart size={size} color={color} />
+            <Users size={size} color={color} />
           ),
         }}
       />
@@ -69,15 +60,6 @@ export default function TabLayout() {
           title: 'Sağlık',
           tabBarIcon: ({ size, color }) => (
             <Activity size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="market"
-        options={{
-          title: 'Market',
-          tabBarIcon: ({ size, color }) => (
-            <ShoppingBag size={size} color={color} />
           ),
         }}
       />
