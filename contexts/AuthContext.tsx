@@ -105,6 +105,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         if (userData) {
           const parsedUser = JSON.parse(userData);
+          console.log('AuthContext: Kullanıcı verisi storage\'dan yüklendi:', parsedUser);
           if (isMountedRef.current) {
             setUser(parsedUser);
           }
