@@ -297,6 +297,7 @@ export default function RegisterScreen() {
               </TouchableOpacity>
             </View>
           </View>
+        </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
