@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Save, Calendar, Stethoscope, Pill, Heart, AlertCircle, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Save, Calendar, Stethoscope, Pill, Heart, CircleAlert as AlertCircle, Trash2 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '@/contexts/ThemeContext';

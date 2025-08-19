@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Bell, Calendar, Pill, Stethoscope, Plus, Clock, AlertCircle } from 'lucide-react-native';
+import { ArrowLeft, Bell, Calendar, Pill, Stethoscope, Plus, Clock, CircleAlert as AlertCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 
