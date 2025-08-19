@@ -150,7 +150,10 @@ export default function ProfileScreen() {
           }
          
           setCurrentProfileImage(newImageUrl);
-          updateUser({ profilePhoto: newImageUrl });
+          
+          console.log('Profile Screen: updateUser çağrılıyor (camera):', newImageUrl);
+          updateUser({ ...user, profilePhoto: newImageUrl });
+          console.log('Profile Screen: updateUser çağrıldı (camera)');
           
           Alert.alert('Başarılı', 'Profil fotoğrafı başarıyla güncellendi!');
         } catch (uploadError) {
