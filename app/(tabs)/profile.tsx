@@ -251,7 +251,7 @@ export default function ProfileScreen() {
       icon: Edit,
       title: 'Profili Düzenle',
       subtitle: 'Kişisel bilgilerinizi güncelleyin',
-      onPress: () => Alert.alert('Bilgi', 'Profil düzenleme özelliği yakında gelecek.'),
+      onPress: () => router.push('/edit-profile'),
     },
     {
       icon: PlusCircle,

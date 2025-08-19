@@ -20,6 +20,7 @@ export default function RootLayout() {
           <Stack.Screen name="my-pets" />
           <Stack.Screen name="add-pet" />
           <Stack.Screen name="edit-pet/[id]" />
+          <Stack.Screen name="edit-profile" />
         </Stack>
         <StatusBar style="auto" />
       </AuthProvider>

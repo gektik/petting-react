@@ -7,6 +7,10 @@ export interface User {
   username: string;
   email: string;
   profilePhoto?: string;
+  firstName?: string;
+  lastName?: string;
+  location?: string;
+  bio?: string;
   createdAt?: string;
 }
 
@@ -172,6 +176,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           username: response.user?.username || response.username || 'Unknown User',
           email: response.user?.email || response.email || 'unknown@example.com',
           profilePhoto: response.user?.profilePictureURL || undefined,
+          firstName: response.user?.firstName || undefined,
+          lastName: response.user?.lastName || undefined,
+          location: response.user?.location || undefined,
+          bio: response.user?.bio || undefined,
         };
         
         console.log('AuthContext: Kullanıcı verisi:', userData);
@@ -235,6 +243,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           username: response.user?.username || response.username || data.username,
           email: response.user?.email || response.email || data.email,
           profilePhoto: response.user?.profilePictureURL || undefined,
+          firstName: response.user?.firstName || undefined,
+          lastName: response.user?.lastName || undefined,
+          location: response.user?.location || undefined,
+          bio: response.user?.bio || undefined,
         };
         
         if (isMountedRef.current) {
