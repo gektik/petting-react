@@ -69,6 +69,7 @@ export default function ProfileScreen() {
   const pickProfileImage = async () => {
     try {
       setImageLoading(true);
+      console.log('🖼️ Profil resmi seçme başlatılıyor...');
       
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
@@ -87,6 +88,7 @@ export default function ProfileScreen() {
 
       if (!result.canceled && result.assets[0]) {
         const selectedImage = result.assets[0];
+        console.log('🖼️ Resim seçildi, yükleme başlatılıyor...');
         
         try {
           const uploadResult = await apiService.uploadProfileImage(selectedImage.uri);
@@ -96,8 +98,22 @@ export default function ProfileScreen() {
             throw new Error('Upload başarılı ama profil resmi URL\'si alınamadı');
           }
          
+          console.log('🖼️ Resim başarıyla yüklendi:', newImageUrl);
           setCurrentProfileImage(newImageUrl);
-          updateUser({ profilePhoto: newImageUrl });
+          
+          // Kullanıcı bilgilerini güncelle
+          console.log('🖼️ Kullanıcı bilgileri güncelleniyor...');
+          const updatedUser = { ...user, profilePhoto: newImageUrl };
+          updateUser(updatedUser);
+          
+          // API'ye de profil resmi güncellemesini gönder
+          console.log('🖼️ API\'ye profil resmi güncelleme gönderiliyor...');
+          try {
+            await apiService.updateUserProfile({ profilePictureURL: newImageUrl });
+            console.log('🖼️ API profil güncelleme başarılı');
+          } catch (apiError) {
+            console.warn('🖼️ API profil güncelleme hatası:', apiError);
+          }
           
           Alert.alert('Başarılı', 'Profil resmi başarıyla güncellendi!');
         } catch (uploadError) {
@@ -123,6 +139,7 @@ export default function ProfileScreen() {
   const takeProfilePhoto = async () => {
     try {
       setImageLoading(true);
+      console.log('📷 Profil fotoğrafı çekme başlatılıyor...');
       
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       
@@ -140,6 +157,7 @@ export default function ProfileScreen() {
 
       if (!result.canceled && result.assets[0]) {
         const takenPhoto = result.assets[0];
+        console.log('📷 Fotoğraf çekildi, yükleme başlatılıyor...');
         
         try {
           const uploadResult = await apiService.uploadProfileImage(takenPhoto.uri);
@@ -149,11 +167,22 @@ export default function ProfileScreen() {
             throw new Error('Upload başarılı ama profil fotoğrafı URL\'si alınamadı');
           }
          
+          console.log('📷 Fotoğraf başarıyla yüklendi:', newImageUrl);
           setCurrentProfileImage(newImageUrl);
           
-          console.log('Profile Screen: updateUser çağrılıyor (camera):', newImageUrl);
-          updateUser({ ...user, profilePhoto: newImageUrl });
-          console.log('Profile Screen: updateUser çağrıldı (camera)');
+          // Kullanıcı bilgilerini güncelle
+          console.log('📷 Kullanıcı bilgileri güncelleniyor...');
+          const updatedUser = { ...user, profilePhoto: newImageUrl };
+          updateUser(updatedUser);
+          
+          // API'ye de profil resmi güncellemesini gönder
+          console.log('📷 API\'ye profil resmi güncelleme gönderiliyor...');
+          try {
+            await apiService.updateUserProfile({ profilePictureURL: newImageUrl });
+            console.log('📷 API profil güncelleme başarılı');
+          } catch (apiError) {
+            console.warn('📷 API profil güncelleme hatası:', apiError);
+          }
           
           Alert.alert('Başarılı', 'Profil fotoğrafı başarıyla güncellendi!');
         } catch (uploadError) {

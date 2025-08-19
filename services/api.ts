@@ -543,7 +543,7 @@ class ApiService {
   // Profile image upload method
   async uploadProfileImage(imageUri: string): Promise<{ imageUrl: string }> {
     try {
-      console.log('API: uploadProfileImage çağrılıyor...', { imageUri: imageUri.substring(0, 50) + '...' });
+      console.log('🔄 API: uploadProfileImage çağrılıyor...', { imageUri: imageUri.substring(0, 50) + '...' });
       
       // Create FormData for multipart/form-data upload
       const formData = new FormData();
@@ -556,7 +556,7 @@ class ApiService {
         name: filename,
       } as any);
       
-      console.log('API: Profile FormData hazırlandı:', { filename });
+      console.log('🔄 API: Profile FormData hazırlandı:', { filename });
       
       const response = await this.api.post('/users/me/upload-profile-image', formData, {
         headers: {
@@ -565,8 +565,8 @@ class ApiService {
         timeout: 30000, // 30 seconds for image upload
       });
       
-      console.log('API: uploadProfileImage yanıtı:', response.data);
-      console.log('API: Profile upload response format check:', {
+      console.log('🔄 API: uploadProfileImage yanıtı:', response.data);
+      console.log('🔄 API: Profile upload response format check:', {
         hasImageUrl: !!response.data.imageUrl,
         hasUrl: !!response.data.url,
         hasProfilePictureURL: !!response.data.profilePictureURL,
@@ -580,15 +580,15 @@ class ApiService {
       // Öncelik sırası: imageUrl > url > profilePictureURL
       if (result.imageUrl) {
         finalImageUrl = this.fixImageUrl(result.imageUrl);
-        console.log('API: imageUrl kullanılıyor:', finalImageUrl);
+        console.log('🔄 API: imageUrl kullanılıyor:', finalImageUrl);
       } else if (result.url) {
         finalImageUrl = this.fixImageUrl(result.url);
-        console.log('API: url kullanılıyor:', finalImageUrl);
+        console.log('🔄 API: url kullanılıyor:', finalImageUrl);
       } else if (result.profilePictureURL) {
         finalImageUrl = this.fixImageUrl(result.profilePictureURL);
-        console.log('API: profilePictureURL kullanılıyor:', finalImageUrl);
+        console.log('🔄 API: profilePictureURL kullanılıyor:', finalImageUrl);
       } else {
-        console.error('API: Hiçbir URL field\'ı bulunamadı!', result);
+        console.error('🔄 API: Hiçbir URL field\'ı bulunamadı!', result);
         throw new Error('Upload başarılı ama resim URL\'si döndürülmedi');
       }
       
@@ -601,7 +601,24 @@ class ApiService {
         ...result
       };
     } catch (error: any) {
-      console.error('API: uploadProfileImage hatası:', {
+      console.error('🔄 API: uploadProfileImage hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
+
+  // User profile update method
+  async updateUserProfile(profileData: any): Promise<any> {
+    try {
+      console.log('👤 API: updateUserProfile çağrılıyor...', profileData);
+      const response = await this.api.put('/users/me', profileData);
+      console.log('👤 API: updateUserProfile yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('👤 API: updateUserProfile hatası:', {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
