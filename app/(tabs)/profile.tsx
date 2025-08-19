@@ -34,11 +34,8 @@ export default function ProfileScreen() {
     loadPetsCount();
   }, []);
 
-  // Separate effect for profile image updates
   React.useEffect(() => {
-    console.log('Profile: User profil resmi güncellendi:', user?.profilePhoto);
     if (user?.profilePhoto) {
-      console.log('Profile: currentProfileImage güncelleniyor:', user.profilePhoto);
       setCurrentProfileImage(user.profilePhoto);
     }
   }, [user?.profilePhoto]);
@@ -49,7 +46,6 @@ export default function ProfileScreen() {
       let pets: Pet[];
       
       if (Platform.OS === 'web') {
-        // Web platformunda mock data kullan
         await new Promise(resolve => setTimeout(resolve, 500));
         pets = mockPets;
       } else {
@@ -58,7 +54,6 @@ export default function ProfileScreen() {
       
       setPetsCount(pets.length);
     } catch (error) {
-      // Don't log 401 errors as they're handled by AuthContext
       if (error?.response?.status !== 401) {
         console.error('Error loading pets count:', error);
       }
@@ -72,7 +67,6 @@ export default function ProfileScreen() {
     try {
       setImageLoading(true);
       
-      // İzin iste
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (permissionResult.granted === false) {
@@ -80,7 +74,6 @@ export default function ProfileScreen() {
         return;
       }
 
-      // Resim seç
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -91,25 +84,16 @@ export default function ProfileScreen() {
 
       if (!result.canceled && result.assets[0]) {
         const selectedImage = result.assets[0];
-        console.log('Seçilen profil resmi:', selectedImage);
         
         try {
-          // Resmi API'ye yükle
-          console.log('Profil resmi API\'ye yükleniyor...');
           const uploadResult = await apiService.uploadProfileImage(selectedImage.uri);
-          console.log('Profil resmi yükleme sonucu:', uploadResult);
-          
-          // Profil resmi URI'sini güncelle
           const newImageUrl = uploadResult.imageUrl;
-          console.log('Yeni profil resmi URL\'si:', newImageUrl);
          
           if (!newImageUrl) {
             throw new Error('Upload başarılı ama profil resmi URL\'si alınamadı');
           }
          
           setCurrentProfileImage(newImageUrl);
-          
-          // AuthContext'teki user verisini güncelle
           updateUser({ profilePhoto: newImageUrl });
           
           Alert.alert('Başarılı', 'Profil resmi başarıyla güncellendi!');
@@ -137,7 +121,6 @@ export default function ProfileScreen() {
     try {
       setImageLoading(true);
       
-      // Kamera izni iste
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       
       if (permissionResult.granted === false) {
@@ -145,7 +128,6 @@ export default function ProfileScreen() {
         return;
       }
 
-      // Fotoğraf çek
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
         aspect: [1, 1],
@@ -155,25 +137,16 @@ export default function ProfileScreen() {
 
       if (!result.canceled && result.assets[0]) {
         const takenPhoto = result.assets[0];
-        console.log('Çekilen profil fotoğrafı:', takenPhoto);
         
         try {
-          // Fotoğrafı API'ye yükle
-          console.log('Profil fotoğrafı API\'ye yükleniyor...');
           const uploadResult = await apiService.uploadProfileImage(takenPhoto.uri);
-          console.log('Profil fotoğrafı yükleme sonucu:', uploadResult);
-          
-          // Profil resmi URI'sini güncelle
           const newImageUrl = uploadResult.imageUrl;
-          console.log('Yeni profil fotoğrafı URL\'si:', newImageUrl);
          
           if (!newImageUrl) {
             throw new Error('Upload başarılı ama profil fotoğrafı URL\'si alınamadı');
           }
          
           setCurrentProfileImage(newImageUrl);
-          
-          // AuthContext'teki user verisini güncelle
           updateUser({ profilePhoto: newImageUrl });
           
           Alert.alert('Başarılı', 'Profil fotoğrafı başarıyla güncellendi!');
@@ -232,13 +205,7 @@ export default function ProfileScreen() {
   };
 
   const handleMyPets = () => {
-    console.log('Hayvanlarım butonuna tıklandı');
     router.push('/my-pets');
-  };
-
-  const handleAddPet = () => {
-    console.log('Yeni hayvan ekleme sayfasına yönlendiriliyor...');
-    router.push('/add-pet');
   };
 
   const menuItems = [
@@ -330,10 +297,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               key={index}
               style={styles.menuItem}
-              onPress={() => {
-                console.log('Menu item pressed:', item.title);
-                item.onPress();
-              }}
+              onPress={item.onPress}
               activeOpacity={0.8}
             >
               <View style={styles.menuIconContainer}>
@@ -348,10 +312,7 @@ export default function ProfileScreen() {
           
           <TouchableOpacity
             style={[styles.menuItem, styles.logoutItem]}
-            onPress={() => {
-              console.log('Logout pressed');
-              handleLogout();
-            }}
+            onPress={handleLogout}
             activeOpacity={0.8}
           >
             <View style={[styles.menuIconContainer, styles.logoutIconContainer]}>
