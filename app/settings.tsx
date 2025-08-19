@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Bell, Shield, Globe, Moon, Smartphone, HelpCircle, LogOut } from 'lucide-react-native';
+import { ArrowLeft, Bell, Shield, Globe, Moon, Smartphone, CircleHelp as HelpCircle, LogOut } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 
