@@ -34,6 +34,15 @@ export default function ProfileScreen() {
     loadPetsCount();
   }, []);
 
+  // Separate effect for profile image updates
+  React.useEffect(() => {
+    console.log('Profile: User profil resmi güncellendi:', user?.profilePhoto);
+    if (user?.profilePhoto) {
+      console.log('Profile: currentProfileImage güncelleniyor:', user.profilePhoto);
+      setCurrentProfileImage(user.profilePhoto);
+    }
+  }, [user?.profilePhoto]);
+
   const loadPetsCount = async () => {
     try {
       setLoadingPets(true);
