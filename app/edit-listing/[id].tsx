@@ -461,14 +461,6 @@ export default function EditListingScreen() {
     </KeyboardAvoidingView>
   );
 
-  const toggleContactPreference = (preference: string) => {
-    setForm(prev => ({
-      ...prev,
-      contactPreferences: prev.contactPreferences.includes(preference)
-        ? prev.contactPreferences.filter(p => p !== preference)
-        : [...prev.contactPreferences, preference]
-    }));
-  };
 }
 
 const styles = StyleSheet.create({
