@@ -169,15 +169,135 @@ export default function RegisterScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <Heart size={48} color="#FFFFFF" fill="#FFFFFF" />
+          <View>
+            <View style={styles.header}>
+              <View style={styles.logoContainer}>
+                <Heart size={48} color="#FFFFFF" fill="#FFFFFF" />
+              </View>
+              <Text style={styles.appName}>Petting</Text>
+              <Text style={styles.subtitle}>Hesap oluşturun ve keşfetmeye başlayın</Text>
             </View>
-            <Text style={styles.appName}>Petting</Text>
-            <Text style={styles.subtitle}>Hesap oluşturun ve keşfetmeye başlayın</Text>
-          </View>
 
-          <View style={[styles.formContainer, { backgroundColor: isDark ? theme.colors.surface : 'rgba(255, 255, 255, 0.95)' }]}>
+            <View style={[styles.formContainer, { backgroundColor: isDark ? theme.colors.surface : 'rgba(255, 255, 255, 0.95)' }]}>
+              <View style={styles.inputContainer}>
+                <Mail size={20} color="#6366F1" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="E-posta"
+                  placeholderTextColor="#9CA3AF"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <User size={20} color="#6366F1" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Kullanıcı adı"
+                  placeholderTextColor="#9CA3AF"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Lock size={20} color="#6366F1" style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, styles.passwordInput]}
+                  placeholder="Şifre"
+                  placeholderTextColor="#9CA3AF"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color="#6366F1" />
+                  ) : (
+                    <Eye size={20} color="#6366F1" />
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Lock size={20} color="#6366F1" style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, styles.passwordInput]}
+                  placeholder="Şifre tekrarı"
+                  placeholderTextColor="#9CA3AF"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} color="#6366F1" />
+                  ) : (
+                    <Eye size={20} color="#6366F1" />
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
+                onPress={handleRegister}
+                disabled={isLoading}
+              >
+                <LinearGradient
+                  colors={['#6366F1', '#8B5CF6']}
+                  style={styles.buttonGradient}
+                >
+                  <Text style={styles.registerButtonText}>
+                    {isLoading ? 'Kayıt Oluşturuluyor...' : 'Kayıt Ol'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>veya</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <View style={styles.socialButtonsContainer}>
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={handleGoogleRegister}
+                  disabled={isLoading}
+                >
+                  <Chrome size={20} color="#DB4437" />
+                  <Text style={styles.socialButtonText}>Google</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={handleFacebookRegister}
+                  disabled={isLoading}
+                >
+                  <View style={styles.facebookIcon}>
+                    <Text style={styles.facebookIconText}>f</Text>
+                  </View>
+                  <Text style={styles.socialButtonText}>Facebook</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.loginContainer}>
+                <Text style={styles.loginText}>Zaten hesabın var mı? </Text>
+                <TouchableOpacity onPress={() => router.push('/auth/login')}>
+                  <Text style={styles.loginLink}>Giriş Yap</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
             <View style={styles.inputContainer}>
               <Mail size={20} color="#6366F1" style={styles.inputIcon} />
               <TextInput
@@ -297,7 +417,6 @@ export default function RegisterScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
