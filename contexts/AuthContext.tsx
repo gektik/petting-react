@@ -301,7 +301,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (Platform.OS === 'web') {
         localStorage.setItem('user_data', JSON.stringify(updatedUser));
       } else {
-        AsyncStorage.setItem('user_data', JSON.stringify(updatedUser));
+        import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
+          AsyncStorage.setItem('user_data', JSON.stringify(updatedUser))
+        );
       }
     } else if (!user && isMountedRef.current) {
       // Eğer user yoksa yeni user oluştur
