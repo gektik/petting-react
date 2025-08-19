@@ -169,6 +169,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           id: response.userId || response.user?.id || 'unknown',
           username: response.username || response.user?.firstName || 'Unknown User',
           email: response.email || response.user?.email || 'unknown@example.com',
+          profilePhoto: response.user?.profilePictureURL || undefined,
         };
         
         console.log('AuthContext: Kullanıcı verisi:', userData);
@@ -231,6 +232,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           id: response.userId || response.user?.id || 'unknown',
           username: response.username || response.user?.firstName || data.username,
           email: response.email || response.user?.email || data.email,
+          profilePhoto: response.user?.profilePictureURL || undefined,
         };
         
         if (isMountedRef.current) {
