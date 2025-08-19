@@ -7,16 +7,49 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { Settings, Heart, MessageSquare, CirclePlus as PlusCircle, LogOut, CreditCard as Edit, Camera, Bell, Shield, CircleHelp as HelpCircle } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
+import { apiService } from '@/services/api';
+import { Pet } from '@/types';
+import { Platform } from 'react-native';
+import { mockPets } from '@/services/mockData';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [petsCount, setPetsCount] = React.useState<number>(0);
+  const [loadingPets, setLoadingPets] = React.useState(true);
+
+  React.useEffect(() => {
+    loadPetsCount();
+  }, []);
+
+  const loadPetsCount = async () => {
+    try {
+      setLoadingPets(true);
+      let pets: Pet[];
+      
+      if (Platform.OS === 'web') {
+        // Web platformunda mock data kullan
+        await new Promise(resolve => setTimeout(resolve, 500));
+        pets = mockPets;
+      } else {
+        pets = await apiService.getUserPets();
+      }
+      
+      setPetsCount(pets.length);
+    } catch (error) {
+      console.error('Error loading pets count:', error);
+      setPetsCount(0);
+    } finally {
+      setLoadingPets(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -86,7 +119,7 @@ export default function ProfileScreen() {
   const stats = [
     { icon: Heart, label: 'Beğeniler', value: '24' },
     { icon: MessageSquare, label: 'Eşleşmeler', value: '8' },
-    { icon: PlusCircle, label: 'Hayvanlarım', value: '3' },
+    { icon: PlusCircle, label: 'Hayvanlarım', value: loadingPets ? '...' : petsCount.toString() },
   ];
 
   return (
