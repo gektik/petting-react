@@ -92,6 +92,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Set token in apiService
       apiService.setAuthToken(token);
       
+      // Check token expiration before making API calls
+      try {
+        let tokenExpiration = null;
+        if (Platform.OS === 'web') {
+          tokenExpiration = localStorage.getItem('token_expiration');
+        } else {
+          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+          tokenExpiration = await AsyncStorage.getItem('token_expiration');
+        }
+        
+        if (tokenExpiration) {
+          const expirationDate = new Date(tokenExpiration);
+          const now = new Date();
+          
+          if (now >= expirationDate) {
+            console.log('AuthContext: Token expired, clearing auth state');
+            // Token is expired, clear everything
+            apiService.setAuthToken(null);
+            if (Platform.OS === 'web') {
+              localStorage.removeItem('auth_token');
+              localStorage.removeItem('user_data');
+              localStorage.removeItem('token_expiration');
+            } else {
+              const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+              await AsyncStorage.multiRemove(['auth_token', 'user_data', 'token_expiration']);
+            }
+            if (isMountedRef.current) {
+              setUser(null);
+              setIsLoading(false);
+            }
+            return;
+          }
+        }
+      } catch (expirationError) {
+        console.warn('Token expiration check error:', expirationError);
+      }
+      
       if (!token) {
         // Explicitly set user to null when no valid token
         if (isMountedRef.current) {
