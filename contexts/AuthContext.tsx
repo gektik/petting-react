@@ -171,16 +171,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (response.isSuccess) {
         console.log('AuthContext: Login başarılı, kullanıcı verisi oluşturuluyor...');
+        
+        // Önce storage'dan mevcut profil resmi bilgisini kontrol et
+        let existingProfilePhoto = undefined;
+        try {
+          let existingUserData = null;
+          if (Platform.OS === 'web') {
+            existingUserData = localStorage.getItem('user_data');
+          } else {
+            const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+            existingUserData = await AsyncStorage.getItem('user_data');
+          }
+          
+          if (existingUserData) {
+            const parsedUser = JSON.parse(existingUserData);
+            existingProfilePhoto = parsedUser.profilePhoto;
+            console.log('🔍 AuthContext: Storage\'dan mevcut profil resmi:', existingProfilePhoto);
+          }
+        } catch (storageError) {
+          console.warn('Storage\'dan profil resmi okunamadı:', storageError);
+        }
+        
         let userData: User = {
           id: response.user?.id || response.userId || 'unknown',
           username: response.user?.username || response.username || 'Unknown User',
           email: response.user?.email || response.email || 'unknown@example.com',
-          profilePhoto: response.user?.profilePictureURL || undefined,
+          profilePhoto: response.user?.profilePictureURL || existingProfilePhoto || undefined,
           firstName: response.user?.firstName || undefined,
           lastName: response.user?.lastName || undefined,
           location: response.user?.location || undefined,
           bio: response.user?.bio || undefined,
         };
+        
+        console.log('🔍 AuthContext: Final user data with profile photo:', {
+          ...userData,
+          profilePhoto: userData.profilePhoto ? 'MEVCUT' : 'YOK'
+        });
         
         console.log('AuthContext: Kullanıcı verisi:', userData);
         if (isMountedRef.current) {
@@ -238,16 +264,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response: AuthResponse = await apiService.register(data);
       
       if (response.isSuccess) {
+        // Önce storage'dan mevcut profil resmi bilgisini kontrol et
+        let existingProfilePhoto = undefined;
+        try {
+          let existingUserData = null;
+          if (Platform.OS === 'web') {
+            existingUserData = localStorage.getItem('user_data');
+          } else {
+            const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+            existingUserData = await AsyncStorage.getItem('user_data');
+          }
+          
+          if (existingUserData) {
+            const parsedUser = JSON.parse(existingUserData);
+            existingProfilePhoto = parsedUser.profilePhoto;
+            console.log('🔍 AuthContext: Register - Storage\'dan mevcut profil resmi:', existingProfilePhoto);
+          }
+        } catch (storageError) {
+          console.warn('Register - Storage\'dan profil resmi okunamadı:', storageError);
+        }
+        
         let userData: User = {
           id: response.user?.id || response.userId || 'unknown',
           username: response.user?.username || response.username || data.username,
           email: response.user?.email || response.email || data.email,
-          profilePhoto: response.user?.profilePictureURL || undefined,
+          profilePhoto: response.user?.profilePictureURL || existingProfilePhoto || undefined,
           firstName: response.user?.firstName || undefined,
           lastName: response.user?.lastName || undefined,
           location: response.user?.location || undefined,
           bio: response.user?.bio || undefined,
         };
+        
+        console.log('🔍 AuthContext: Register - Final user data with profile photo:', {
+          ...userData,
+          profilePhoto: userData.profilePhoto ? 'MEVCUT' : 'YOK'
+        });
         
         if (isMountedRef.current) {
           setUser(userData);
