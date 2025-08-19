@@ -42,10 +42,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isMountedRef = useRef(true);
+  const isLoggingInRef = useRef(false);
 
   useEffect(() => {
     // Set up automatic logout on 401 responses FIRST
     apiService.setUnauthorizedCallback(() => {
+      // Don't logout if we're in the middle of login/register process
+      if (isLoggingInRef.current) {
+        console.log('AuthContext: 401 hatası login/register sırasında, otomatik logout atlanıyor...');
+        return;
+      }
       console.log('AuthContext: 401 hatası nedeniyle otomatik logout yapılıyor...');
       logout();
     });
@@ -162,6 +168,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (data: LoginRequest) => {
     try {
+      isLoggingInRef.current = true;
       if (isMountedRef.current) {
         setIsLoading(true);
       }
@@ -237,6 +244,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       throw error;
     } finally {
       console.log('AuthContext: Login işlemi tamamlandı, loading false yapılıyor');
+      isLoggingInRef.current = false;
       if (isMountedRef.current) {
         setIsLoading(false);
       }
@@ -245,6 +253,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const register = async (data: RegisterRequest) => {
     try {
+      isLoggingInRef.current = true;
       if (isMountedRef.current) {
         setIsLoading(true);
       }
@@ -308,6 +317,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       throw error;
     } finally {
+      isLoggingInRef.current = false;
       if (isMountedRef.current) {
         setIsLoading(false);
       }
