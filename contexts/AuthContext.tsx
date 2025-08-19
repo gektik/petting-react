@@ -286,13 +286,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       apiService.setAuthToken(null);
       
       if (Platform.OS === 'web') {
+        // Only remove auth token, keep user data for profile image persistence
         localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
         localStorage.removeItem('token_expiration');
         console.log('AuthContext: Web storage temizlendi');
       } else {
         const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-        await AsyncStorage.multiRemove(['auth_token', 'user_data', 'token_expiration']);
+        // Only remove auth token, keep user data for profile image persistence
+        await AsyncStorage.multiRemove(['auth_token', 'token_expiration']);
         console.log('AuthContext: AsyncStorage temizlendi');
       }
       if (isMountedRef.current) {
@@ -306,9 +307,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (isMountedRef.current) {
         setUser(null);
       }
-      if (Platform.OS === 'web') {
-        localStorage.clear();
-      }
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false);
@@ -321,23 +319,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (user && isMountedRef.current) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
+      
+      // Save to storage properly
       if (Platform.OS === 'web') {
         localStorage.setItem('user_data', JSON.stringify(updatedUser));
       } else {
-        import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
-          AsyncStorage.setItem('user_data', JSON.stringify(updatedUser))
-        );
+        import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
+          AsyncStorage.setItem('user_data', JSON.stringify(updatedUser)).catch(error => {
+            console.error('Error saving user data to AsyncStorage:', error);
+          });
+        }).catch(error => {
+          console.error('Error importing AsyncStorage:', error);
+        });
       }
     } else if (!user && isMountedRef.current) {
       // Eğer user yoksa yeni user oluştur
       const newUser = userData as User;
       setUser(newUser);
+      
+      // Save new user to storage
       if (Platform.OS === 'web') {
         localStorage.setItem('user_data', JSON.stringify(newUser));
       } else {
-        import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => 
-          AsyncStorage.setItem('user_data', JSON.stringify(newUser))
-        );
+        import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
+          AsyncStorage.setItem('user_data', JSON.stringify(newUser)).catch(error => {
+            console.error('Error saving new user data to AsyncStorage:', error);
+          });
+        }).catch(error => {
+          console.error('Error importing AsyncStorage:', error);
+        });
       }
     }
   };
