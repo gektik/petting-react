@@ -526,6 +526,76 @@ class ApiService {
     }
   }
 
+  // Profile image upload method
+  async uploadProfileImage(imageUri: string): Promise<{ imageUrl: string }> {
+    try {
+      console.log('API: uploadProfileImage çağrılıyor...', { imageUri: imageUri.substring(0, 50) + '...' });
+      
+      // Create FormData for multipart/form-data upload
+      const formData = new FormData();
+      
+      // Add the image file
+      const filename = `profile_${Date.now()}.jpg`;
+      formData.append('image', {
+        uri: imageUri,
+        type: 'image/jpeg',
+        name: filename,
+      } as any);
+      
+      console.log('API: Profile FormData hazırlandı:', { filename });
+      
+      const response = await this.api.post('/users/me/upload-profile-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 30000, // 30 seconds for image upload
+      });
+      
+      console.log('API: uploadProfileImage yanıtı:', response.data);
+      console.log('API: Profile upload response format check:', {
+        hasImageUrl: !!response.data.imageUrl,
+        hasUrl: !!response.data.url,
+        hasProfilePictureURL: !!response.data.profilePictureURL,
+        rawResponse: response.data
+      });
+      
+      // API'den dönen response formatını kontrol et ve normalize et
+      const result = response.data;
+      let finalImageUrl = '';
+      
+      // Öncelik sırası: imageUrl > url > profilePictureURL
+      if (result.imageUrl) {
+        finalImageUrl = this.fixImageUrl(result.imageUrl);
+        console.log('API: imageUrl kullanılıyor:', finalImageUrl);
+      } else if (result.url) {
+        finalImageUrl = this.fixImageUrl(result.url);
+        console.log('API: url kullanılıyor:', finalImageUrl);
+      } else if (result.profilePictureURL) {
+        finalImageUrl = this.fixImageUrl(result.profilePictureURL);
+        console.log('API: profilePictureURL kullanılıyor:', finalImageUrl);
+      } else {
+        console.error('API: Hiçbir URL field\'ı bulunamadı!', result);
+        throw new Error('Upload başarılı ama resim URL\'si döndürülmedi');
+      }
+      
+      // Standardize edilmiş format döndür
+      return {
+        imageUrl: finalImageUrl,
+        // Backward compatibility için diğer field'ları da ekle
+        url: finalImageUrl,
+        profilePictureURL: finalImageUrl,
+        ...result
+      };
+    } catch (error: any) {
+      console.error('API: uploadProfileImage hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
+
   // Pet update method
   async updatePet(petId: string, petData: any): Promise<any> {
     try {

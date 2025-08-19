@@ -18,12 +18,17 @@ import { apiService } from '@/services/api';
 import { Pet } from '@/types';
 import { Platform } from 'react-native';
 import { mockPets } from '@/services/mockData';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [petsCount, setPetsCount] = React.useState<number>(0);
   const [loadingPets, setLoadingPets] = React.useState(true);
+  const [imageLoading, setImageLoading] = React.useState(false);
+  const [currentProfileImage, setCurrentProfileImage] = React.useState<string>(
+    user?.profilePhoto || 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
+  );
 
   React.useEffect(() => {
     loadPetsCount();
@@ -49,6 +54,141 @@ export default function ProfileScreen() {
     } finally {
       setLoadingPets(false);
     }
+  };
+
+  const pickProfileImage = async () => {
+    try {
+      setImageLoading(true);
+      
+      // İzin iste
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gerekli.');
+        return;
+      }
+
+      // Resim seç
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: false,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const selectedImage = result.assets[0];
+        console.log('Seçilen profil resmi:', selectedImage);
+        
+        try {
+          // Resmi API'ye yükle
+          console.log('Profil resmi API\'ye yükleniyor...');
+          const uploadResult = await apiService.uploadProfileImage(selectedImage.uri);
+          console.log('Profil resmi yükleme sonucu:', uploadResult);
+          
+          // Profil resmi URI'sini güncelle
+          const newImageUrl = uploadResult.imageUrl;
+          console.log('Yeni profil resmi URL\'si:', newImageUrl);
+         
+          if (!newImageUrl) {
+            throw new Error('Upload başarılı ama profil resmi URL\'si alınamadı');
+          }
+         
+          setCurrentProfileImage(newImageUrl);
+          
+          Alert.alert('Başarılı', 'Profil resmi başarıyla güncellendi!');
+        } catch (uploadError) {
+          console.error('Profil resmi yükleme hatası:', uploadError);
+          Alert.alert(
+            'Yükleme Hatası', 
+            'Profil resmi yüklenirken hata oluştu. Lütfen tekrar deneyin.',
+            [
+              { text: 'Tamam' },
+              { text: 'Tekrar Dene', onPress: pickProfileImage }
+            ]
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Profil resmi seçme hatası:', error);
+      Alert.alert('Hata', 'Profil resmi seçilirken bir hata oluştu.');
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const takeProfilePhoto = async () => {
+    try {
+      setImageLoading(true);
+      
+      // Kamera izni iste
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
+        return;
+      }
+
+      // Fotoğraf çek
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: false,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const takenPhoto = result.assets[0];
+        console.log('Çekilen profil fotoğrafı:', takenPhoto);
+        
+        try {
+          // Fotoğrafı API'ye yükle
+          console.log('Profil fotoğrafı API\'ye yükleniyor...');
+          const uploadResult = await apiService.uploadProfileImage(takenPhoto.uri);
+          console.log('Profil fotoğrafı yükleme sonucu:', uploadResult);
+          
+          // Profil resmi URI'sini güncelle
+          const newImageUrl = uploadResult.imageUrl;
+          console.log('Yeni profil fotoğrafı URL\'si:', newImageUrl);
+         
+          if (!newImageUrl) {
+            throw new Error('Upload başarılı ama profil fotoğrafı URL\'si alınamadı');
+          }
+         
+          setCurrentProfileImage(newImageUrl);
+          
+          Alert.alert('Başarılı', 'Profil fotoğrafı başarıyla güncellendi!');
+        } catch (uploadError) {
+          console.error('Profil fotoğrafı yükleme hatası:', uploadError);
+          Alert.alert(
+            'Yükleme Hatası', 
+            'Profil fotoğrafı yüklenirken hata oluştu. Lütfen tekrar deneyin.',
+            [
+              { text: 'Tamam' },
+              { text: 'Tekrar Dene', onPress: takeProfilePhoto }
+            ]
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Profil fotoğrafı çekme hatası:', error);
+      Alert.alert('Hata', 'Profil fotoğrafı çekilirken bir hata oluştu.');
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const showProfileImageOptions = () => {
+    Alert.alert(
+      'Profil Fotoğrafı',
+      'Profil fotoğrafınızı nereden seçmek istiyorsunuz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        { text: 'Galeriden Seç', onPress: pickProfileImage },
+        { text: 'Fotoğraf Çek', onPress: takeProfilePhoto },
+      ]
+    );
   };
 
   const handleLogout = () => {
@@ -134,11 +274,19 @@ export default function ProfileScreen() {
           <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
               <Image
-                source={{ uri: user?.profilePhoto || 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop' }}
+                source={{ uri: currentProfileImage }}
                 style={styles.avatar}
               />
-              <TouchableOpacity style={styles.cameraButton}>
-                <Camera size={16} color="#FFFFFF" />
+              <TouchableOpacity 
+                style={styles.cameraButton}
+                onPress={showProfileImageOptions}
+                disabled={imageLoading}
+              >
+                {imageLoading ? (
+                  <ActivityIndicator size={16} color="#FFFFFF" />
+                ) : (
+                  <Camera size={16} color="#FFFFFF" />
+                )}
               </TouchableOpacity>
             </View>
             
