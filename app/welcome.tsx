@@ -11,11 +11,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Heart, Sparkles } from 'lucide-react-native';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { theme, isDark } = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -46,10 +48,10 @@ export default function WelcomeScreen() {
 
   return (
     <LinearGradient
-      colors={['#667EEA', '#764BA2', '#F093FB']}
+      colors={isDark ? ['#1E293B', '#334155', '#475569'] : ['#667EEA', '#764BA2', '#F093FB']}
       style={styles.container}
     >
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? "light" : "light"} />
       
       <View style={styles.content}>
         <Animated.View

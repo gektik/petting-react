@@ -14,6 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Settings, Heart, MessageSquare, CirclePlus as PlusCircle, LogOut, CreditCard as Edit, Camera, Bell, Shield, CircleHelp as HelpCircle } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
+import { useTheme } from '@/contexts/ThemeContext';
 import { apiService } from '@/services/api';
 import { Pet } from '@/types';
 import { Platform } from 'react-native';
@@ -23,6 +24,7 @@ import * as ImagePicker from 'expo-image-picker';
 export default function ProfileScreen() {
   const { user, logout, updateUser, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const { theme, isDark } = useTheme();
   const [petsCount, setPetsCount] = React.useState<number>(0);
   const [loadingPets, setLoadingPets] = React.useState(true);
   const [imageLoading, setImageLoading] = React.useState(false);
@@ -292,12 +294,12 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
-      <StatusBar style="dark" />
+    <LinearGradient colors={theme.colors.gradient} style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       
       <ScrollView showsVerticalScrollIndicator={false}>
         <LinearGradient
-          colors={['#6366F1', '#8B5CF6']}
+          colors={theme.colors.headerGradient}
           style={styles.headerGradient}
         >
           <View style={styles.profileHeader}>
@@ -324,14 +326,14 @@ export default function ProfileScreen() {
           </View>
         </LinearGradient>
 
-        <View style={styles.statsContainer}>
+        <View style={[styles.statsContainer, { backgroundColor: theme.colors.surface }]}>
           {stats.map((stat, index) => (
             <View key={index} style={styles.statItem}>
-              <View style={styles.statIconContainer}>
-                <stat.icon size={24} color="#6366F1" />
+              <View style={[styles.statIconContainer, { backgroundColor: `${theme.colors.primary}20` }]}>
+                <stat.icon size={24} color={theme.colors.primary} />
               </View>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
+              <Text style={[styles.statValue, { color: theme.colors.text }]}>{stat.value}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>{stat.label}</Text>
             </View>
           ))}
         </View>
@@ -340,22 +342,22 @@ export default function ProfileScreen() {
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.menuItem}
+              style={[styles.menuItem, { backgroundColor: theme.colors.surface }]}
               onPress={item.onPress}
               activeOpacity={0.8}
             >
-              <View style={styles.menuIconContainer}>
-                <item.icon size={24} color="#6366F1" />
+              <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.primary}20` }]}>
+                <item.icon size={24} color={theme.colors.primary} />
               </View>
               <View style={styles.menuTextContainer}>
-                <Text style={styles.menuTitle}>{item.title}</Text>
-                <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
+                <Text style={[styles.menuTitle, { color: theme.colors.text }]}>{item.title}</Text>
+                <Text style={[styles.menuSubtitle, { color: theme.colors.textSecondary }]}>{item.subtitle}</Text>
               </View>
             </TouchableOpacity>
           ))}
           
           <TouchableOpacity
-            style={[styles.menuItem, styles.logoutItem]}
+            style={[styles.menuItem, styles.logoutItem, { backgroundColor: theme.colors.surface }]}
             onPress={handleLogout}
             activeOpacity={0.8}
           >
@@ -422,7 +424,6 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginTop: -20,
     borderRadius: 16,
@@ -444,7 +445,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F0F4FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -452,12 +452,10 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1F2937',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#6B7280',
     textAlign: 'center',
   },
   menuContainer: {
@@ -465,7 +463,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   menuItem: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     marginBottom: 12,
@@ -485,7 +482,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F0F4FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -499,12 +495,10 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1F2937',
     marginBottom: 4,
   },
   menuSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
   },
   logoutItem: {
     marginTop: 16,

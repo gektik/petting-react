@@ -13,13 +13,14 @@ import { StatusBar } from 'expo-status-bar';
 import { ArrowLeft, Bell, Shield, Globe, Moon, Smartphone, CircleHelp as HelpCircle, LogOut } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { logout } = useAuth();
+  const { theme, isDark, toggleTheme } = useTheme();
   const [notifications, setNotifications] = useState(true);
   const [locationSharing, setLocationSharing] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(true);
 
   const handleLogout = () => {
@@ -91,8 +92,8 @@ export default function SettingsScreen() {
           title: 'Karanlık Mod',
           subtitle: 'Koyu tema kullan',
           type: 'switch',
-          value: darkMode,
-          onToggle: setDarkMode,
+          value: isDark,
+          onToggle: toggleTheme,
         },
       ],
     },
@@ -136,32 +137,32 @@ export default function SettingsScreen() {
   );
 
   return (
-    <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
-      <StatusBar style="dark" />
+    <LinearGradient colors={theme.colors.gradient} style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color="#1F2937" />
+          <ArrowLeft size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Ayarlar</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Ayarlar</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {settingsGroups.map((group, groupIndex) => (
           <View key={groupIndex} style={styles.settingsGroup}>
-            <Text style={styles.groupTitle}>{group.title}</Text>
-            <View style={styles.groupContainer}>
+            <Text style={[styles.groupTitle, { color: theme.colors.text }]}>{group.title}</Text>
+            <View style={[styles.groupContainer, { backgroundColor: theme.colors.surface }]}>
               {group.items.map(renderSettingItem)}
             </View>
           </View>
         ))}
 
         <TouchableOpacity
-          style={[styles.settingItem, styles.logoutItem]}
+          style={[styles.settingItem, styles.logoutItem, { backgroundColor: theme.colors.surface }]}
           onPress={handleLogout}
         >
           <View style={[styles.settingIconContainer, styles.logoutIconContainer]}>
@@ -193,7 +194,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -208,7 +208,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1F2937',
   },
   placeholder: {
     width: 44,
@@ -220,12 +219,10 @@ const styles = StyleSheet.create({
   groupTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1F2937',
     marginBottom: 12,
     paddingHorizontal: 8,
   },
   groupContainer: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: {
@@ -262,15 +259,12 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1F2937',
     marginBottom: 4,
   },
   settingSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
   },
   logoutItem: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginHorizontal: 16,
     marginBottom: 32,

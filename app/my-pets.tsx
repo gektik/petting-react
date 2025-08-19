@@ -18,8 +18,10 @@ import { Pet } from '@/types';
 import { apiService } from '@/services/api';
 import { mockPets } from '@/services/mockData';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function MyPetsScreen() {
+  const { theme, isDark } = useTheme();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -183,37 +185,37 @@ export default function MyPetsScreen() {
 
   if (loading) {
     return (
-      <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6366F1" />
-        <Text style={styles.loadingText}>Hayvanlarınız yükleniyor...</Text>
+      <LinearGradient colors={theme.colors.gradient} style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Hayvanlarınız yükleniyor...</Text>
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
-      <StatusBar style="dark" />
+    <LinearGradient colors={theme.colors.gradient} style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: theme.colors.surface }]}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color="#1F2937" />
+          <ArrowLeft size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Hayvanlarım</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Hayvanlarım</Text>
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: theme.colors.surface }]}
           onPress={handleAddPet}
         >
-          <Plus size={24} color="#6366F1" />
+          <Plus size={24} color={theme.colors.primary} />
         </TouchableOpacity>
       </View>
 
       {pets.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyTitle}>Henüz hayvanınız yok</Text>
-          <Text style={styles.emptySubtitle}>
+          <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>Henüz hayvanınız yok</Text>
+          <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
             İlk hayvanınızı ekleyerek başlayın!
           </Text>
           <TouchableOpacity
@@ -221,7 +223,7 @@ export default function MyPetsScreen() {
             onPress={handleAddPet}
           >
             <LinearGradient
-              colors={['#6366F1', '#8B5CF6']}
+              colors={theme.colors.headerGradient}
               style={styles.addPetGradient}
             >
               <Plus size={24} color="#FFFFFF" />
@@ -254,7 +256,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#6B7280',
     fontWeight: '500',
   },
   header: {
@@ -269,7 +270,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -284,13 +284,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1F2937',
   },
   addButton: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -379,13 +377,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1F2937',
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#6B7280',
     textAlign: 'center',
     marginBottom: 32,
   },

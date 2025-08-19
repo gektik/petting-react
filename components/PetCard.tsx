@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MapPin, Calendar, Heart, X } from 'lucide-react-native';
 import { Pet } from '@/types';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface PetCardProps {
   pet: Pet;
@@ -32,8 +33,10 @@ export function PetCard({
   swipeDirection,
   swipeOpacity 
 }: PetCardProps) {
+  const { theme } = useTheme();
+
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
       <Image
         source={{ uri: pet.photos[0] }}
         style={styles.image}
@@ -47,15 +50,15 @@ export function PetCard({
       
       {/* Swipe Indicators */}
       {swipeDirection === 'right' && swipeOpacity && (
-        <Animated.View style={[styles.swipeIndicator, styles.likeIndicator, { opacity: swipeOpacity }]}>
-          <Heart size={40} color="#10B981" fill="#10B981" />
+        <Animated.View style={[styles.swipeIndicator, styles.likeIndicator, { opacity: swipeOpacity, backgroundColor: `${theme.colors.success}20` }]}>
+          <Heart size={40} color={theme.colors.success} fill={theme.colors.success} />
           <Text style={styles.swipeText}>BEĞENDİM</Text>
         </Animated.View>
       )}
       
       {swipeDirection === 'left' && swipeOpacity && (
-        <Animated.View style={[styles.swipeIndicator, styles.passIndicator, { opacity: swipeOpacity }]}>
-          <X size={40} color="#EF4444" />
+        <Animated.View style={[styles.swipeIndicator, styles.passIndicator, { opacity: swipeOpacity, backgroundColor: `${theme.colors.error}20` }]}>
+          <X size={40} color={theme.colors.error} />
           <Text style={styles.swipeText}>GEÇ</Text>
         </Animated.View>
       )}
@@ -93,17 +96,17 @@ export function PetCard({
       {showActions && (
         <View style={styles.actions}>
           <TouchableOpacity
-            style={[styles.actionButton, styles.passButton]}
+            style={[styles.actionButton, styles.passButton, { backgroundColor: `${theme.colors.error}20` }]}
             onPress={onPass}
           >
-            <X size={24} color="#EF4444" />
+            <X size={24} color={theme.colors.error} />
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[styles.actionButton, styles.likeButton]}
+            style={[styles.actionButton, styles.likeButton, { backgroundColor: `${theme.colors.success}20` }]}
             onPress={onLike}
           >
-            <Heart size={24} color="#10B981" fill="#10B981" />
+            <Heart size={24} color={theme.colors.success} fill={theme.colors.success} />
           </TouchableOpacity>
         </View>
       )}
@@ -115,7 +118,6 @@ const styles = StyleSheet.create({
   card: {
     width: cardWidth,
     height: 600,
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -153,12 +155,10 @@ const styles = StyleSheet.create({
   },
   likeIndicator: {
     right: 30,
-    borderColor: '#10B981',
     transform: [{ rotate: '-15deg' }],
   },
   passIndicator: {
     left: 30,
-    borderColor: '#EF4444',
     transform: [{ rotate: '15deg' }],
   },
   swipeText: {
@@ -238,9 +238,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   passButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   likeButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
 });

@@ -17,8 +17,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoginRequest } from '@/services/api';
 import { apiService } from '@/services/api';
 import { socialAuthService } from '@/services/socialAuth';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function LoginScreen() {
+  const { theme, isDark } = useTheme();
   const [login, setLogin] = useState('test1');
   const [password, setPassword] = useState('Bp@@--12345');
   const [showPassword, setShowPassword] = useState(false);
@@ -156,7 +158,7 @@ export default function LoginScreen() {
 
   return (
     <LinearGradient
-      colors={['#667EEA', '#764BA2']}
+      colors={isDark ? theme.colors.headerGradient : ['#667EEA', '#764BA2']}
       style={styles.container}
     >
       <KeyboardAvoidingView
@@ -173,6 +175,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.formContainer}>
+          <View style={[styles.formContainer, { backgroundColor: isDark ? theme.colors.surface : 'rgba(255, 255, 255, 0.95)' }]}>
             <View style={styles.inputContainer}>
               <Mail size={20} color="#6366F1" style={styles.inputIcon} />
               <TextInput
@@ -308,7 +311,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   formContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 24,
     padding: 24,
     shadowColor: '#000',

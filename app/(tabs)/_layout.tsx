@@ -1,17 +1,20 @@
 import { Tabs } from 'expo-router';
 import { ShoppingBag, Chrome as Home, Activity, FileText, Heart, MessageSquare, User } from 'lucide-react-native';
 import { Platform } from 'react-native';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function TabLayout() {
+  const { theme, isDark } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#6366F1',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E5E7EB',
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.border,
           borderTopWidth: 1,
           paddingBottom: Platform.OS === 'ios' ? 30 : 15,
           paddingTop: 5,

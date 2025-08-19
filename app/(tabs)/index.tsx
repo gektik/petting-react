@@ -22,6 +22,7 @@ import { PetCard } from '@/components/PetCard';
 import { Pet, User as UserType } from '@/types';
 import { apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { mockPets } from '@/services/mockData';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -29,6 +30,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 export default function ExploreScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const { theme, isDark } = useTheme();
   const [pets, setPets] = useState<Pet[]>([]);
   const [userPets, setUserPets] = useState<Pet[]>([]);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
@@ -216,26 +218,26 @@ export default function ExploreScreen() {
 
   if (loading) {
     return (
-      <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6366F1" />
-        <Text style={styles.loadingText}>Sevimli dostlar yükleniyor...</Text>
+      <LinearGradient colors={theme.colors.gradient} style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Sevimli dostlar yükleniyor...</Text>
       </LinearGradient>
     );
   }
 
   if (currentIndex >= pets.length) {
     return (
-      <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
-        <StatusBar style="dark" />
+      <LinearGradient colors={theme.colors.gradient} style={styles.container}>
+        <StatusBar style={isDark ? "light" : "dark"} />
         <View style={styles.header}>
           <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeText}>Hoşgeldiniz</Text>
-            <Text style={styles.usernameText}>{user?.username}</Text>
+            <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Hoşgeldiniz</Text>
+            <Text style={[styles.usernameText, { color: theme.colors.text }]}>{user?.username}</Text>
           </View>
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyTitle}>Tüm hayvanları gördünüz!</Text>
-          <Text style={styles.emptySubtitle}>Yeni hayvanlar için daha sonra tekrar kontrol edin.</Text>
+          <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>Tüm hayvanları gördünüz!</Text>
+          <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>Yeni hayvanlar için daha sonra tekrar kontrol edin.</Text>
         </View>
       </LinearGradient>
     );
@@ -244,54 +246,54 @@ export default function ExploreScreen() {
   const currentPet = pets[currentIndex];
 
   return (
-    <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
-      <StatusBar style="dark" />
+    <LinearGradient colors={theme.colors.gradient} style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <TouchableOpacity
-            style={styles.menuButton}
+            style={[styles.menuButton, { backgroundColor: theme.colors.surface }]}
             onPress={toggleDrawer}
           >
-            <Menu size={24} color="#1F2937" />
+            <Menu size={24} color={theme.colors.text} />
           </TouchableOpacity>
           
           <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeText}>Hoşgeldiniz</Text>
-            <Text style={styles.usernameText}>{user?.username}</Text>
+            <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Hoşgeldiniz</Text>
+            <Text style={[styles.usernameText, { color: theme.colors.text }]}>{user?.username}</Text>
           </View>
           
           <TouchableOpacity
-            style={styles.petSelector}
+            style={[styles.petSelector, { backgroundColor: theme.colors.surface }]}
             onPress={() => setShowPetSelector(true)}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
               {selectedPet ? (
                 <>
                   <Image source={{ uri: selectedPet.photos[0] }} style={styles.selectedPetImage} />
-                  <Text style={styles.selectedPetName}>{selectedPet.name}</Text>
+                  <Text style={[styles.selectedPetName, { color: theme.colors.text }]}>{selectedPet.name}</Text>
                 </>
               ) : (
                 <>
-                  <View style={styles.defaultPetIcon}>
-                    <User size={20} color="#6366F1" />
+                  <View style={[styles.defaultPetIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                    <User size={20} color={theme.colors.primary} />
                   </View>
-                  <Text style={styles.selectedPetName}>Hayvan Seç</Text>
+                  <Text style={[styles.selectedPetName, { color: theme.colors.text }]}>Hayvan Seç</Text>
                 </>
               )}
             </View>
-            <ChevronDown size={16} color="#6B7280" style={styles.chevronIcon} />
+            <ChevronDown size={16} color={theme.colors.textSecondary} style={styles.chevronIcon} />
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity
-          style={styles.locationAlert}
+          style={[styles.locationAlert, { backgroundColor: `${theme.colors.primary}20` }]}
           onPress={() => setShowFilterModal(true)}
         >
-          <Text style={styles.locationAlertText}>
+          <Text style={[styles.locationAlertText, { color: theme.colors.primary }]}>
             Ankara'da 50 km yakınındaki sevimli dostlar ✨
           </Text>
-          <Filter size={16} color="#8B5CF6" style={styles.filterIcon} />
+          <Filter size={16} color={theme.colors.secondary} style={styles.filterIcon} />
         </TouchableOpacity>
       </View>
 
@@ -351,14 +353,14 @@ export default function ExploreScreen() {
         onRequestClose={() => setShowPetSelector(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Hayvanınızı Seçin</Text>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Hayvanınızı Seçin</Text>
               <TouchableOpacity
-                style={styles.modalCloseButton}
+                style={[styles.modalCloseButton, { backgroundColor: theme.colors.background }]}
                 onPress={() => setShowPetSelector(false)}
               >
-                <Text style={styles.modalCloseText}>Kapat</Text>
+                <Text style={[styles.modalCloseText, { color: theme.colors.textSecondary }]}>Kapat</Text>
               </TouchableOpacity>
             </View>
             
@@ -387,14 +389,14 @@ export default function ExploreScreen() {
         onRequestClose={() => setShowFilterModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.filterModalContent}>
+          <View style={[styles.filterModalContent, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filtreleme Seçenekleri</Text>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Filtreleme Seçenekleri</Text>
               <TouchableOpacity
-                style={styles.modalCloseButton}
+                style={[styles.modalCloseButton, { backgroundColor: theme.colors.background }]}
                 onPress={() => setShowFilterModal(false)}
               >
-                <Text style={styles.modalCloseText}>Kapat</Text>
+                <Text style={[styles.modalCloseText, { color: theme.colors.textSecondary }]}>Kapat</Text>
               </TouchableOpacity>
             </View>
             
@@ -495,7 +497,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#6B7280',
     fontWeight: '500',
   },
   header: {
@@ -530,19 +531,16 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 16,
-    color: '#6B7280',
     marginBottom: 4,
   },
   usernameText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1F2937',
   },
   locationAlert: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F0F4FF',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
@@ -558,7 +556,6 @@ const styles = StyleSheet.create({
   },
   locationAlertText: {
     fontSize: 12,
-    color: '#6366F1',
     fontWeight: '500',
     flex: 1,
     lineHeight: 16,
@@ -569,7 +566,6 @@ const styles = StyleSheet.create({
   petSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -592,7 +588,6 @@ const styles = StyleSheet.create({
   selectedPetName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1F2937',
     marginRight: 8,
     flex: 1,
   },
@@ -600,7 +595,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F0F4FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
@@ -659,7 +653,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 20,
@@ -677,18 +670,15 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1F2937',
   },
   modalCloseButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#F3F4F6',
     borderRadius: 8,
   },
   modalCloseText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
   },
   petSelectorList: {
     paddingHorizontal: 24,
@@ -748,7 +738,6 @@ const styles = StyleSheet.create({
     color: '#6366F1',
   },
   filterModalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 20,
@@ -815,13 +804,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1F2937',
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#6B7280',
     textAlign: 'center',
   },
   matchOverlay: {
