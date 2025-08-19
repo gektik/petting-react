@@ -53,7 +53,10 @@ export default function ProfileScreen() {
       
       setPetsCount(pets.length);
     } catch (error) {
-      console.error('Error loading pets count:', error);
+      // Don't log 401 errors as they're handled by AuthContext
+      if (error?.response?.status !== 401) {
+        console.error('Error loading pets count:', error);
+      }
       setPetsCount(0);
     } finally {
       setLoadingPets(false);
