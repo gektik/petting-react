@@ -212,7 +212,7 @@ export default function LoginScreen() {
 
             <TouchableOpacity
               style={styles.forgotPassword}
-              onPress={() => Alert.alert('Bilgi', 'Şifre sıfırlama özelliği yakında gelecek.')}
+              onPress={() => router.push('/auth/forgot-password')}
             >
               <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
             </TouchableOpacity>

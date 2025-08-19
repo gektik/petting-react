@@ -17,6 +17,7 @@ export default function RootLayout() {
             <Stack.Screen name="welcome" />
             <Stack.Screen name="auth/login" />
             <Stack.Screen name="auth/register" />
+            <Stack.Screen name="auth/forgot-password" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="+not-found" />
             <Stack.Screen name="my-pets" />
@@ -28,6 +29,7 @@ export default function RootLayout() {
             <Stack.Screen name="help-center" />
             <Stack.Screen name="notifications" />
             <Stack.Screen name="sha1-info" />
+            <Stack.Screen name="profile" />
           </Stack>
           <StatusBar style="auto" />
         </AuthProvider>

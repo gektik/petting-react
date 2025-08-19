@@ -59,12 +59,12 @@ export default function ExploreScreen() {
       onPress: () => { toggleDrawer(); router.push('/(tabs)/chats'); },
     },
     {
-      title: 'Ayarlar',
-      onPress: () => { toggleDrawer(); router.push('/settings'); },
+      title: 'Profil',
+      onPress: () => { toggleDrawer(); router.push('/profile'); },
     },
     {
-      title: 'Profil',
-      onPress: () => { toggleDrawer(); router.push('/(tabs)/profile'); },
+      title: 'Ayarlar',
+      onPress: () => { toggleDrawer(); router.push('/settings'); },
     },
   ];
 
