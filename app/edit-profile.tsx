@@ -198,71 +198,35 @@ export default function EditProfileScreen() {
       setSaving(true);
       console.log('📝 Profil güncelleme başlatılıyor...');
       
-      const updateData = {
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        biography: form.bio.trim(),
-        country: form.location.split(',')[1]?.trim() || '',
-        city: form.location.split(',')[0]?.trim() || '',
-        profilePictureURL: currentProfileImage,
-      };
+      // Sadece değişen alanları gönder
+      const updateData = {};
+      if (form.firstName !== undefined) updateData.firstName = form.firstName.trim();
+      if (form.lastName !== undefined) updateData.lastName = form.lastName.trim();
+      if (form.bio !== undefined) updateData.biography = form.bio.trim();
+      if (form.location) {
+        const [city, country] = form.location.split(',').map(s => s.trim());
+        updateData.country = country;
+        updateData.city = city;
+      }
+      if (currentProfileImage) updateData.profilePictureURL = currentProfileImage;
       
       console.log('📝 Güncelleme verisi:', updateData);
       const result = await apiService.updateUserProfile(updateData);
       console.log('📝 API yanıtı:', result);
       
-      if (result === true) {
-        // Profil başarıyla güncellendi, güncel bilgileri al
-        try {
-          console.log('📝 Güncel kullanıcı bilgileri çekiliyor...');
-          const userDetails = await apiService.getCurrentUser();
-          console.log('📝 API\'den güncel kullanıcı bilgileri:', userDetails);
-          
-          // Context'i güncel bilgilerle güncelle
-          const finalUserData = {
-            ...user,
-            firstName: userDetails.firstName,
-            lastName: userDetails.lastName,
-            bio: userDetails.biography,
-            location: userDetails.city && userDetails.country 
-              ? `${userDetails.city}, ${userDetails.country}`
-              : form.location.trim(),
-            profilePhoto: userDetails.profilePictureURL || currentProfileImage,
-          };
-          
-          console.log('📝 Final güncellenmiş kullanıcı verisi:', finalUserData);
-          updateUser(finalUserData);
-        } catch (getUserError) {
-          console.warn('📝 Güncel kullanıcı bilgileri alınamadı:', getUserError);
-          // Fallback: Form verilerini kullan
-          const fallbackUserData = {
-            ...user,
-            firstName: form.firstName.trim(),
-            lastName: form.lastName.trim(),
-            bio: form.bio.trim(),
-            location: form.location.trim(),
-            profilePhoto: currentProfileImage,
-          };
-          updateUser(fallbackUserData);
-        }
+      if (result) {
+        // API'den güncel kullanıcı bilgilerini al ve context'i güncelle
+        updateUser(result);
+        Alert.alert('Başarılı', 'Profil güncellendi');
+      } else {
+        Alert.alert('Hata', 'Profil güncellenemedi');
       }
-      
-      Alert.alert('Başarılı', 'Profil bilgileriniz güncellendi.', [
-        { text: 'Tamam', onPress: () => router.back() }
-      ]);
     } catch (error: any) {
       console.error('Profil güncelleme hatası:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Profil güncellenirken bir hata oluştu.';
-      Alert.alert(
-        'Güncelleme Hatası',
-        errorMessage,
-        [
-          { text: 'Tamam' },
-          { text: 'Tekrar Dene', onPress: handleSave }
-        ]
-      );
+      Alert.alert('Hata', 'Profil güncellenemedi');
     } finally {
       setSaving(false);
+      router.back();
     }
   };
 
