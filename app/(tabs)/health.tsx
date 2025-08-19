@@ -10,6 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { Activity, Calendar, Pill, Stethoscope, Plus, Heart, CircleAlert as AlertCircle, Clock } from 'lucide-react-native';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface HealthRecord {
   id: string;
@@ -24,6 +25,7 @@ interface HealthRecord {
 }
 
 export default function HealthScreen() {
+  const { theme, isDark } = useTheme();
   const [healthRecords] = useState<HealthRecord[]>([
     {
       id: '1',
