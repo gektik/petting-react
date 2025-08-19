@@ -367,6 +367,7 @@ export default function ProfileScreen() {
     </LinearGradient>
   );
 }
+}
 
 const styles = StyleSheet.create({
   container: {
