@@ -114,6 +114,7 @@ export default function ListingsScreen() {
           Sahiplendirme ve hizmet ilanları
         </Text>
         
+          onPress={() => router.push('/add-listing')}
         <TouchableOpacity style={styles.addButton}>
           <LinearGradient
             colors={['#6366F1', '#8B5CF6']}
