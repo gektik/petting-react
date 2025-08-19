@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     paddingHorizontal: 16,
     paddingVertical: 16,
-   paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 16,
   },
   inputWrapper: {
     flexDirection: 'row',
