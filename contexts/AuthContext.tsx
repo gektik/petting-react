@@ -168,9 +168,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.isSuccess) {
         console.log('AuthContext: Login başarılı, kullanıcı verisi oluşturuluyor...');
         let userData: User = {
-          id: response.userId || response.user?.id || 'unknown',
-          username: response.username || response.user?.firstName || 'Unknown User',
-          email: response.email || response.user?.email || 'unknown@example.com',
+          id: response.user?.id || response.userId || 'unknown',
+          username: response.user?.username || response.username || 'Unknown User',
+          email: response.user?.email || response.email || 'unknown@example.com',
           profilePhoto: response.user?.profilePictureURL || undefined,
         };
         
@@ -231,9 +231,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (response.isSuccess) {
         let userData: User = {
-          id: response.userId || response.user?.id || 'unknown',
-          username: response.username || response.user?.firstName || data.username,
-          email: response.email || response.user?.email || data.email,
+          id: response.user?.id || response.userId || 'unknown',
+          username: response.user?.username || response.username || data.username,
+          email: response.user?.email || response.email || data.email,
           profilePhoto: response.user?.profilePictureURL || undefined,
         };
         
