@@ -216,33 +216,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.isSuccess) {
         console.log('AuthContext: Login başarılı, kullanıcı verisi oluşturuluyor...');
         
-        // Set token in apiService immediately after successful login
-        apiService.setAuthToken(response.token);
-        
-        // Login sonrası API'den tam kullanıcı bilgilerini çek
-        let fullUserData = null;
-        try {
-          console.log('🔍 AuthContext: Login sonrası tam kullanıcı bilgileri çekiliyor...');
-          fullUserData = await apiService.getCurrentUser();
-          console.log('🔍 AuthContext: API\'den alınan tam kullanıcı bilgileri:', fullUserData);
-        } catch (userError) {
-          console.warn('🔍 AuthContext: Tam kullanıcı bilgileri alınamadı:', userError);
-        }
-        
+        // İlk kullanıcı bilgilerini kaydet
         let userData: User = {
           id: response.user?.id || response.userId || 'unknown',
           username: response.user?.username || response.username || 'Unknown User',
           email: response.user?.email || response.email || 'unknown@example.com',
-          profilePhoto: fullUserData?.profilePictureURL || response.user?.profilePictureURL || undefined,
-          firstName: fullUserData?.firstName || response.user?.firstName || undefined,
-          lastName: fullUserData?.lastName || response.user?.lastName || undefined,
-          location: fullUserData?.location || response.user?.location || undefined,
-          bio: fullUserData?.bio || response.user?.bio || undefined,
+          profilePhoto: response.user?.profilePictureURL || undefined,
         };
         
-        console.log('🔍 AuthContext: Login - Final user data:', userData);
+        console.log('AuthContext: İlk kullanıcı verisi:', userData);
+        if (isMountedRef.current) {
+          setUser(userData);
+        }
         
-        console.log('AuthContext: Kullanıcı verisi:', userData);
+        // Token'ı kaydet ve API service'e set et
+        apiService.setAuthToken(response.token);
+        
+        // Detaylı kullanıcı bilgilerini al
+        let fullUserData = null;
+        try {
+          console.log('🔍 AuthContext: Detaylı kullanıcı bilgileri çekiliyor...');
+          fullUserData = await apiService.getCurrentUser();
+          console.log('🔍 AuthContext: Detaylı kullanıcı bilgileri:', fullUserData);
+        } catch (userError) {
+          console.warn('🔍 AuthContext: Detaylı kullanıcı bilgileri alınamadı:', userError);
+        }
+        
+        // Tüm bilgileri güncelle
+        if (fullUserData) {
+          userData = {
+            ...userData,
+            firstName: fullUserData.firstName,
+            lastName: fullUserData.lastName,
+            bio: fullUserData.biography,
+            location: fullUserData.city && fullUserData.country 
+              ? `${fullUserData.city}, ${fullUserData.country}`
+              : fullUserData.city || fullUserData.country || undefined,
+            profilePhoto: fullUserData.profilePictureURL || userData.profilePhoto,
+          };
+        }
+        
+        console.log('🔍 AuthContext: Final user data:', userData);
+        
         if (isMountedRef.current) {
           setUser(userData);
         }
@@ -299,29 +314,45 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response: AuthResponse = await apiService.register(data);
       
       if (response.isSuccess) {
-        // Set token in apiService immediately after successful register
-        apiService.setAuthToken(response.token);
-        
-        // Register sonrası API'den tam kullanıcı bilgilerini çek
-        let fullUserData = null;
-        try {
-          console.log('🔍 AuthContext: Register sonrası tam kullanıcı bilgileri çekiliyor...');
-          fullUserData = await apiService.getCurrentUser();
-          console.log('🔍 AuthContext: API\'den alınan tam kullanıcı bilgileri:', fullUserData);
-        } catch (userError) {
-          console.warn('🔍 AuthContext: Tam kullanıcı bilgileri alınamadı:', userError);
-        }
-        
+        // İlk kullanıcı bilgilerini kaydet
         let userData: User = {
           id: response.user?.id || response.userId || 'unknown',
           username: response.user?.username || response.username || data.username,
           email: response.user?.email || response.email || data.email,
-          profilePhoto: fullUserData?.profilePictureURL || response.user?.profilePictureURL || undefined,
-          firstName: fullUserData?.firstName || response.user?.firstName || undefined,
-          lastName: fullUserData?.lastName || response.user?.lastName || undefined,
-          location: fullUserData?.location || response.user?.location || undefined,
-          bio: fullUserData?.bio || response.user?.bio || undefined,
+          profilePhoto: response.user?.profilePictureURL || undefined,
         };
+        
+        console.log('AuthContext: İlk register kullanıcı verisi:', userData);
+        if (isMountedRef.current) {
+          setUser(userData);
+        }
+        
+        // Token'ı kaydet ve API service'e set et
+        apiService.setAuthToken(response.token);
+        
+        // Detaylı kullanıcı bilgilerini al
+        let fullUserData = null;
+        try {
+          console.log('🔍 AuthContext: Register - Detaylı kullanıcı bilgileri çekiliyor...');
+          fullUserData = await apiService.getCurrentUser();
+          console.log('🔍 AuthContext: Register - Detaylı kullanıcı bilgileri:', fullUserData);
+        } catch (userError) {
+          console.warn('🔍 AuthContext: Register - Detaylı kullanıcı bilgileri alınamadı:', userError);
+        }
+        
+        // Tüm bilgileri güncelle
+        if (fullUserData) {
+          userData = {
+            ...userData,
+            firstName: fullUserData.firstName,
+            lastName: fullUserData.lastName,
+            bio: fullUserData.biography,
+            location: fullUserData.city && fullUserData.country 
+              ? `${fullUserData.city}, ${fullUserData.country}`
+              : fullUserData.city || fullUserData.country || undefined,
+            profilePhoto: fullUserData.profilePictureURL || userData.profilePhoto,
+          };
+        }
         
         console.log('🔍 AuthContext: Register - Final user data:', userData);
         
