@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { ShoppingBag, Star, Plus, Search, Filter } from 'lucide-react-native';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface Product {
   id: string;
@@ -30,6 +31,7 @@ interface Category {
 }
 
 export default function MarketScreen() {
+  const { theme, isDark } = useTheme();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const categories: Category[] = [
@@ -82,6 +84,170 @@ export default function MarketScreen() {
   const filteredProducts = selectedCategory === 'all' 
     ? products 
     : products.filter(product => product.category === selectedCategory);
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    header: {
+      paddingTop: 60,
+      paddingHorizontal: 24,
+      paddingBottom: 20,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+    headerTitle: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      marginBottom: 4,
+    },
+    headerSubtitle: {
+      fontSize: 16,
+    },
+    headerActions: {
+      flexDirection: 'row',
+    },
+    headerButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: theme.colors.card,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: 8,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    categoriesContainer: {
+      marginBottom: 24,
+    },
+    categoriesList: {
+      paddingHorizontal: 16,
+    },
+    categoryCard: {
+      alignItems: 'center',
+      marginRight: 16,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      backgroundColor: theme.colors.card,
+      borderRadius: 12,
+      minWidth: 80,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    selectedCategory: {
+      backgroundColor: '#6366F1',
+    },
+    categoryIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    categoryText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.colors.text,
+    },
+    selectedCategoryText: {
+      color: '#FFFFFF',
+    },
+    productsContainer: {
+      paddingHorizontal: 16,
+    },
+    sectionTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginBottom: 16,
+      paddingHorizontal: 8,
+    },
+    productRow: {
+      justifyContent: 'space-between',
+    },
+    productCard: {
+      backgroundColor: theme.colors.card,
+      borderRadius: 16,
+      padding: 12,
+      marginBottom: 16,
+      width: '48%',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    productImage: {
+      width: '100%',
+      height: 120,
+      borderRadius: 12,
+      marginBottom: 12,
+    },
+    productInfo: {
+      flex: 1,
+    },
+    productName: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+      marginBottom: 4,
+    },
+    productDescription: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginBottom: 8,
+      lineHeight: 16,
+    },
+    ratingContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    ratingText: {
+      fontSize: 14,
+      color: theme.colors.text,
+      marginLeft: 4,
+      fontWeight: '600',
+    },
+    priceContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    price: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#6366F1',
+    },
+    addToCartButton: {
+      borderRadius: 8,
+      overflow: 'hidden',
+    },
+    addToCartGradient: {
+      width: 32,
+      height: 32,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
 
   const renderCategory = ({ item }: { item: Category }) => (
     <TouchableOpacity
@@ -147,10 +313,10 @@ export default function MarketScreen() {
         
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerButton}>
-            <Search size={24} color="#6B7280" />
+            <Search size={24} color={theme.colors.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton}>
-            <Filter size={24} color="#6B7280" />
+            <Filter size={24} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -184,169 +350,3 @@ export default function MarketScreen() {
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-  },
-  headerActions: {
-    flexDirection: 'row',
-  },
-  headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  categoriesContainer: {
-    marginBottom: 24,
-  },
-  categoriesList: {
-    paddingHorizontal: 16,
-  },
-  categoryCard: {
-    alignItems: 'center',
-    marginRight: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    minWidth: 80,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  selectedCategory: {
-    backgroundColor: '#6366F1',
-  },
-  categoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  selectedCategoryText: {
-    color: '#FFFFFF',
-  },
-  productsContainer: {
-    paddingHorizontal: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 16,
-    paddingHorizontal: 8,
-  },
-  productRow: {
-    justifyContent: 'space-between',
-  },
-  productCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 16,
-    width: '48%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  productImage: {
-    width: '100%',
-    height: 120,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  productInfo: {
-    flex: 1,
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  productDescription: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 8,
-    lineHeight: 16,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  ratingText: {
-    fontSize: 14,
-    color: '#1F2937',
-    marginLeft: 4,
-    fontWeight: '600',
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  price: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6366F1',
-  },
-  addToCartButton: {
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  addToCartGradient: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
