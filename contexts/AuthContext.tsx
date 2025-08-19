@@ -179,6 +179,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.isSuccess) {
         console.log('AuthContext: Login başarılı, kullanıcı verisi oluşturuluyor...');
         
+        // Set token in apiService immediately after successful login
+        apiService.setAuthToken(response.token);
+        
         // Login sonrası API'den tam kullanıcı bilgilerini çek
         let fullUserData = null;
         try {
@@ -214,7 +217,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
           await AsyncStorage.setItem('auth_token', response.token);
         }
-        apiService.setAuthToken(response.token);
         
         // Storage'a kaydet
         if (Platform.OS === 'web') {
