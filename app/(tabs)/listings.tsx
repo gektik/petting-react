@@ -15,12 +15,14 @@ import { MapPin, Calendar, Plus } from 'lucide-react-native';
 import { AdoptionListing, Pet } from '@/types';
 import { apiService } from '@/services/api';
 import { mockPets } from '@/services/mockData';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface AdoptionListingWithPet extends AdoptionListing {
   pet: Pet;
 }
 
 export default function ListingsScreen() {
+  const { theme, isDark } = useTheme();
   const [listings, setListings] = useState<AdoptionListingWithPet[]>([]);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [loading, setLoading] = useState(true);
