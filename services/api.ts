@@ -327,6 +327,23 @@ class ApiService {
     return this.token;
   }
 
+  // Get current user profile method
+  async getCurrentUser(): Promise<any> {
+    try {
+      console.log('🔍 API: getCurrentUser çağrılıyor...');
+      const response = await this.api.get('/users/me');
+      console.log('🔍 API: getCurrentUser yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('🔍 API: getCurrentUser hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
+
   // Pet methods
   async getUserPets(): Promise<Pet[]> {
     try {

@@ -167,12 +167,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (response.isSuccess) {
         console.log('AuthContext: Login başarılı, kullanıcı verisi oluşturuluyor...');
-        const userData: User = {
+        let userData: User = {
           id: response.userId || response.user?.id || 'unknown',
           username: response.username || response.user?.firstName || 'Unknown User',
           email: response.email || response.user?.email || 'unknown@example.com',
           profilePhoto: response.user?.profilePictureURL || undefined,
         };
+        
+        // API'den tam kullanıcı bilgilerini çek (profil resmi dahil)
+        try {
+          console.log('🔍 AuthContext: Kullanıcı profil bilgileri API\'den çekiliyor...');
+          const userProfile = await apiService.getCurrentUser();
+          console.log('🔍 AuthContext: API\'den gelen profil bilgileri:', userProfile);
+          
+          if (userProfile && userProfile.profilePictureURL) {
+            userData.profilePhoto = userProfile.profilePictureURL;
+            console.log('🔍 AuthContext: Profil resmi API\'den alındı:', userProfile.profilePictureURL);
+          }
+        } catch (profileError) {
+          console.warn('🔍 AuthContext: Profil bilgileri alınamadı:', profileError);
+        }
         
         console.log('AuthContext: Kullanıcı verisi:', userData);
         if (isMountedRef.current) {
@@ -230,12 +244,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response: AuthResponse = await apiService.register(data);
       
       if (response.isSuccess) {
-        const userData: User = {
+        let userData: User = {
           id: response.userId || response.user?.id || 'unknown',
           username: response.username || response.user?.firstName || data.username,
           email: response.email || response.user?.email || data.email,
           profilePhoto: response.user?.profilePictureURL || undefined,
         };
+        
+        // API'den tam kullanıcı bilgilerini çek (profil resmi dahil)
+        try {
+          console.log('🔍 AuthContext: Register sonrası kullanıcı profil bilgileri API\'den çekiliyor...');
+          const userProfile = await apiService.getCurrentUser();
+          console.log('🔍 AuthContext: Register - API\'den gelen profil bilgileri:', userProfile);
+          
+          if (userProfile && userProfile.profilePictureURL) {
+            userData.profilePhoto = userProfile.profilePictureURL;
+            console.log('🔍 AuthContext: Register - Profil resmi API\'den alındı:', userProfile.profilePictureURL);
+          }
+        } catch (profileError) {
+          console.warn('🔍 AuthContext: Register - Profil bilgileri alınamadı:', profileError);
+        }
         
         if (isMountedRef.current) {
           setUser(userData);
