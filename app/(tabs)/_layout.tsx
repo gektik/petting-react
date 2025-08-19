@@ -81,15 +81,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="chats"
-        options={{
-          title: 'Sohbetler',
-          tabBarIcon: ({ size, color }) => (
-            <MessageSquare size={size} color={color} />
-          ),
-        }}
-      />
     </Tabs>
   );
 }
