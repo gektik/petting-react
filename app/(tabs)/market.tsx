@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ShoppingBag, Star, Plus, Search, Filter } from 'lucide-react-native';
+import { ShoppingBag, Star, Plus, Search, Filter, ShoppingCart, Package } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface Product {
@@ -31,6 +32,7 @@ interface Category {
 }
 
 export default function MarketScreen() {
+  const router = useRouter();
   const { theme, isDark } = useTheme();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -270,7 +272,10 @@ export default function MarketScreen() {
   );
 
   const renderProduct = ({ item }: { item: Product }) => (
-    <TouchableOpacity style={styles.productCard}>
+    <TouchableOpacity 
+      style={styles.productCard}
+      onPress={() => router.push(`/market/product/${item.id}`)}
+    >
       <Image source={{ uri: item.image }} style={styles.productImage} />
       
       <View style={styles.productInfo}>
@@ -314,6 +319,18 @@ export default function MarketScreen() {
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerButton}>
             <Search size={24} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.headerButton}
+            onPress={() => router.push('/market/cart')}
+          >
+            <ShoppingCart size={24} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.headerButton}
+            onPress={() => router.push('/market/orders')}
+          >
+            <Package size={24} color={theme.colors.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton}>
             <Filter size={24} color={theme.colors.textSecondary} />

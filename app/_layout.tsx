@@ -38,6 +38,11 @@ export default function RootLayout() {
             <Stack.Screen name="health/reminders" />
             <Stack.Screen name="health/add-reminder" />
             <Stack.Screen name="health/edit-record/[id]" />
+            <Stack.Screen name="market/product/[id]" />
+            <Stack.Screen name="market/cart" />
+            <Stack.Screen name="market/checkout" />
+            <Stack.Screen name="market/orders" />
+            <Stack.Screen name="market/order-detail/[id]" />
           </Stack>
           <StatusBar style="auto" />
         </AuthProvider>
