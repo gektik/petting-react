@@ -506,20 +506,6 @@ class ApiService {
        hasProfilePictureURL: !!response.data.profilePictureURL,
        rawResponse: response.data
      });
-      // Don't log 401 errors if they're being handled by auth context
-      if (error.response?.status !== 401 || !this.onUnauthorized) {
-        console.error('API: getUserPets hatası:', {
-          message: error.message,
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          url: error.config?.url,
-          headers: error.config?.headers,
-          isNetworkError: !error.response,
-          fullError: error
-        });
-      }
-      
      // API'den dönen response formatını kontrol et ve normalize et
      const result = response.data;
      let finalImageUrl = '';
