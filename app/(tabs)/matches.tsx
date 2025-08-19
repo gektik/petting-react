@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 import { MessageCircle, MapPin, X, Heart, Users, ThumbsUp, SkipForward } from 'lucide-react-native';
 import { Match, Pet } from '@/types';
 import { apiService } from '@/services/api';
@@ -24,6 +25,7 @@ type TabType = 'matches' | 'likes' | 'passes';
 
 export default function MatchesScreen() {
   const { theme, isDark } = useTheme();
+  const router = useRouter();
   const [matches, setMatches] = useState<MatchWithPet[]>([]);
   const [likes, setLikes] = useState<Pet[]>([]);
   const [passes, setPasses] = useState<Pet[]>([]);
@@ -61,6 +63,11 @@ export default function MatchesScreen() {
     }
   };
 
+  const handleChatPress = (match: MatchWithPet) => {
+    console.log('Chat açılıyor:', match.matchedPet.name);
+    router.push('/(tabs)/chats');
+  };
+
   const renderMatch = ({ item }: { item: MatchWithPet }) => (
     <TouchableOpacity style={styles.itemCard}>
       <Image source={{ uri: item.matchedPet.photos[0] }} style={styles.petImage} />
@@ -86,6 +93,7 @@ export default function MatchesScreen() {
       
       <TouchableOpacity style={styles.actionButton}>
         <LinearGradient
+        onPress={() => handleChatPress(item)}
           colors={['#6366F1', '#8B5CF6']}
           style={styles.actionButtonGradient}
         >
