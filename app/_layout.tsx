@@ -30,6 +30,8 @@ export default function RootLayout() {
             <Stack.Screen name="notifications" />
             <Stack.Screen name="sha1-info" />
             <Stack.Screen name="profile" />
+            <Stack.Screen name="add-listing" />
+            <Stack.Screen name="edit-listing/[id]" />
           </Stack>
           <StatusBar style="auto" />
         </AuthProvider>

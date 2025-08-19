@@ -118,6 +118,7 @@ export default function ListingsScreen() {
           <LinearGradient
             colors={['#6366F1', '#8B5CF6']}
             style={styles.addButtonGradient}
+            onPress={() => router.push('/add-listing')}
           >
             <Plus size={24} color="#FFFFFF" />
           </LinearGradient>
@@ -160,7 +161,11 @@ export default function ListingsScreen() {
         ) : (
           <View style={styles.listContainer}>
             {listings.map((item) => (
-              <TouchableOpacity key={item.id} style={styles.listingCard}>
+              <TouchableOpacity 
+                key={item.id} 
+                style={styles.listingCard}
+                onPress={() => router.push(`/edit-listing/${item.id}`)}
+              >
                 <Image source={{ uri: item.pet.photos[0] }} style={styles.petImage} />
                 
                 <View style={styles.listingInfo}>
