@@ -60,7 +60,7 @@ export default function ChatsScreen() {
     const otherParticipant = item.participants[1]; // Assume first is current user
     
     return (
-      <TouchableOpacity style={styles.chatCard}>
+      <TouchableOpacity style={[styles.chatCard, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.avatarContainer}>
           <Image
             source={{ uri: otherParticipant.profilePhoto }}
@@ -70,14 +70,14 @@ export default function ChatsScreen() {
         </View>
         
         <View style={styles.chatInfo}>
-          <Text style={styles.participantName}>{otherParticipant.username}</Text>
-          <Text style={styles.lastMessage} numberOfLines={1}>
+          <Text style={[styles.participantName, { color: theme.colors.text }]}>{otherParticipant.username}</Text>
+          <Text style={[styles.lastMessage, { color: theme.colors.textSecondary }]} numberOfLines={1}>
             {item.lastMessage?.content || 'Henüz mesaj yok'}
           </Text>
         </View>
         
         <View style={styles.chatMeta}>
-          <Text style={styles.timeText}>
+          <Text style={[styles.timeText, { color: theme.colors.textSecondary }]}>
             {item.lastMessage ? formatTime(item.lastMessage.createdAt) : ''}
           </Text>
           <View style={styles.unreadBadge}>

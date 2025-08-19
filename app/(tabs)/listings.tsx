@@ -95,20 +95,20 @@ export default function ListingsScreen() {
 
   if (loading) {
     return (
-      <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6366F1" />
-        <Text style={styles.loadingText}>İlanlar yükleniyor...</Text>
+      <LinearGradient colors={theme.colors.gradient} style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>İlanlar yükleniyor...</Text>
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
-      <StatusBar style="dark" />
+    <LinearGradient colors={theme.colors.gradient} style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>İlanlar</Text>
-        <Text style={styles.headerSubtitle}>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>İlanlar</Text>
+        <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
           Sahiplendirme ve hizmet ilanları
         </Text>
         

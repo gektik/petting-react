@@ -120,12 +120,12 @@ export default function HealthScreen() {
   ];
 
   return (
-    <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
-      <StatusBar style="dark" />
+    <LinearGradient colors={theme.colors.gradient} style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Sağlık Takibi</Text>
-        <Text style={styles.headerSubtitle}>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Sağlık Takibi</Text>
+        <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
           Hayvanlarınızın sağlık kayıtları
         </Text>
       </View>

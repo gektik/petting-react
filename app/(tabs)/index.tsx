@@ -45,6 +45,29 @@ export default function ExploreScreen() {
   const rotation = useRef(new Animated.Value(0)).current;
   const drawerAnimation = useRef(new Animated.Value(-300)).current;
 
+  const drawerMenu = [
+    {
+      title: 'Hayvanlarım',
+      onPress: () => { toggleDrawer(); router.push('/my-pets'); },
+    },
+    {
+      title: 'Eşleşmelerim',
+      onPress: () => { toggleDrawer(); router.push('/(tabs)/matches'); },
+    },
+    {
+      title: 'Sohbetlerim',
+      onPress: () => { toggleDrawer(); router.push('/(tabs)/chats'); },
+    },
+    {
+      title: 'Ayarlar',
+      onPress: () => { toggleDrawer(); router.push('/settings'); },
+    },
+    {
+      title: 'Profil',
+      onPress: () => { toggleDrawer(); router.push('/(tabs)/profile'); },
+    },
+  ];
+
   useEffect(() => {
     loadPets();
     loadUserPets();
@@ -232,7 +255,11 @@ export default function ExploreScreen() {
         <View style={styles.header}>
           <View style={styles.welcomeContainer}>
             <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Hoşgeldiniz</Text>
-            <Text style={[styles.usernameText, { color: theme.colors.text }]}>{user?.username}</Text>
+            <Text style={[styles.usernameText, { color: theme.colors.text }]}>
+              {user?.firstName && user?.lastName 
+                ? `${user.firstName} ${user.lastName}` 
+                : user?.username}
+            </Text>
           </View>
         </View>
         <View style={styles.emptyContainer}>
@@ -260,7 +287,11 @@ export default function ExploreScreen() {
           
           <View style={styles.welcomeContainer}>
             <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Hoşgeldiniz</Text>
-            <Text style={[styles.usernameText, { color: theme.colors.text }]}>{user?.username}</Text>
+            <Text style={[styles.usernameText, { color: theme.colors.text }]}>
+              {user?.firstName && user?.lastName 
+                ? `${user.firstName} ${user.lastName}` 
+                : user?.username}
+            </Text>
           </View>
           
           <TouchableOpacity
@@ -450,7 +481,7 @@ export default function ExploreScreen() {
           onPress={toggleDrawer}
         />
       )}
-      <Animated.View style={[styles.drawer, { left: drawerAnimation }]}>
+      <Animated.View style={[styles.drawer, { left: drawerAnimation, backgroundColor: theme.colors.surface }]}>
         <LinearGradient
           colors={['#6366F1', '#8B5CF6']}
           style={styles.drawerHeader}
@@ -464,21 +495,15 @@ export default function ExploreScreen() {
         </LinearGradient>
         
         <View style={styles.drawerMenu}>
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); /* Navigate to my pets */ }}>
-            <Text style={styles.drawerMenuText}>Hayvanlarım</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); router.push('/(tabs)/matches'); }}>
-            <Text style={styles.drawerMenuText}>Eşleşmelerim</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); router.push('/(tabs)/chats'); }}>
-            <Text style={styles.drawerMenuText}>Sohbetlerim</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); router.push('/settings'); }}>
-            <Text style={styles.drawerMenuText}>Ayarlar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.drawerMenuItem} onPress={() => { toggleDrawer(); router.push('/my-pets'); }}>
-            <Text style={styles.drawerMenuText}>Hayvanlarım</Text>
-          </TouchableOpacity>
+          {drawerMenu.map((item, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.drawerMenuItem} 
+              onPress={item.onPress}
+            >
+              <Text style={[styles.drawerMenuText, { color: theme.colors.text }]}>{item.title}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </Animated.View>
     </LinearGradient>
@@ -846,7 +871,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 280,
-    backgroundColor: '#FFFFFF',
     zIndex: 999,
     shadowColor: '#000',
     shadowOffset: {
@@ -888,11 +912,9 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
   },
   drawerMenuText: {
     fontSize: 16,
-    color: '#1F2937',
     fontWeight: '500',
   },
 });

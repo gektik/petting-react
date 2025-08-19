@@ -181,9 +181,9 @@ export default function MatchesScreen() {
 
   if (loading) {
     return (
-      <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6366F1" />
-        <Text style={styles.loadingText}>Yükleniyor...</Text>
+      <LinearGradient colors={theme.colors.gradient} style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Yükleniyor...</Text>
       </LinearGradient>
     );
   }
@@ -191,11 +191,11 @@ export default function MatchesScreen() {
   const { data, renderItem, emptyText } = getTabData();
 
   return (
-    <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
-      <StatusBar style="dark" />
+    <LinearGradient colors={theme.colors.gradient} style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Etkileşimlerim</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Etkileşimlerim</Text>
       </View>
 
       {/* Tabs */}
