@@ -105,10 +105,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         if (userData) {
           const parsedUser = JSON.parse(userData);
-          console.log('AuthContext: Kullanıcı verisi storage\'dan yüklendi:', parsedUser);
+          console.log('AuthContext: Storage\'dan yüklenen kullanıcı verisi:', parsedUser);
+          console.log('AuthContext: Profil resmi URL\'si:', parsedUser.profilePhoto);
           if (isMountedRef.current) {
             setUser(parsedUser);
           }
+        } else {
+          console.log('AuthContext: Storage\'da kullanıcı verisi bulunamadı');
         }
       } catch (storageError) {
         console.warn('User data storage error:', storageError);
@@ -321,34 +324,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
       
-      // Save to storage properly
-      if (Platform.OS === 'web') {
-        localStorage.setItem('user_data', JSON.stringify(updatedUser));
-      } else {
-        import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
-          AsyncStorage.setItem('user_data', JSON.stringify(updatedUser)).catch(error => {
-            console.error('Error saving user data to AsyncStorage:', error);
-          });
-        }).catch(error => {
-          console.error('Error importing AsyncStorage:', error);
-        });
+      console.log('AuthContext: updateUser çağrıldı:', updatedUser);
+      
+      // Save to storage synchronously
+      try {
+        if (Platform.OS === 'web') {
+          localStorage.setItem('user_data', JSON.stringify(updatedUser));
+          console.log('AuthContext: Web storage\'a kaydedildi:', updatedUser);
+        } else {
+          // Use async function for AsyncStorage
+          (async () => {
+            try {
+              const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+              await AsyncStorage.setItem('user_data', JSON.stringify(updatedUser));
+              console.log('AuthContext: AsyncStorage\'a kaydedildi:', updatedUser);
+            } catch (error) {
+              console.error('Error saving user data to AsyncStorage:', error);
+            }
+          })();
+        }
+      } catch (error) {
+        console.error('Error saving user data:', error);
       }
     } else if (!user && isMountedRef.current) {
       // Eğer user yoksa yeni user oluştur
       const newUser = userData as User;
       setUser(newUser);
+      console.log('AuthContext: Yeni user oluşturuldu:', newUser);
       
       // Save new user to storage
-      if (Platform.OS === 'web') {
-        localStorage.setItem('user_data', JSON.stringify(newUser));
-      } else {
-        import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
-          AsyncStorage.setItem('user_data', JSON.stringify(newUser)).catch(error => {
-            console.error('Error saving new user data to AsyncStorage:', error);
-          });
-        }).catch(error => {
-          console.error('Error importing AsyncStorage:', error);
-        });
+      try {
+        if (Platform.OS === 'web') {
+          localStorage.setItem('user_data', JSON.stringify(newUser));
+          console.log('AuthContext: Yeni user web storage\'a kaydedildi:', newUser);
+        } else {
+          // Use async function for AsyncStorage
+          (async () => {
+            try {
+              const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+              await AsyncStorage.setItem('user_data', JSON.stringify(newUser));
+              console.log('AuthContext: Yeni user AsyncStorage\'a kaydedildi:', newUser);
+            } catch (error) {
+              console.error('Error saving new user data to AsyncStorage:', error);
+            }
+          })();
+        }
+      } catch (error) {
+        console.error('Error saving new user data:', error);
       }
     }
   };
