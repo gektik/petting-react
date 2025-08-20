@@ -881,13 +881,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    alignItems: 'center',
   },
   reviewModal: {
-    width: '85%',
+    width: '90%',
+    maxWidth: 400,
     borderRadius: 16,
     padding: 20,
-    maxHeight: '60%',
+    maxHeight: '70%',
   },
   reviewModalHeader: {
     flexDirection: 'row',
@@ -921,10 +921,12 @@ const styles = StyleSheet.create({
   submitReviewButton: {
     borderRadius: 12,
     overflow: 'hidden',
+    marginTop: 16,
   },
   submitReviewGradient: {
     paddingVertical: 16,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   submitReviewText: {
     fontSize: 16,
