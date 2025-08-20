@@ -444,7 +444,7 @@ export default function ProductDetailScreen() {
         animationType="slide"
         onRequestClose={() => setShowReviewForm(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={styles.reviewModalOverlay}>
           <View style={[styles.reviewModal, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.reviewModalHeader}>
               <Text style={[styles.reviewModalTitle, { color: theme.colors.text }]}>Değerlendirme Yap</Text>
@@ -876,11 +876,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  reviewModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignItems: 'center',
+  },
   reviewModal: {
-    width: '90%',
+    width: '85%',
     borderRadius: 16,
     padding: 20,
-    maxHeight: '70%',
+    maxHeight: '60%',
   },
   reviewModalHeader: {
     flexDirection: 'row',
@@ -898,7 +905,8 @@ const styles = StyleSheet.create({
   reviewFormLabel: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 16,
+    marginTop: 12,
   },
   reviewInput: {
     borderRadius: 12,
@@ -907,16 +915,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     height: 100,
-    marginBottom: 20,
+    marginBottom: 24,
     paddingTop: 12,
   },
   submitReviewButton: {
     borderRadius: 12,
     overflow: 'hidden',
-    marginTop: 'auto',
   },
   submitReviewGradient: {
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
   },
   submitReviewText: {
