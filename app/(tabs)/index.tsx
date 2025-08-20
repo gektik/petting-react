@@ -421,6 +421,62 @@ export default function ExploreScreen() {
           </View>
         )}
 
+        {/* Tutorial Overlay */}
+        {showTutorial && currentIndex === 0 && (
+          <View style={styles.tutorialOverlay}>
+            <Animated.View
+              style={[
+                styles.tutorialIndicator,
+                styles.tutorialLike,
+                {
+                  opacity: tutorialLikeAnim,
+                  transform: [
+                    {
+                      translateX: tutorialLikeAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 50],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <Heart size={32} color="#10B981" fill="#10B981" />
+              <Text style={styles.tutorialText}>Sağa kaydır</Text>
+              <Text style={styles.tutorialSubtext}>Beğen</Text>
+            </Animated.View>
+
+            <Animated.View
+              style={[
+                styles.tutorialIndicator,
+                styles.tutorialPass,
+                {
+                  opacity: tutorialPassAnim,
+                  transform: [
+                    {
+                      translateX: tutorialPassAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, -50],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <X size={32} color="#EF4444" />
+              <Text style={styles.tutorialText}>Sola kaydır</Text>
+              <Text style={styles.tutorialSubtext}>Geç</Text>
+            </Animated.View>
+
+            <TouchableOpacity
+              style={styles.tutorialCloseButton}
+              onPress={() => setShowTutorial(false)}
+            >
+              <Text style={styles.tutorialCloseText}>Anladım</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {pets.slice(currentIndex, currentIndex + 2).map((pet, index) => {
           if (index === 0) {
             return (
@@ -1001,6 +1057,63 @@ const styles = StyleSheet.create({
   drawerMenuText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  tutorialOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  tutorialIndicator: {
+    position: 'absolute',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  tutorialLike: {
+    right: '25%',
+  },
+  tutorialPass: {
+    left: '25%',
+  },
+  tutorialText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginTop: 8,
+  },
+  tutorialSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  tutorialCloseButton: {
+    position: 'absolute',
+    bottom: 100,
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 25,
+  },
+  tutorialCloseText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   tutorialOverlay: {
     position: 'absolute',

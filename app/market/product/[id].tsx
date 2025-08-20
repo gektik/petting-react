@@ -444,18 +444,35 @@ export default function ProductDetailScreen() {
         animationType="slide"
         onRequestClose={() => setShowReviewForm(false)}
       >
-        <View style={styles.reviewModalOverlay}>
-          <View style={[styles.reviewModal, { backgroundColor: theme.colors.surface }]}>
-            <View style={styles.reviewModalHeader}>
-              <Text style={[styles.reviewModalTitle, { color: theme.colors.text }]}>Değerlendirme Yap</Text>
-              <TouchableOpacity onPress={() => setShowReviewForm(false)}>
-                <X size={24} color={theme.colors.textSecondary} />
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Değerlendirme Yap</Text>
+              <TouchableOpacity
+                style={[styles.modalCloseButton, { backgroundColor: theme.colors.background }]}
+                onPress={() => setShowReviewForm(false)}
+              >
+                <X size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.reviewForm}>
+            <ScrollView style={styles.reviewFormContent}>
               <Text style={[styles.reviewFormLabel, { color: theme.colors.text }]}>Puanınız</Text>
-              {renderStars(userReview.rating, 32, true)}
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => setUserReview({ ...userReview, rating: star })}
+                    style={styles.starButton}
+                  >
+                    <Star
+                      size={32}
+                      color="#F59E0B"
+                      fill={star <= userReview.rating ? "#F59E0B" : "none"}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
 
               <Text style={[styles.reviewFormLabel, { color: theme.colors.text }]}>Yorumunuz</Text>
               <TextInput
@@ -480,7 +497,7 @@ export default function ProductDetailScreen() {
                   <Text style={styles.submitReviewText}>Değerlendirmeyi Gönder</Text>
                 </LinearGradient>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -739,51 +756,51 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 8,
   },
   quantityButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginHorizontal: 16,
-    minWidth: 30,
+    marginHorizontal: 12,
+    minWidth: 25,
     textAlign: 'center',
   },
   actionButtons: {
     flex: 1,
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   addToCartButton: {
-    flex: 1,
+    flex: 0.8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 12,
   },
   addToCartText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   buyNowButton: {
-    flex: 1.5,
+    flex: 1.2,
     borderRadius: 12,
     overflow: 'hidden',
   },
   buyNowGradient: {
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   buyNowText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
@@ -870,7 +887,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  modalOverlay: {
+  reviewFormContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  starButton: {
+    padding: 4,
+  },
+  reviewFormLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 16,
+    marginTop: 12,
+  },
+  reviewInput: {
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    height: 100,
+    marginBottom: 24,
+    paddingTop: 12,
+  },
+  submitReviewButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 16,
+  },
+  submitReviewGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitReviewText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+});
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',

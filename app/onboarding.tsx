@@ -187,6 +187,15 @@ export default function OnboardingScreen() {
             </Text>
             <ArrowRight size={20} color="#FFFFFF" />
           </LinearGradient>
+          
+          {currentStep < steps.length - 1 && (
+            <TouchableOpacity
+              style={styles.skipBottomButton}
+              onPress={skipOnboarding}
+            >
+              <Text style={styles.skipBottomText}>Geç</Text>
+            </TouchableOpacity>
+          )}
         </TouchableOpacity>
       </View>
     </LinearGradient>
@@ -311,5 +320,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginRight: 8,
+  },
+  skipBottomButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  skipBottomText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
 });
