@@ -887,75 +887,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  reviewFormContent: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  starButton: {
-    padding: 4,
-  },
-  reviewFormLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 16,
-    marginTop: 12,
-  },
-  reviewInput: {
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    height: 100,
-    marginBottom: 24,
-    paddingTop: 12,
-  },
-  submitReviewButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 16,
-  },
-  submitReviewGradient: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitReviewText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-});
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  reviewModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  reviewModal: {
+  modalContent: {
     width: '90%',
     maxWidth: 400,
     borderRadius: 16,
     padding: 20,
     maxHeight: '70%',
   },
-  reviewModalHeader: {
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
-  reviewModalTitle: {
+  modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
   },
-  reviewForm: {
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reviewFormContent: {
     flex: 1,
+    paddingHorizontal: 20,
+  },
+  starButton: {
+    padding: 4,
   },
   reviewFormLabel: {
     fontSize: 16,
