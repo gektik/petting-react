@@ -8,10 +8,12 @@ import {
   Image,
   Alert,
   Dimensions,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Star, ShoppingCart, Heart, Share, Plus, Minus } from 'lucide-react-native';
+import { ArrowLeft, Star, ShoppingCart, Heart, Share, Plus, Minus, Check, X } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -43,7 +45,38 @@ export default function ProductDetailScreen() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [cartItemCount, setCartItemCount] = useState(3); // Mock cart count
+  const [cartItemCount, setCartItemCount] = useState(3);
+  const [showReviews, setShowReviews] = useState(false);
+  const [userReview, setUserReview] = useState({ rating: 0, comment: '' });
+  const [showReviewForm, setShowReviewForm] = useState(false);
+
+  // Mock reviews data
+  const [reviews] = useState([
+    {
+      id: '1',
+      userName: 'Ahmet Y.',
+      rating: 5,
+      comment: 'Köpeğim çok sevdi, kaliteli bir ürün.',
+      date: '2024-03-10',
+      verified: true,
+    },
+    {
+      id: '2',
+      userName: 'Ayşe K.',
+      rating: 4,
+      comment: 'Fiyat performans açısından iyi, tavsiye ederim.',
+      date: '2024-03-08',
+      verified: true,
+    },
+    {
+      id: '3',
+      userName: 'Mehmet S.',
+      rating: 5,
+      comment: 'Hızlı kargo, ürün açıklamaya uygun geldi.',
+      date: '2024-03-05',
+      verified: false,
+    },
+  ]);
 
   // Mock product data
   const mockProducts: Product[] = [
@@ -120,8 +153,9 @@ export default function ProductDetailScreen() {
   };
 
   const handleAddToCart = () => {
+    setCartItemCount(prev => prev + 1);
     Alert.alert(
-      'Sepete Eklendi',
+      'Sepete Eklendi! 🛒',
       `${product?.name} (${quantity} adet) sepetinize eklendi.`,
       [
         { text: 'Alışverişe Devam', style: 'cancel' },
@@ -148,6 +182,62 @@ export default function ProductDetailScreen() {
       `${product?.name} ${isFavorite ? 'favorilerden çıkarıldı' : 'favorilerinize eklendi'}.`
     );
   };
+
+  const submitReview = () => {
+    if (userReview.rating === 0) {
+      Alert.alert('Hata', 'Lütfen bir puan verin.');
+      return;
+    }
+    
+    Alert.alert(
+      'Değerlendirme Gönderildi',
+      'Değerlendirmeniz başarıyla gönderildi. Teşekkür ederiz!',
+      [{ text: 'Tamam', onPress: () => setShowReviewForm(false) }]
+    );
+  };
+
+  const renderStars = (rating: number, size: number = 16, interactive: boolean = false) => {
+    return (
+      <View style={styles.starsContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <TouchableOpacity
+            key={star}
+            disabled={!interactive}
+            onPress={() => interactive && setUserReview({ ...userReview, rating: star })}
+          >
+            <Star
+              size={size}
+              color="#F59E0B"
+              fill={star <= rating ? "#F59E0B" : "none"}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  const renderReview = (review: any) => (
+    <View key={review.id} style={[styles.reviewItem, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.reviewHeader}>
+        <Text style={[styles.reviewerName, { color: theme.colors.text }]}>{review.userName}</Text>
+        <View style={styles.reviewMeta}>
+          {renderStars(review.rating, 14)}
+          <Text style={[styles.reviewDate, { color: theme.colors.textSecondary }]}>
+            {new Date(review.date).toLocaleDateString('tr-TR')}
+          </Text>
+        </View>
+      </View>
+      <Text style={[styles.reviewComment, { color: theme.colors.textSecondary }]}>
+        {review.comment}
+      </Text>
+      {review.verified && (
+        <View style={styles.verifiedBadge}>
+          <Check size={12} color={theme.colors.success} />
+          <Text style={[styles.verifiedText, { color: theme.colors.success }]}>Doğrulanmış alıcı</Text>
+        </View>
+      )}
+    </View>
+  );
 
   if (loading || !product) {
     return (
@@ -305,7 +395,95 @@ export default function ProductDetailScreen() {
             </Text>
           </View>
         )}
+
+        {/* Reviews Section */}
+        <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+          <View style={styles.reviewsHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Değerlendirmeler ({reviews.length})
+            </Text>
+            <TouchableOpacity
+              style={styles.writeReviewButton}
+              onPress={() => setShowReviewForm(true)}
+            >
+              <Text style={[styles.writeReviewText, { color: theme.colors.primary }]}>Değerlendir</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.ratingOverview}>
+            <View style={styles.overallRating}>
+              <Text style={[styles.overallRatingNumber, { color: theme.colors.text }]}>
+                {product.rating}
+              </Text>
+              {renderStars(product.rating, 20)}
+              <Text style={[styles.reviewCount, { color: theme.colors.textSecondary }]}>
+                {product.reviewCount} değerlendirme
+              </Text>
+            </View>
+          </View>
+
+          {reviews.slice(0, showReviews ? reviews.length : 2).map(renderReview)}
+
+          {reviews.length > 2 && (
+            <TouchableOpacity
+              style={styles.showMoreReviews}
+              onPress={() => setShowReviews(!showReviews)}
+            >
+              <Text style={[styles.showMoreText, { color: theme.colors.primary }]}>
+                {showReviews ? 'Daha Az Göster' : `${reviews.length - 2} Değerlendirme Daha Göster`}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </ScrollView>
+
+      {/* Review Form Modal */}
+      <Modal
+        visible={showReviewForm}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowReviewForm(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.reviewModal, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.reviewModalHeader}>
+              <Text style={[styles.reviewModalTitle, { color: theme.colors.text }]}>Değerlendirme Yap</Text>
+              <TouchableOpacity onPress={() => setShowReviewForm(false)}>
+                <X size={24} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.reviewForm}>
+              <Text style={[styles.reviewFormLabel, { color: theme.colors.text }]}>Puanınız</Text>
+              {renderStars(userReview.rating, 32, true)}
+
+              <Text style={[styles.reviewFormLabel, { color: theme.colors.text }]}>Yorumunuz</Text>
+              <TextInput
+                style={[styles.reviewInput, { backgroundColor: theme.colors.background, color: theme.colors.text, borderColor: theme.colors.border }]}
+                value={userReview.comment}
+                onChangeText={(text) => setUserReview({ ...userReview, comment: text })}
+                placeholder="Ürün hakkındaki düşüncelerinizi paylaşın..."
+                placeholderTextColor={theme.colors.textSecondary}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+
+              <TouchableOpacity
+                style={styles.submitReviewButton}
+                onPress={submitReview}
+              >
+                <LinearGradient
+                  colors={theme.colors.headerGradient}
+                  style={styles.submitReviewGradient}
+                >
+                  <Text style={styles.submitReviewText}>Değerlendirmeyi Gönder</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Bottom Actions */}
       <View style={[styles.bottomContainer, { backgroundColor: theme.colors.surface }]}>
@@ -564,17 +742,17 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   quantityButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityText: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginHorizontal: 12,
-    minWidth: 25,
+    marginHorizontal: 16,
+    minWidth: 30,
     textAlign: 'center',
   },
   actionButtons: {
@@ -583,7 +761,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   addToCartButton: {
-    flex: 0.8,
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -596,7 +774,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   buyNowButton: {
-    flex: 1.2,
+    flex: 1.5,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -605,6 +783,143 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buyNowText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  writeReviewButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#F0F4FF',
+  },
+  writeReviewText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  ratingOverview: {
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  overallRating: {
+    alignItems: 'center',
+  },
+  overallRatingNumber: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  reviewCount: {
+    fontSize: 14,
+    marginTop: 8,
+  },
+  reviewItem: {
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reviewerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  reviewMeta: {
+    alignItems: 'flex-end',
+  },
+  reviewDate: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  reviewComment: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  verifiedText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  showMoreReviews: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  showMoreText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reviewModal: {
+    width: '90%',
+    borderRadius: 16,
+    padding: 20,
+    maxHeight: '70%',
+  },
+  reviewModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  reviewModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  reviewForm: {
+    flex: 1,
+  },
+  reviewFormLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  reviewInput: {
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    height: 100,
+    marginBottom: 20,
+    paddingTop: 12,
+  },
+  submitReviewButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 'auto',
+  },
+  submitReviewGradient: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  submitReviewText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
