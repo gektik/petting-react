@@ -291,6 +291,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     marginHorizontal: 6,
   },
   bottomContainer: {
@@ -298,6 +299,7 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
   },
   nextButton: {
+    width: '100%',
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -322,8 +324,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   skipBottomButton: {
-    marginTop: 16,
-    paddingVertical: 12,
+    marginTop: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
     alignItems: 'center',
   },
   skipBottomText: {
