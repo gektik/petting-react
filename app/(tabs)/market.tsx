@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
+  Alert,
+  Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ShoppingBag, Star, Plus, Search, Filter, ShoppingCart, Package } from 'lucide-react-native';
+import { ShoppingBag, Star, ShoppingCart as CartIcon, Search, Filter, Package, X, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -35,6 +37,14 @@ export default function MarketScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [cartItemCount, setCartItemCount] = useState(3);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filters, setFilters] = useState({
+    priceRange: 'all',
+    brand: 'all',
+    rating: 'all',
+    sortBy: 'popular'
+  });
 
   const categories: Category[] = [
     { id: 'all', name: 'Tümü', icon: ShoppingBag, color: '#6366F1' },
@@ -87,6 +97,32 @@ export default function MarketScreen() {
     ? products 
     : products.filter(product => product.category === selectedCategory);
 
+  const addToCart = (product: Product) => {
+    setCartItemCount(prev => prev + 1);
+    Alert.alert(
+      'Sepete Eklendi! 🛒',
+      `${product.name} sepetinize eklendi.`,
+      [
+        { text: 'Alışverişe Devam', style: 'cancel' },
+        { text: 'Sepete Git', onPress: () => router.push('/market/cart') },
+      ]
+    );
+  };
+
+  const applyFilters = () => {
+    setShowFilterModal(false);
+    Alert.alert('Filtreler Uygulandı', 'Ürünler filtrelere göre sıralandı.');
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      priceRange: 'all',
+      brand: 'all',
+      rating: 'all',
+      sortBy: 'popular'
+    });
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -126,6 +162,23 @@ export default function MarketScreen() {
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 3,
+    },
+    cartBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      backgroundColor: '#EF4444',
+      borderRadius: 10,
+      minWidth: 20,
+      height: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 4,
+    },
+    cartBadgeText: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: '#FFFFFF',
     },
     categoriesContainer: {
       marginBottom: 24,
@@ -244,10 +297,91 @@ export default function MarketScreen() {
       overflow: 'hidden',
     },
     addToCartGradient: {
-      width: 32,
-      height: 32,
+      width: 28,
+      height: 28,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    filterModal: {
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      maxHeight: '80%',
+    },
+    filterHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: '#E5E7EB',
+    },
+    filterTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+    },
+    closeButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    filterContent: {
+      flex: 1,
+      paddingHorizontal: 20,
+    },
+    filterSection: {
+      marginBottom: 24,
+    },
+    filterSectionTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginBottom: 12,
+    },
+    filterOption: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: '#F3F4F6',
+    },
+    filterOptionText: {
+      fontSize: 16,
+    },
+    filterActions: {
+      flexDirection: 'row',
+      padding: 20,
+      gap: 12,
+    },
+    resetButton: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: 'center',
+    },
+    resetButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    applyButton: {
+      flex: 2,
+      borderRadius: 12,
+      overflow: 'hidden',
+    },
+    applyGradient: {
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    applyButtonText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#FFFFFF',
     },
   });
 
@@ -291,12 +425,15 @@ export default function MarketScreen() {
         
         <View style={styles.priceContainer}>
           <Text style={styles.price}>₺{item.price}</Text>
-          <TouchableOpacity style={styles.addToCartButton}>
+          <TouchableOpacity
+            style={styles.addToCartButton}
+            onPress={() => addToCart(item)}
+          >
             <LinearGradient
               colors={['#6366F1', '#8B5CF6']}
               style={styles.addToCartGradient}
             >
-              <Plus size={20} color="#FFFFFF" />
+              <CartIcon size={20} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -324,7 +461,12 @@ export default function MarketScreen() {
             style={styles.headerButton}
             onPress={() => router.push('/market/cart')}
           >
-            <ShoppingCart size={24} color={theme.colors.textSecondary} />
+            <CartIcon size={24} color={theme.colors.textSecondary} />
+            {cartItemCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.headerButton}
@@ -332,7 +474,10 @@ export default function MarketScreen() {
           >
             <Package size={24} color={theme.colors.textSecondary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton}>
+          <TouchableOpacity 
+            style={styles.headerButton}
+            onPress={() => setShowFilterModal(true)}
+          >
             <Filter size={24} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         </View>
@@ -364,6 +509,132 @@ export default function MarketScreen() {
           />
         </View>
       </ScrollView>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={showFilterModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.filterModal, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.filterHeader}>
+              <Text style={[styles.filterTitle, { color: theme.colors.text }]}>Filtreler</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowFilterModal(false)}
+              >
+                <X size={24} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.filterContent}>
+              {/* Price Range */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterSectionTitle, { color: theme.colors.text }]}>Fiyat Aralığı</Text>
+                {['all', '0-100', '100-300', '300-500', '500+'].map((range) => (
+                  <TouchableOpacity
+                    key={range}
+                    style={styles.filterOption}
+                    onPress={() => setFilters({ ...filters, priceRange: range })}
+                  >
+                    <Text style={[styles.filterOptionText, { color: theme.colors.text }]}>
+                      {range === 'all' ? 'Tümü' : range === '500+' ? '500₺+' : `${range}₺`}
+                    </Text>
+                    {filters.priceRange === range && (
+                      <Check size={20} color={theme.colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Brand */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterSectionTitle, { color: theme.colors.text }]}>Marka</Text>
+                {['all', 'PetNutrition', 'CatPlay', 'DogStyle', 'HealthPet'].map((brand) => (
+                  <TouchableOpacity
+                    key={brand}
+                    style={styles.filterOption}
+                    onPress={() => setFilters({ ...filters, brand })}
+                  >
+                    <Text style={[styles.filterOptionText, { color: theme.colors.text }]}>
+                      {brand === 'all' ? 'Tüm Markalar' : brand}
+                    </Text>
+                    {filters.brand === brand && (
+                      <Check size={20} color={theme.colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Rating */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterSectionTitle, { color: theme.colors.text }]}>Değerlendirme</Text>
+                {['all', '4+', '4.5+'].map((rating) => (
+                  <TouchableOpacity
+                    key={rating}
+                    style={styles.filterOption}
+                    onPress={() => setFilters({ ...filters, rating })}
+                  >
+                    <Text style={[styles.filterOptionText, { color: theme.colors.text }]}>
+                      {rating === 'all' ? 'Tümü' : `${rating} ⭐ ve üzeri`}
+                    </Text>
+                    {filters.rating === rating && (
+                      <Check size={20} color={theme.colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Sort By */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterSectionTitle, { color: theme.colors.text }]}>Sıralama</Text>
+                {[
+                  { id: 'popular', name: 'Popülerlik' },
+                  { id: 'price-low', name: 'Fiyat (Düşük → Yüksek)' },
+                  { id: 'price-high', name: 'Fiyat (Yüksek → Düşük)' },
+                  { id: 'rating', name: 'En Yüksek Puan' },
+                  { id: 'newest', name: 'En Yeni' }
+                ].map((sort) => (
+                  <TouchableOpacity
+                    key={sort.id}
+                    style={styles.filterOption}
+                    onPress={() => setFilters({ ...filters, sortBy: sort.id })}
+                  >
+                    <Text style={[styles.filterOptionText, { color: theme.colors.text }]}>
+                      {sort.name}
+                    </Text>
+                    {filters.sortBy === sort.id && (
+                      <Check size={20} color={theme.colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+
+            <View style={styles.filterActions}>
+              <TouchableOpacity
+                style={[styles.resetButton, { backgroundColor: theme.colors.background }]}
+                onPress={resetFilters}
+              >
+                <Text style={[styles.resetButtonText, { color: theme.colors.text }]}>Sıfırla</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.applyButton}
+                onPress={applyFilters}
+              >
+                <LinearGradient
+                  colors={theme.colors.headerGradient}
+                  style={styles.applyGradient}
+                >
+                  <Text style={styles.applyButtonText}>Uygula</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
