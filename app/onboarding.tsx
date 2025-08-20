@@ -11,7 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Heart, PlusCircle, Users, Activity, ArrowRight } from 'lucide-react-native';
+import { ChevronRight, Heart, CirclePlus as PlusCircle, Users, Activity, ArrowRight } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
 
