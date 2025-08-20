@@ -43,6 +43,7 @@ export default function ProductDetailScreen() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [cartItemCount, setCartItemCount] = useState(3); // Mock cart count
 
   // Mock product data
   const mockProducts: Product[] = [
@@ -178,6 +179,17 @@ export default function ProductDetailScreen() {
               color={isFavorite ? theme.colors.error : theme.colors.textSecondary}
               fill={isFavorite ? theme.colors.error : 'none'}
             />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.headerButton, { backgroundColor: theme.colors.surface }]}
+            onPress={() => router.push('/market/cart')}
+          >
+            <ShoppingCart size={24} color={theme.colors.textSecondary} />
+            {cartItemCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.headerButton, { backgroundColor: theme.colors.surface }]}
@@ -320,7 +332,7 @@ export default function ProductDetailScreen() {
             disabled={!product.inStock}
           >
             <ShoppingCart size={20} color={theme.colors.primary} />
-            <Text style={[styles.addToCartText, { color: theme.colors.primary }]}>Sepete Ekle</Text>
+            <Text style={[styles.addToCartText, { color: theme.colors.primary }]}>Sepet</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -382,6 +394,23 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     gap: 8,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  cartBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   imageContainer: {
     position: 'relative',
@@ -532,20 +561,20 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   quantityButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityText: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginHorizontal: 16,
-    minWidth: 30,
+    marginHorizontal: 12,
+    minWidth: 25,
     textAlign: 'center',
   },
   actionButtons: {
@@ -554,7 +583,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   addToCartButton: {
-    flex: 1,
+    flex: 0.8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -567,7 +596,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   buyNowButton: {
-    flex: 1,
+    flex: 1.2,
     borderRadius: 12,
     overflow: 'hidden',
   },
