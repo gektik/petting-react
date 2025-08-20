@@ -104,6 +104,12 @@ export default function WelcomeScreen() {
             <Text style={styles.secondaryButtonText}>Hesap Oluştur</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.onboardingButton}
+            onPress={() => router.push('/onboarding')}
+          >
+            <Text style={styles.onboardingButtonText}>Nasıl Çalışır?</Text>
+          </TouchableOpacity>
           <Text style={styles.footerText}>
             Hayvan severlerin buluşma noktası
           </Text>
@@ -204,5 +210,17 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  onboardingButton: {
+    width: '100%',
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  onboardingButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textDecorationLine: 'underline',
   },
 });
