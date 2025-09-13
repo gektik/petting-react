@@ -585,9 +585,10 @@ class ApiService {
   async deletePetPhoto(petId: string): Promise<any> {
     try {
       console.log('🖼️ API: deletePetPhoto çağrılıyor...', { petId });
-      const response = await this.api.delete(`/pets/${petId}/photo`);
-      console.log('🖼️ API: deletePetPhoto yanıtı:', response.data);
-      return response.data;
+      // Fotoğrafı silmek için updatePet metodunu kullanarak profilePictureURL'yi null yap
+      const response = await this.updatePet(petId, { profilePictureURL: null });
+      console.log('🖼️ API: deletePetPhoto yanıtı:', response);
+      return response;
     } catch (error: any) {
       console.error('🖼️ API: deletePetPhoto hatası:', {
         message: error.message,
@@ -602,9 +603,10 @@ class ApiService {
   async deleteProfilePhoto(): Promise<any> {
     try {
       console.log('🖼️ API: deleteProfilePhoto çağrılıyor...');
-      const response = await this.api.delete('/users/me/profile-photo');
-      console.log('🖼️ API: deleteProfilePhoto yanıtı:', response.data);
-      return response.data;
+      // Profil fotoğrafını silmek için updateUserProfile metodunu kullanarak profilePictureURL'yi null yap
+      const response = await this.updateUserProfile({ profilePictureURL: null });
+      console.log('🖼️ API: deleteProfilePhoto yanıtı:', response);
+      return response;
     } catch (error: any) {
       console.error('🖼️ API: deleteProfilePhoto hatası:', {
         message: error.message,
