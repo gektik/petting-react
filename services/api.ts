@@ -405,6 +405,44 @@ class ApiService {
       throw error;
     }
   }
+
+  // Get pets for matching (swipe cards)
+  async getPetsForMatching(): Promise<Pet[]> {
+    try {
+      console.log('API: getPetsForMatching çağrılıyor...');
+      const response = await this.api.get('/pets/for-matching');
+      console.log('API: getPetsForMatching yanıtı:', response.data);
+      
+      // API'den gelen veriyi Pet tipine dönüştür
+      const pets = response.data || [];
+      return pets
+        .filter((apiPet: any) => apiPet && (apiPet.petID || apiPet.id))
+        .map((apiPet: any) => ({
+          id: (apiPet.petID || apiPet.id || '').toString(),
+          name: apiPet.name || '',
+          species: apiPet.petTypeID === 1 ? 'cat' : 'dog',
+          breed: apiPet.breedName || apiPet.breed || '',
+          age: apiPet.age || 0,
+          gender: apiPet.gender === 0 ? 'female' : 'male',
+          neutered: apiPet.isNeutered || false,
+          photos: apiPet.photos || (apiPet.profilePictureURL ? [this.fixImageUrl(apiPet.profilePictureURL)] : ['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400']),
+          description: apiPet.description || '',
+          color: apiPet.color || '',
+          ownerId: (apiPet.userID || apiPet.ownerId || '').toString(),
+          isActive: apiPet.isActiveForMatching !== false,
+          location: apiPet.location || 'Türkiye',
+          createdAt: apiPet.createdDate || apiPet.createdAt || new Date().toISOString(),
+          birthDate: apiPet.birthDate || undefined,
+        }));
+    } catch (error: any) {
+      console.error('API: getPetsForMatching hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
   // Generic API methods
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
     try {

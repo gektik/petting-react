@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Animated,
+  PanResponder,
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -17,11 +20,78 @@ import { apiService } from '@/services/api';
 import { mockPets } from '@/services/mockData';
 import { useTheme } from '@/contexts/ThemeContext';
 
+const { width: screenWidth } = Dimensions.get('window');
+
 interface MatchWithPet extends Match {
   matchedPet: Pet;
 }
 
 type TabType = 'matches' | 'likes' | 'passes';
+
+// SwipeableItem component for swipe-to-delete functionality
+const SwipeableItem = ({ children, onDelete, theme }: { 
+  children: React.ReactNode; 
+  onDelete: () => void; 
+  theme: any;
+}) => {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dx < 0) {
+          translateX.setValue(gestureState.dx);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -screenWidth * 0.3) {
+          // Swipe threshold reached, delete item
+          Animated.parallel([
+            Animated.timing(translateX, {
+              toValue: -screenWidth,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(opacity, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+          ]).start(() => {
+            onDelete();
+          });
+        } else {
+          // Return to original position
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
+  return (
+    <Animated.View
+      style={[
+        styles.swipeableContainer,
+        {
+          transform: [{ translateX }],
+          opacity,
+        },
+      ]}
+      {...panResponder.panHandlers}
+    >
+      {children}
+      <View style={[styles.deleteBackground, { backgroundColor: theme.colors.error }]}>
+        <X size={24} color="#FFFFFF" />
+      </View>
+    </Animated.View>
+  );
+};
 
 export default function MatchesScreen() {
   const { theme, isDark } = useTheme();
@@ -104,67 +174,63 @@ export default function MatchesScreen() {
   );
 
   const renderLike = ({ item }: { item: Pet }) => (
-    <TouchableOpacity style={styles.itemCard}>
-      <Image source={{ uri: item.photos[0] }} style={styles.petImage} />
-      
-      <View style={styles.itemInfo}>
-        <Text style={styles.petName}>{item.name}</Text>
-        <Text style={styles.petBreed}>{item.breed}</Text>
+    <SwipeableItem 
+      onDelete={() => handleRemoveFromList(item.id, 'likes')}
+      theme={theme}
+    >
+      <TouchableOpacity style={styles.itemCard}>
+        <Image source={{ uri: item.photos[0] }} style={styles.petImage} />
         
-        <View style={styles.petDetails}>
-          <Text style={styles.petAge}>{item.age} yaşında</Text>
-          <Text style={styles.petGender}>
-            {item.gender === 'male' ? 'Erkek' : 'Dişi'}
-          </Text>
-        </View>
-        
-        {item.location && (
-          <View style={styles.locationContainer}>
-            <MapPin size={14} color="#6B7280" />
-            <Text style={styles.locationText}>{item.location}</Text>
+        <View style={styles.itemInfo}>
+          <Text style={styles.petName}>{item.name}</Text>
+          <Text style={styles.petBreed}>{item.breed}</Text>
+          
+          <View style={styles.petDetails}>
+            <Text style={styles.petAge}>{item.age} yaşında</Text>
+            <Text style={styles.petGender}>
+              {item.gender === 'male' ? 'Erkek' : 'Dişi'}
+            </Text>
           </View>
-        )}
-      </View>
-      
-      <TouchableOpacity 
-        style={[styles.actionButton, styles.removeButton]}
-        onPress={() => handleRemoveFromList(item.id, 'likes')}
-      >
-        <X size={20} color="#EF4444" />
+          
+          {item.location && (
+            <View style={styles.locationContainer}>
+              <MapPin size={14} color="#6B7280" />
+              <Text style={styles.locationText}>{item.location}</Text>
+            </View>
+          )}
+        </View>
       </TouchableOpacity>
-    </TouchableOpacity>
+    </SwipeableItem>
   );
 
   const renderPass = ({ item }: { item: Pet }) => (
-    <TouchableOpacity style={styles.itemCard}>
-      <Image source={{ uri: item.photos[0] }} style={styles.petImage} />
-      
-      <View style={styles.itemInfo}>
-        <Text style={styles.petName}>{item.name}</Text>
-        <Text style={styles.petBreed}>{item.breed}</Text>
+    <SwipeableItem 
+      onDelete={() => handleRemoveFromList(item.id, 'passes')}
+      theme={theme}
+    >
+      <TouchableOpacity style={styles.itemCard}>
+        <Image source={{ uri: item.photos[0] }} style={styles.petImage} />
         
-        <View style={styles.petDetails}>
-          <Text style={styles.petAge}>{item.age} yaşında</Text>
-          <Text style={styles.petGender}>
-            {item.gender === 'male' ? 'Erkek' : 'Dişi'}
-          </Text>
-        </View>
-        
-        {item.location && (
-          <View style={styles.locationContainer}>
-            <MapPin size={14} color="#6B7280" />
-            <Text style={styles.locationText}>{item.location}</Text>
+        <View style={styles.itemInfo}>
+          <Text style={styles.petName}>{item.name}</Text>
+          <Text style={styles.petBreed}>{item.breed}</Text>
+          
+          <View style={styles.petDetails}>
+            <Text style={styles.petAge}>{item.age} yaşında</Text>
+            <Text style={styles.petGender}>
+              {item.gender === 'male' ? 'Erkek' : 'Dişi'}
+            </Text>
           </View>
-        )}
-      </View>
-      
-      <TouchableOpacity 
-        style={[styles.actionButton, styles.removeButton]}
-        onPress={() => handleRemoveFromList(item.id, 'passes')}
-      >
-        <X size={20} color="#EF4444" />
+          
+          {item.location && (
+            <View style={styles.locationContainer}>
+              <MapPin size={14} color="#6B7280" />
+              <Text style={styles.locationText}>{item.location}</Text>
+            </View>
+          )}
+        </View>
       </TouchableOpacity>
-    </TouchableOpacity>
+    </SwipeableItem>
   );
 
   const getTabData = () => {
@@ -415,5 +481,18 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     fontSize: 16,
     textAlign: 'center',
+  },
+  swipeableContainer: {
+    position: 'relative',
+  },
+  deleteBackground: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
   },
 });

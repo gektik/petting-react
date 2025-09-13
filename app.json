@@ -30,7 +30,9 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-font",
+      "expo-web-browser"
     ],
     "updates": {
       "enabled": false,

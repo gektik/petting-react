@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { PetProvider } from '@/contexts/PetContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function RootLayout() {
@@ -13,7 +14,8 @@ export default function RootLayout() {
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <Stack screenOptions={{ headerShown: false }}>
+          <PetProvider>
+            <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="onboarding" />
             <Stack.Screen name="welcome" />
             <Stack.Screen name="auth/login" />
@@ -46,6 +48,7 @@ export default function RootLayout() {
             <Stack.Screen name="market/order-detail/[id]" />
           </Stack>
           <StatusBar style="auto" />
+          </PetProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

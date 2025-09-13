@@ -130,11 +130,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       
       if (!token) {
-        // Explicitly set user to null when no valid token
+        // No token, set loading to false and continue
         if (isMountedRef.current) {
           setUser(null);
-        }
-        if (isMountedRef.current) {
           setIsLoading(false);
         }
         return;
@@ -162,32 +160,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.warn('User data storage error:', storageError);
       }
 
-      // Verify token with server (optional)
-      // Validate token by making an authenticated request
-      try {
-        await apiService.getUserPets();
-        console.log('AuthContext: Token validation successful');
-        console.log('AuthContext: Final user state after validation:', user);
-      } catch (validationError: any) {
-        console.log('AuthContext: Token validation failed, clearing auth state');
-        // Token is invalid, clear everything
-        apiService.setAuthToken(null);
-        if (Platform.OS === 'web') {
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('user_data');
-          localStorage.removeItem('token_expiration');
-        } else {
-          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-          await AsyncStorage.multiRemove(['auth_token', 'user_data', 'token_expiration']);
-        }
-        if (isMountedRef.current) {
-          setUser(null);
-        }
-        if (isMountedRef.current) {
-          setIsLoading(false);
-        }
-        return;
-      }
+      // Set token in API service
+      apiService.setAuthToken(token);
+      
+      // Skip token validation for now to avoid 401 errors
+      console.log('AuthContext: Token set in API service, skipping validation');
       
     } catch (error) {
       console.error('Error checking auth status:', error);

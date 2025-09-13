@@ -83,7 +83,11 @@ export default function OnboardingScreen() {
     if (currentStep < steps.length - 1) {
       const nextIndex = currentStep + 1;
       setCurrentStep(nextIndex);
-      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+      flatListRef.current?.scrollToIndex({ 
+        index: nextIndex, 
+        animated: true,
+        viewPosition: 0.5 // Center the item
+      });
     } else {
       router.replace('/welcome');
     }
@@ -169,9 +173,18 @@ export default function OnboardingScreen() {
         )}
         onMomentumScrollEnd={(event) => {
           const index = Math.round(event.nativeEvent.contentOffset.x / width);
-          setCurrentStep(index);
+          if (index >= 0 && index < steps.length) {
+            setCurrentStep(index);
+          }
         }}
         scrollEventThrottle={16}
+        getItemLayout={(_, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
+        initialScrollIndex={0}
+        removeClippedSubviews={false}
       />
 
       {renderDots()}
@@ -229,6 +242,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
+    minHeight: height * 0.7, // Ensure minimum height
   },
   imageContainer: {
     width: 280,
