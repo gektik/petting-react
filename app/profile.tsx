@@ -21,8 +21,9 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     // User state'i değiştiğinde sayfayı yenile
+    console.log('Profile Screen - User changed:', user);
     setRefreshKey(prev => prev + 1);
-  }, [user?.profilePhoto]);
+  }, [user?.profilePhoto, user?.firstName, user?.lastName]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -126,9 +127,15 @@ export default function ProfileScreen() {
             <Text style={styles.username}>
               {user?.firstName && user?.lastName 
                 ? `${user.firstName} ${user.lastName}` 
-                : user?.username}
+                : user?.username || 'Kullanıcı'}
             </Text>
             <Text style={styles.email}>{user?.email}</Text>
+            <Text style={styles.credentials}>
+              Kullanıcı Adı: {user?.username}
+            </Text>
+            <Text style={styles.credentials}>
+              Şifre: ••••••••
+            </Text>
             {user?.location && (
               <Text style={styles.location}>{user.location}</Text>
             )}
@@ -264,6 +271,11 @@ const styles = StyleSheet.create({
   location: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
+  },
+  credentials: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 2,
   },
   statsContainer: {
     flexDirection: 'row',

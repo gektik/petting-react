@@ -28,7 +28,7 @@ import { mockPets } from '@/services/mockData';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function ExploreScreen() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const [pets, setPets] = useState<Pet[]>([]);
@@ -70,6 +70,29 @@ export default function ExploreScreen() {
       onPress: () => { toggleDrawer(); router.push('/settings'); },
     },
   ];
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Güvenli Çıkış',
+      'Hesabınızdan güvenle çıkmak istediğinize emin misiniz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Çıkış Yap',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              router.replace('/welcome');
+            } catch (error) {
+              console.error('Logout error:', error);
+              router.replace('/welcome');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   useEffect(() => {
     loadPets();
@@ -676,6 +699,14 @@ export default function ExploreScreen() {
               <Text style={[styles.drawerMenuText, { color: theme.colors.text }]}>{item.title}</Text>
             </TouchableOpacity>
           ))}
+          
+          {/* Güvenli Çıkış Butonu */}
+          <TouchableOpacity 
+            style={[styles.drawerMenuItem, styles.logoutMenuItem]} 
+            onPress={handleLogout}
+          >
+            <Text style={[styles.drawerMenuText, styles.logoutText]}>Güvenli Çıkış</Text>
+          </TouchableOpacity>
         </View>
       </Animated.View>
     </LinearGradient>
@@ -1195,5 +1226,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  logoutMenuItem: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    paddingTop: 20,
+  },
+  logoutText: {
+    color: '#EF4444',
+    fontWeight: '600',
   },
 });
