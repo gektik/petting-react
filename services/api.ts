@@ -617,6 +617,57 @@ class ApiService {
     }
   }
 
+  // Get user statistics
+  async getUserStats(): Promise<any> {
+    try {
+      console.log('📊 API: getUserStats çağrılıyor...');
+      const response = await this.api.get('/users/me/stats');
+      console.log('📊 API: getUserStats yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('📊 API: getUserStats hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
+
+  // Get user likes count
+  async getUserLikesCount(): Promise<number> {
+    try {
+      console.log('❤️ API: getUserLikesCount çağrılıyor...');
+      const response = await this.api.get('/users/me/likes/count');
+      console.log('❤️ API: getUserLikesCount yanıtı:', response.data);
+      return response.data.count || response.data || 0;
+    } catch (error: any) {
+      console.error('❤️ API: getUserLikesCount hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      return 0; // Hata durumunda 0 döndür
+    }
+  }
+
+  // Get user matches count
+  async getUserMatchesCount(): Promise<number> {
+    try {
+      console.log('💕 API: getUserMatchesCount çağrılıyor...');
+      const response = await this.api.get('/users/me/matches/count');
+      console.log('💕 API: getUserMatchesCount yanıtı:', response.data);
+      return response.data.count || response.data || 0;
+    } catch (error: any) {
+      console.error('💕 API: getUserMatchesCount hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      return 0; // Hata durumunda 0 döndür
+    }
+  }
+
   // Get current user details
   async getCurrentUser(): Promise<any> {
     try {

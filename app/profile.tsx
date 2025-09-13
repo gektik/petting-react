@@ -19,12 +19,59 @@ export default function ProfileScreen() {
   const { user, logout, updateUser } = useAuth();
   const router = useRouter();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [stats, setStats] = useState({
+    likesCount: 0,
+    matchesCount: 0,
+    petsCount: 0
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     // User state'i değiştiğinde sayfayı yenile
     console.log('Profile Screen - User changed:', user);
     setRefreshKey(prev => prev + 1);
   }, [user?.profilePhoto, user?.firstName, user?.lastName]);
+
+  useEffect(() => {
+    // İstatistikleri yükle
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      setLoadingStats(true);
+      console.log('📊 Profil istatistikleri yükleniyor...');
+      
+      // Paralel olarak tüm istatistikleri çek
+      const [likesCount, matchesCount, userPets] = await Promise.all([
+        apiService.getUserLikesCount(),
+        apiService.getUserMatchesCount(),
+        apiService.getUserPets()
+      ]);
+
+      setStats({
+        likesCount,
+        matchesCount,
+        petsCount: userPets.length
+      });
+
+      console.log('📊 İstatistikler yüklendi:', {
+        likesCount,
+        matchesCount,
+        petsCount: userPets.length
+      });
+    } catch (error) {
+      console.error('📊 İstatistik yükleme hatası:', error);
+      // Hata durumunda varsayılan değerler
+      setStats({
+        likesCount: 0,
+        matchesCount: 0,
+        petsCount: 0
+      });
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   const handleDeleteProfilePhoto = () => {
     Alert.alert(
@@ -119,10 +166,10 @@ export default function ProfileScreen() {
     },
   ];
 
-  const stats = [
-    { icon: Heart, label: 'Beğeniler', value: '24' },
-    { icon: MessageSquare, label: 'Eşleşmeler', value: '8' },
-    { icon: PlusCircle, label: 'Hayvanlarım', value: '3' },
+  const statsData = [
+    { icon: Heart, label: 'Beğendiklerim', value: loadingStats ? '...' : stats.likesCount.toString() },
+    { icon: MessageSquare, label: 'Eşleşmeler', value: loadingStats ? '...' : stats.matchesCount.toString() },
+    { icon: PlusCircle, label: 'Hayvanlarım', value: loadingStats ? '...' : stats.petsCount.toString() },
   ];
 
   return (
@@ -187,7 +234,7 @@ export default function ProfileScreen() {
         </LinearGradient>
 
         <View style={styles.statsContainer}>
-          {stats.map((stat, index) => (
+          {statsData.map((stat, index) => (
             <View key={index} style={styles.statItem}>
               <View style={styles.statIconContainer}>
                 <stat.icon size={24} color="#6366F1" />
