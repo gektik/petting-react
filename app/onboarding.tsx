@@ -103,7 +103,7 @@ export default function OnboardingScreen() {
         colors={[`${item.color}20`, `${item.color}10`]}
         style={styles.imageContainer}
       >
-        <Image source={{ uri: item.image }} style={styles.stepImage} />
+        <Image source={item.image} style={styles.stepImage} />
         <View style={[styles.iconContainer, { backgroundColor: item.color }]}>
           <item.icon size={32} color="#FFFFFF" />
         </View>
@@ -241,23 +241,23 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
-    paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingHorizontal: 20,
+    paddingTop: 30,
     minHeight: height * 0.7,
   },
   imageContainer: {
-    width: 280,
-    height: 280,
-    borderRadius: 140,
+    width: 320,
+    height: 320,
+    borderRadius: 160,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
     position: 'relative',
   },
   stepImage: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
     opacity: 0.9,
   },
   iconContainer: {
@@ -274,37 +274,37 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     flex: 1,
     justifyContent: 'flex-start',
-    paddingTop: 8,
+    paddingTop: 2,
   },
   stepTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 3,
     textAlign: 'center',
   },
   stepSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   stepDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 260,
+    lineHeight: 18,
+    maxWidth: 240,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 8,
   },
   dot: {
     width: 10,
@@ -314,8 +314,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   bottomContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     alignItems: 'center',
   },
   nextButton: {
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   nextButtonGradient: {
     flexDirection: 'row',
