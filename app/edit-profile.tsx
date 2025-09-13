@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Camera, Save, User, Mail, MapPin, Edit3 } from 'lucide-react-native';
+import { ArrowLeft, Camera, Save, User, Mail, MapPin, Edit3, Trash2 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { apiService } from '@/services/api';
@@ -69,6 +69,44 @@ export default function EditProfileScreen() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleDeleteProfilePhoto = () => {
+    Alert.alert(
+      'Profil Fotoğrafını Sil',
+      'Profil fotoğrafınızı silmek istediğinize emin misiniz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('Deleting profile photo...');
+              // API'ye profil fotoğrafı silme isteği gönder
+              await apiService.deleteProfilePhoto();
+              
+              // Local state'i güncelle - profil fotoğrafını kaldır
+              setFormData(prev => ({
+                ...prev,
+                profilePhoto: ''
+              }));
+              
+              // AuthContext'teki user state'ini de güncelle
+              await updateUser({
+                profilePhoto: undefined
+              });
+              
+              Alert.alert('Başarılı', 'Profil fotoğrafınız silindi.');
+            } catch (error) {
+              console.error('Delete profile photo error:', error);
+              const errorMessage = error instanceof Error ? error.message : 'Profil fotoğrafı silinirken bir hata oluştu.';
+              Alert.alert('Silme Hatası', errorMessage);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleImagePicker = async () => {
@@ -207,9 +245,10 @@ export default function EditProfileScreen() {
             <View style={styles.photoSection}>
               <View style={styles.avatarContainer}>
                 <Image
-                  source={{ 
-                    uri: formData.profilePhoto || 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop' 
-                  }}
+                  source={formData.profilePhoto 
+                    ? { uri: formData.profilePhoto } 
+                    : require('@/assets/images/icon.svg')
+                  }
                   style={styles.avatar}
                 />
                 <TouchableOpacity
@@ -223,6 +262,14 @@ export default function EditProfileScreen() {
                     <Camera size={16} color="#FFFFFF" />
                   )}
                 </TouchableOpacity>
+                {formData.profilePhoto && (
+                  <TouchableOpacity 
+                    style={styles.deletePhotoButton}
+                    onPress={handleDeleteProfilePhoto}
+                  >
+                    <Trash2 size={14} color="#FFFFFF" />
+                  </TouchableOpacity>
+                )}
               </View>
               <Text style={styles.photoText}>Profil Fotoğrafı</Text>
             </View>
@@ -411,6 +458,19 @@ const styles = StyleSheet.create({
   },
   cameraButtonDisabled: {
     backgroundColor: '#9CA3AF',
+  },
+  deletePhotoButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   photoText: {
     fontSize: 16,

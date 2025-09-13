@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Camera, Save, Calendar } from 'lucide-react-native';
+import { ArrowLeft, Camera, Save, Calendar, Trash2 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
@@ -288,6 +288,36 @@ export default function EditPetScreen() {
     } finally {
       setImageLoading(false);
     }
+  };
+
+  const deletePhoto = async () => {
+    Alert.alert(
+      'Fotoğrafı Sil',
+      'Bu hayvanın fotoğrafını silmek istediğinize emin misiniz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('Deleting photo for pet:', pet?.name, 'ID:', id);
+              // API'ye fotoğraf silme isteği gönder
+              await apiService.deletePetPhoto(id!);
+              
+              // Local state'i güncelle - fotoğrafı kaldır
+              setCurrentImageUri('');
+              
+              Alert.alert('Başarılı', 'Hayvanın fotoğrafı silindi.');
+            } catch (error) {
+              console.error('Delete photo error:', error);
+              const errorMessage = error instanceof Error ? error.message : 'Fotoğraf silinirken bir hata oluştu.';
+              Alert.alert('Silme Hatası', errorMessage);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const takePhoto = async () => {
@@ -586,7 +616,16 @@ export default function EditPetScreen() {
           {/* Profil Fotoğrafı */}
           <View style={styles.photoSection}>
             <View style={styles.photoContainer}>
-              <Image source={{ uri: currentImageUri || pet.photos[0] }} style={styles.photo} />
+              <Image 
+                source={
+                  currentImageUri || (pet.photos && pet.photos.length > 0 && pet.photos[0])
+                    ? { uri: currentImageUri || pet.photos[0] } 
+                    : pet.species === 'cat' 
+                      ? require('@/assets/images/kedi2.png')
+                      : require('@/assets/images/kopek2.png')
+                }
+                style={styles.photo} 
+              />
               <TouchableOpacity 
                 style={styles.cameraButton}
                 onPress={showImageOptions}
@@ -598,6 +637,14 @@ export default function EditPetScreen() {
                   <Camera size={20} color="#FFFFFF" />
                 )}
               </TouchableOpacity>
+              {(currentImageUri || (pet.photos && pet.photos.length > 0 && pet.photos[0])) && (
+                <TouchableOpacity 
+                  style={styles.deletePhotoButton}
+                  onPress={deletePhoto}
+                >
+                  <Trash2 size={16} color="#FFFFFF" />
+                </TouchableOpacity>
+              )}
             </View>
             <TouchableOpacity onPress={showImageOptions} disabled={imageLoading}>
               <Text style={styles.photoText}>
@@ -835,6 +882,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  deletePhotoButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
     borderColor: '#FFFFFF',
   },
   photoText: {

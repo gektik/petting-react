@@ -149,7 +149,10 @@ export default function ProfileScreen() {
             <View style={styles.avatarContainer}>
               <Image
                 key={refreshKey}
-                source={{ uri: user?.profilePhoto || 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop' }}
+                source={user?.profilePhoto 
+                  ? { uri: user.profilePhoto } 
+                  : require('@/assets/images/icon.svg')
+                }
                 style={styles.avatar}
               />
               <TouchableOpacity style={styles.cameraButton}>
