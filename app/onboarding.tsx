@@ -39,7 +39,7 @@ export default function OnboardingScreen() {
       description: 'Sevimli dostlarınızla tanışın ve hayvan severlerin büyük ailesine katılın.',
       icon: Heart,
       color: '#6366F1',
-      image: 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=600',
+      image: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&h=600&fit=crop&crop=center',
     },
     {
       id: 2,
@@ -48,7 +48,7 @@ export default function OnboardingScreen() {
       description: 'Hızlı kayıt ile hesabınızı oluşturun veya mevcut hesabınızla giriş yapın.',
       icon: Users,
       color: '#10B981',
-      image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600',
+      image: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&h=600&fit=crop&crop=center',
     },
     {
       id: 3,
@@ -57,7 +57,7 @@ export default function OnboardingScreen() {
       description: 'Sevimli dostunuzun profilini oluşturun ve en güzel fotoğraflarını paylaşın.',
       icon: PlusCircle,
       color: '#F59E0B',
-      image: 'https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=600',
+      image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&h=600&fit=crop&crop=center',
     },
     {
       id: 4,
@@ -66,7 +66,7 @@ export default function OnboardingScreen() {
       description: 'Yakınınızdaki sevimli hayvanları keşfedin ve yeni dostluklar kurun.',
       icon: Heart,
       color: '#EF4444',
-      image: 'https://images.pexels.com/photos/605296/pexels-photo-605296.jpeg?auto=compress&cs=tinysrgb&w=600',
+      image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&h=600&fit=crop&crop=center',
     },
     {
       id: 5,
@@ -75,7 +75,7 @@ export default function OnboardingScreen() {
       description: 'Hayvanınızın sağlık kayıtlarını tutun, randevularını takip edin.',
       icon: Activity,
       color: '#8B5CF6',
-      image: 'https://images.pexels.com/photos/4498185/pexels-photo-4498185.jpeg?auto=compress&cs=tinysrgb&w=600',
+      image: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&h=600&fit=crop&crop=center',
     },
   ];
 
@@ -200,16 +200,16 @@ export default function OnboardingScreen() {
             </Text>
             <ArrowRight size={20} color="#FFFFFF" />
           </LinearGradient>
-          
-          {currentStep < steps.length - 1 && (
-            <TouchableOpacity
-              style={styles.skipBottomButton}
-              onPress={skipOnboarding}
-            >
-              <Text style={styles.skipBottomText}>Geç</Text>
-            </TouchableOpacity>
-          )}
         </TouchableOpacity>
+        
+        {currentStep < steps.length - 1 && (
+          <TouchableOpacity
+            style={styles.skipBottomButton}
+            onPress={skipOnboarding}
+          >
+            <Text style={styles.skipBottomText}>Geç</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </LinearGradient>
   );
@@ -240,60 +240,64 @@ const styles = StyleSheet.create({
     width: width,
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 32,
-    minHeight: height * 0.7, // Ensure minimum height
+    paddingTop: 60,
+    minHeight: height * 0.7,
   },
   imageContainer: {
-    width: 280,
-    height: 280,
-    borderRadius: 140,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: 32,
     position: 'relative',
   },
   stepImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
     opacity: 0.8,
   },
   iconContainer: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    bottom: 15,
+    right: 15,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 4,
+    borderWidth: 3,
     borderColor: '#FFFFFF',
   },
   textContainer: {
     alignItems: 'center',
     paddingHorizontal: 24,
+    flex: 1,
+    justifyContent: 'center',
   },
   stepTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   stepSubtitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: 16,
+    marginBottom: 12,
     textAlign: 'center',
   },
   stepDescription: {
-    fontSize: 16,
+    fontSize: 15,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 22,
+    maxWidth: 280,
   },
   dotsContainer: {
     flexDirection: 'row',
@@ -311,6 +315,7 @@ const styles = StyleSheet.create({
   bottomContainer: {
     paddingHorizontal: 32,
     paddingBottom: 50,
+    alignItems: 'center',
   },
   nextButton: {
     width: '100%',
@@ -324,6 +329,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    marginBottom: 16,
   },
   nextButtonGradient: {
     flexDirection: 'row',
@@ -338,16 +344,17 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   skipBottomButton: {
-    marginTop: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 25,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   skipBottomText: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
 });

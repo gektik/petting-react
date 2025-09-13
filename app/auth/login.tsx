@@ -92,7 +92,7 @@ export default function LoginScreen() {
           localStorage.setItem('auth_token', response.token);
           localStorage.setItem('user_data', JSON.stringify(userData));
         } else {
-          const AsyncStorage = await import('@react-native-async-storage/async-storage');
+          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
           await AsyncStorage.setItem('auth_token', response.token);
           await AsyncStorage.setItem('user_data', JSON.stringify(userData));
         }
@@ -136,7 +136,7 @@ export default function LoginScreen() {
           localStorage.setItem('auth_token', response.token);
           localStorage.setItem('user_data', JSON.stringify(userData));
         } else {
-          const AsyncStorage = await import('@react-native-async-storage/async-storage');
+          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
           await AsyncStorage.setItem('auth_token', response.token);
           await AsyncStorage.setItem('user_data', JSON.stringify(userData));
         }
