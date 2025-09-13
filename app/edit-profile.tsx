@@ -27,8 +27,8 @@ export default function EditProfileScreen() {
   const [uploadingImage, setUploadingImage] = useState(false);
   
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
+    firstName: user?.firstName || 'Gökhan',
+    lastName: user?.lastName || 'Ektik',
     email: user?.email || '',
     bio: user?.bio || '',
     location: user?.location || '',
@@ -40,8 +40,8 @@ export default function EditProfileScreen() {
   useEffect(() => {
     if (user) {
       setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+        firstName: user.firstName || 'Gökhan',
+        lastName: user.lastName || 'Ektik',
         email: user.email || '',
         bio: user.bio || '',
         location: user.location || '',

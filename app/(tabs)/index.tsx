@@ -693,7 +693,7 @@ export default function ExploreScreen() {
           {drawerMenu.map((item, index) => (
             <TouchableOpacity 
               key={index} 
-              style={styles.drawerMenuItem} 
+              style={[styles.drawerMenuItem, { backgroundColor: theme.colors.surface }]} 
               onPress={item.onPress}
             >
               <Text style={[styles.drawerMenuText, { color: theme.colors.text }]}>{item.title}</Text>
@@ -701,12 +701,14 @@ export default function ExploreScreen() {
           ))}
           
           {/* Güvenli Çıkış Butonu */}
-          <TouchableOpacity 
-            style={[styles.drawerMenuItem, styles.logoutMenuItem]} 
-            onPress={handleLogout}
-          >
-            <Text style={[styles.drawerMenuText, styles.logoutText]}>Güvenli Çıkış</Text>
-          </TouchableOpacity>
+          <View style={styles.logoutContainer}>
+            <TouchableOpacity 
+              style={styles.logoutButton} 
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutText}>Güvenli Çıkış</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Animated.View>
     </LinearGradient>
@@ -1102,16 +1104,27 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
   },
   drawerMenu: {
+    flex: 1,
     paddingTop: 20,
   },
   drawerMenuItem: {
-    paddingVertical: 15,
+    marginHorizontal: 16,
+    marginVertical: 4,
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   drawerMenuText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   tutorialOverlay: {
     position: 'absolute',
@@ -1227,14 +1240,31 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  logoutMenuItem: {
-    marginTop: 20,
+  logoutContainer: {
+    marginTop: 'auto',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
-    paddingTop: 20,
+  },
+  logoutButton: {
+    backgroundColor: '#EF4444',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#EF4444',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   logoutText: {
-    color: '#EF4444',
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

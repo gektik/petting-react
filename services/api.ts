@@ -581,6 +581,23 @@ class ApiService {
     }
   }
 
+  // Get current user details
+  async getCurrentUser(): Promise<any> {
+    try {
+      console.log('👤 API: getCurrentUser çağrılıyor...');
+      const response = await this.api.get('/users/me');
+      console.log('👤 API: getCurrentUser yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('👤 API: getCurrentUser hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
+
   // Profile image upload method
   async uploadProfileImage(imageUri: string): Promise<{ imageUrl: string }> {
     try {
