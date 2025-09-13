@@ -130,6 +130,42 @@ export default function MyPetsScreen() {
     router.push('/add-pet');
   };
 
+  const handleDeletePhoto = async (pet: Pet) => {
+    Alert.alert(
+      'Fotoğrafı Sil',
+      `${pet.name} adlı hayvanın fotoğrafını silmek istediğinize emin misiniz?`,
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('Deleting photo for pet:', pet.name, 'ID:', pet.id);
+              // API'ye fotoğraf silme isteği gönder
+              await apiService.deletePetPhoto(pet.id);
+              
+              // Local state'i güncelle - fotoğrafı kaldır
+              setPets(prevPets => 
+                prevPets.map(p => 
+                  p.id === pet.id 
+                    ? { ...p, photos: [] }
+                    : p
+                )
+              );
+              
+              Alert.alert('Başarılı', `${pet.name} adlı hayvanın fotoğrafı silindi.`);
+            } catch (error) {
+              console.error('Delete photo error:', error);
+              const errorMessage = error instanceof Error ? error.message : 'Fotoğraf silinirken bir hata oluştu.';
+              Alert.alert('Silme Hatası', errorMessage);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderPet = ({ item }: { item: Pet }) => (
     <TouchableOpacity 
       style={styles.petCard}
@@ -178,6 +214,15 @@ export default function MyPetsScreen() {
         >
           <Pencil size={18} color="#6366F1" />
         </TouchableOpacity>
+        
+        {item.photos && item.photos.length > 0 && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deletePhotoButton]}
+            onPress={() => handleDeletePhoto(item)}
+          >
+            <Trash2 size={18} color="#F59E0B" />
+          </TouchableOpacity>
+        )}
         
         <TouchableOpacity
           style={[styles.actionButton, styles.deleteButton]}
@@ -370,6 +415,9 @@ const styles = StyleSheet.create({
   },
   editButton: {
     backgroundColor: '#F0F4FF',
+  },
+  deletePhotoButton: {
+    backgroundColor: '#FFFBEB',
   },
   deleteButton: {
     backgroundColor: '#FEF2F2',

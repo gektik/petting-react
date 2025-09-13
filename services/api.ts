@@ -581,6 +581,40 @@ class ApiService {
     }
   }
 
+  // Delete pet photo
+  async deletePetPhoto(petId: string): Promise<any> {
+    try {
+      console.log('🖼️ API: deletePetPhoto çağrılıyor...', { petId });
+      const response = await this.api.delete(`/pets/${petId}/photo`);
+      console.log('🖼️ API: deletePetPhoto yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('🖼️ API: deletePetPhoto hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
+
+  // Delete profile photo
+  async deleteProfilePhoto(): Promise<any> {
+    try {
+      console.log('🖼️ API: deleteProfilePhoto çağrılıyor...');
+      const response = await this.api.delete('/users/me/profile-photo');
+      console.log('🖼️ API: deleteProfilePhoto yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('🖼️ API: deleteProfilePhoto hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      throw error;
+    }
+  }
+
   // Get current user details
   async getCurrentUser(): Promise<any> {
     try {

@@ -10,12 +10,13 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { Settings, Heart, MessageSquare, CirclePlus as PlusCircle, LogOut, CreditCard as Edit, Camera, Bell, Shield, CircleHelp as HelpCircle, ArrowLeft } from 'lucide-react-native';
+import { Settings, Heart, MessageSquare, CirclePlus as PlusCircle, LogOut, CreditCard as Edit, Camera, Bell, Shield, CircleHelp as HelpCircle, ArrowLeft, Trash2 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
+import { apiService } from '@/services/api';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const router = useRouter();
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -24,6 +25,38 @@ export default function ProfileScreen() {
     console.log('Profile Screen - User changed:', user);
     setRefreshKey(prev => prev + 1);
   }, [user?.profilePhoto, user?.firstName, user?.lastName]);
+
+  const handleDeleteProfilePhoto = () => {
+    Alert.alert(
+      'Profil Fotoğrafını Sil',
+      'Profil fotoğrafınızı silmek istediğinize emin misiniz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('Deleting profile photo...');
+              // API'ye profil fotoğrafı silme isteği gönder
+              await apiService.deleteProfilePhoto();
+              
+              // Local state'i güncelle - profil fotoğrafını kaldır
+              await updateUser({
+                profilePhoto: undefined
+              });
+              
+              Alert.alert('Başarılı', 'Profil fotoğrafınız silindi.');
+            } catch (error) {
+              console.error('Delete profile photo error:', error);
+              const errorMessage = error instanceof Error ? error.message : 'Profil fotoğrafı silinirken bir hata oluştu.';
+              Alert.alert('Silme Hatası', errorMessage);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -122,6 +155,14 @@ export default function ProfileScreen() {
               <TouchableOpacity style={styles.cameraButton}>
                 <Camera size={16} color="#FFFFFF" />
               </TouchableOpacity>
+              {user?.profilePhoto && (
+                <TouchableOpacity 
+                  style={styles.deletePhotoButton}
+                  onPress={handleDeleteProfilePhoto}
+                >
+                  <Trash2 size={14} color="#FFFFFF" />
+                </TouchableOpacity>
+              )}
             </View>
             
             <Text style={styles.username}>
@@ -255,6 +296,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  deletePhotoButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
     borderColor: '#FFFFFF',
   },
   username: {
