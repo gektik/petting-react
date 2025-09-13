@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,12 @@ import { useRouter } from 'expo-router';
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    // User state'i değiştiğinde sayfayı yenile
+    setRefreshKey(prev => prev + 1);
+  }, [user?.profilePhoto]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -45,7 +51,7 @@ export default function ProfileScreen() {
       icon: Edit,
       title: 'Profili Düzenle',
       subtitle: 'Kişisel bilgilerinizi güncelleyin',
-      onPress: () => Alert.alert('Bilgi', 'Profil düzenleme özelliği yakında gelecek.'),
+      onPress: () => router.push('/edit-profile'),
     },
     {
       icon: PlusCircle,
@@ -108,6 +114,7 @@ export default function ProfileScreen() {
           <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
               <Image
+                key={refreshKey}
                 source={{ uri: user?.profilePhoto || 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop' }}
                 style={styles.avatar}
               />
@@ -116,7 +123,11 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
             
-            <Text style={styles.username}>{user?.username}</Text>
+            <Text style={styles.username}>
+              {user?.firstName && user?.lastName 
+                ? `${user.firstName} ${user.lastName}` 
+                : user?.username}
+            </Text>
             <Text style={styles.email}>{user?.email}</Text>
             {user?.location && (
               <Text style={styles.location}>{user.location}</Text>

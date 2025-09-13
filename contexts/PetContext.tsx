@@ -45,17 +45,10 @@ export function PetProvider({ children }: PetProviderProps) {
     try {
       setLoading(true);
       setError(null);
-      console.log('Loading user pets...');
+      console.log('PetContext: Uygulama başlangıcında pet yükleme atlanıyor...');
       
-      // For now, use mock data to avoid 401 errors
-      console.log('Using mock user pets for web preview:', mockPets.slice(0, 2));
-      const pets = mockPets.slice(0, 2);
-      
-      // Mock data is already in correct format, no transformation needed
-      const transformedPets: Pet[] = pets;
-      
-      console.log('Final pets data:', transformedPets);
-      setUserPets(transformedPets);
+      // Don't load pets on app start
+      setUserPets([]);
     } catch (err) {
       console.error('Error loading user pets:', err);
       setError('Hayvanlar yüklenirken hata oluştu');

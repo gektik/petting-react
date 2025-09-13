@@ -67,114 +67,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const checkAuthStatus = async () => {
     try {
-      if (isMountedRef.current) {
-        setIsLoading(true);
-      }
+      console.log('AuthContext: Uygulama başlangıcında auth kontrolü atlanıyor...');
       
-      // Check if token exists
-      let token = null;
-      try {
-        if (Platform.OS === 'web') {
-          token = localStorage.getItem('auth_token');
-        } else {
-          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-          token = await AsyncStorage.getItem('auth_token');
-        }
-        
-        // Treat empty string as null
-        if (token === '') {
-          token = null;
-        }
-      } catch (storageError) {
-        console.warn('Storage access error:', storageError);
-      }
-      
-      // Set token in apiService
-      apiService.setAuthToken(token);
-      
-      // Check token expiration before making API calls
-      try {
-        let tokenExpiration = null;
-        if (Platform.OS === 'web') {
-          tokenExpiration = localStorage.getItem('token_expiration');
-        } else {
-          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-          tokenExpiration = await AsyncStorage.getItem('token_expiration');
-        }
-        
-        if (tokenExpiration) {
-          const expirationDate = new Date(tokenExpiration);
-          const now = new Date();
-          
-          if (now >= expirationDate) {
-            console.log('AuthContext: Token expired, clearing auth state');
-            // Token is expired, clear everything
-            apiService.setAuthToken(null);
-            if (Platform.OS === 'web') {
-              localStorage.removeItem('auth_token');
-              localStorage.removeItem('user_data');
-              localStorage.removeItem('token_expiration');
-            } else {
-              const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-              await AsyncStorage.multiRemove(['auth_token', 'user_data', 'token_expiration']);
-            }
-            if (isMountedRef.current) {
-              setUser(null);
-              setIsLoading(false);
-            }
-            return;
-          }
-        }
-      } catch (expirationError) {
-        console.warn('Token expiration check error:', expirationError);
-      }
-      
-      if (!token) {
-        // No token, set loading to false and continue
-        if (isMountedRef.current) {
-          setUser(null);
-          setIsLoading(false);
-        }
-        return;
-      }
-
-      // Check if user data exists in storage
-      try {
-        let userData = null;
-        if (Platform.OS === 'web') {
-          userData = localStorage.getItem('user_data');
-        } else {
-          const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-          userData = await AsyncStorage.getItem('user_data');
-        }
-        
-        if (userData) {
-          const parsedUser = JSON.parse(userData);
-          console.log('💾 AuthContext: Storage\'dan yüklenen kullanıcı verisi:', parsedUser);
-          console.log('💾 AuthContext: Profil resmi URL\'si:', parsedUser.profilePhoto);
-          if (isMountedRef.current) {
-            setUser(parsedUser);
-          }
-        }
-      } catch (storageError) {
-        console.warn('User data storage error:', storageError);
-      }
-
-      // Set token in API service
-      apiService.setAuthToken(token);
-      
-      // Skip token validation for now to avoid 401 errors
-      console.log('AuthContext: Token set in API service, skipping validation');
-      
-    } catch (error) {
-      console.error('Error checking auth status:', error);
-      // Don't call logout on startup errors, just clear state
       if (isMountedRef.current) {
         setUser(null);
         setIsLoading(false);
       }
-    } finally {
+    } catch (error) {
+      console.error('AuthContext: checkAuthStatus hatası:', error);
       if (isMountedRef.current) {
+        setUser(null);
         setIsLoading(false);
       }
     }

@@ -125,16 +125,16 @@ export default function ExploreScreen() {
 
   const loadPets = async () => {
     try {
-      // For now, use mock data to avoid API errors
-      console.log('Using mock pets for matching:', mockPets);
-      setPets(mockPets);
+      console.log('Loading pets for matching from API...');
       
-      // TODO: Uncomment when API is ready
-      // const petData = await apiService.getPetsForMatching();
-      // setPets(petData);
+      // Try to load from API first
+      const petData = await apiService.getPetsForMatching();
+      console.log('API\'den yüklenen hayvanlar (matching):', petData);
+      setPets(petData);
     } catch (error) {
       console.error('Error loading pets:', error);
       // Fallback to mock data
+      console.log('Mock data kullanılıyor (matching):', mockPets);
       setPets(mockPets);
     } finally {
       setLoading(false);
@@ -145,20 +145,24 @@ export default function ExploreScreen() {
     try {
       console.log('Loading user pets from API...');
       
-      // Web preview'da CORS hatası olduğu için mock data kullan
-      const mockUserPets = mockPets.slice(0, 3);
-      console.log('Using mock user pets for web preview:', mockUserPets);
-      setUserPets(mockUserPets);
-      if (mockUserPets.length > 0) {
-        setSelectedPet(mockUserPets[0]);
-        console.log('İlk hayvan seçildi:', mockUserPets[0].name);
+      // Try to load from API first
+      const userPetsData = await apiService.getUserPets();
+      console.log('API\'den yüklenen hayvanlar:', userPetsData);
+      setUserPets(userPetsData);
+      
+      if (userPetsData.length > 0) {
+        setSelectedPet(userPetsData[0]);
+        console.log('İlk hayvan seçildi:', userPetsData[0].name);
       }
     } catch (error) {
       console.error('Error loading user pets:', error);
-      const mockUserPets = mockPets.slice(0, 2);
+      // Fallback to mock data
+      const mockUserPets = mockPets.slice(0, 3);
+      console.log('Mock data kullanılıyor:', mockUserPets);
       setUserPets(mockUserPets);
       if (mockUserPets.length > 0) {
         setSelectedPet(mockUserPets[0]);
+        console.log('İlk hayvan seçildi (mock):', mockUserPets[0].name);
       }
     }
   };

@@ -14,373 +14,308 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Camera, Save, User, Mail, MapPin } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { ArrowLeft, Camera, Save, User, Mail, MapPin, Edit3 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'expo-router';
 import { apiService } from '@/services/api';
 import * as ImagePicker from 'expo-image-picker';
 
-interface EditProfileForm {
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  location: string;
-  bio: string;
-}
-
 export default function EditProfileScreen() {
-  const router = useRouter();
   const { user, updateUser } = useAuth();
-  const [saving, setSaving] = useState(false);
-  const [imageLoading, setImageLoading] = useState(false);
-  const [currentProfileImage, setCurrentProfileImage] = useState<string>(
-    user?.profilePhoto || 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
-  );
-  const [form, setForm] = useState<EditProfileForm>({
-    username: user?.username || '',
-    email: user?.email || '',
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  
+  const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
-    location: user?.location || '',
+    email: user?.email || '',
     bio: user?.bio || '',
+    location: user?.location || '',
+    profilePhoto: user?.profilePhoto || '',
   });
+
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     if (user) {
-      setForm({
-        username: user.username || '',
-        email: user.email || '',
+      setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        location: user.location || '',
+        email: user.email || '',
         bio: user.bio || '',
+        location: user.location || '',
+        profilePhoto: user.profilePhoto || '',
       });
-      setCurrentProfileImage(user.profilePhoto || 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop');
     }
   }, [user]);
 
-  const pickProfileImage = async () => {
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {};
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'Ad alanı zorunludur';
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Soyad alanı zorunludur';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'E-posta alanı zorunludur';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Geçerli bir e-posta adresi girin';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleImagePicker = async () => {
     try {
-      setImageLoading(true);
-      console.log('📝 Profil düzenleme: Resim seçme başlatılıyor...');
-      
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (permissionResult.granted === false) {
-        Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gerekli.');
+        Alert.alert('Hata', 'Fotoğraf seçmek için izin gerekli');
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'Images',
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
-        base64: false,
       });
 
       if (!result.canceled && result.assets[0]) {
-        const selectedImage = result.assets[0];
-        console.log('📝 Resim seçildi, yükleme başlatılıyor...');
-        
+        setUploadingImage(true);
         try {
-          const uploadResult = await apiService.uploadProfileImage(selectedImage.uri);
-          const newImageUrl = uploadResult.imageUrl;
-         
-          if (!newImageUrl) {
-            throw new Error('Upload başarılı ama profil resmi URL\'si alınamadı');
-          }
-         
-          console.log('📝 Resim başarıyla yüklendi:', newImageUrl);
-          setCurrentProfileImage(newImageUrl);
+          const uploadResult = await apiService.uploadProfileImage(result.assets[0].uri);
+          setFormData(prev => ({
+            ...prev,
+            profilePhoto: uploadResult.imageUrl
+          }));
           
-          Alert.alert('Başarılı', 'Profil resmi başarıyla güncellendi!');
-        } catch (uploadError) {
-          console.error('Profil resmi yükleme hatası:', uploadError);
-          Alert.alert(
-            'Yükleme Hatası', 
-            'Profil resmi yüklenirken hata oluştu. Lütfen tekrar deneyin.',
-            [
-              { text: 'Tamam' },
-              { text: 'Tekrar Dene', onPress: pickProfileImage }
-            ]
-          );
+          // AuthContext'teki user state'ini de güncelle
+          await updateUser({
+            profilePhoto: uploadResult.imageUrl
+          });
+          
+          Alert.alert('Başarılı', 'Profil fotoğrafı güncellendi');
+        } catch (error) {
+          console.error('Image upload error:', error);
+          Alert.alert('Hata', 'Fotoğraf yüklenirken hata oluştu');
+        } finally {
+          setUploadingImage(false);
         }
       }
     } catch (error) {
-      console.error('Profil resmi seçme hatası:', error);
-      Alert.alert('Hata', 'Profil resmi seçilirken bir hata oluştu.');
-    } finally {
-      setImageLoading(false);
+      console.error('Image picker error:', error);
+      Alert.alert('Hata', 'Fotoğraf seçerken hata oluştu');
     }
-  };
-
-  const takeProfilePhoto = async () => {
-    try {
-      setImageLoading(true);
-      console.log('📝 Profil düzenleme: Fotoğraf çekme başlatılıyor...');
-      
-      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        base64: false,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const takenPhoto = result.assets[0];
-        console.log('📝 Fotoğraf çekildi, yükleme başlatılıyor...');
-        
-        try {
-          const uploadResult = await apiService.uploadProfileImage(takenPhoto.uri);
-          const newImageUrl = uploadResult.imageUrl;
-         
-          if (!newImageUrl) {
-            throw new Error('Upload başarılı ama profil fotoğrafı URL\'si alınamadı');
-          }
-         
-          console.log('📝 Fotoğraf başarıyla yüklendi:', newImageUrl);
-          setCurrentProfileImage(newImageUrl);
-          
-          Alert.alert('Başarılı', 'Profil fotoğrafı başarıyla güncellendi!');
-        } catch (uploadError) {
-          console.error('Profil fotoğrafı yükleme hatası:', uploadError);
-          Alert.alert(
-            'Yükleme Hatası', 
-            'Profil fotoğrafı yüklenirken hata oluştu. Lütfen tekrar deneyin.',
-            [
-              { text: 'Tamam' },
-              { text: 'Tekrar Dene', onPress: takeProfilePhoto }
-            ]
-          );
-        }
-      }
-    } catch (error) {
-      console.error('Profil fotoğrafı çekme hatası:', error);
-      Alert.alert('Hata', 'Profil fotoğrafı çekilirken bir hata oluştu.');
-    } finally {
-      setImageLoading(false);
-    }
-  };
-
-  const showProfileImageOptions = () => {
-    Alert.alert(
-      'Profil Fotoğrafı',
-      'Profil fotoğrafınızı nereden seçmek istiyorsunuz?',
-      [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Galeriden Seç', onPress: pickProfileImage },
-        { text: 'Fotoğraf Çek', onPress: takeProfilePhoto },
-      ]
-    );
   };
 
   const handleSave = async () => {
-    if (!form.username.trim()) {
-      Alert.alert('Hata', 'Kullanıcı adı gereklidir.');
+    if (!validateForm()) {
       return;
     }
 
-    if (!form.email.trim()) {
-      Alert.alert('Hata', 'E-posta adresi gereklidir.');
-      return;
-    }
-
+    setLoading(true);
     try {
-      setSaving(true);
-      console.log('📝 Profil güncelleme başlatılıyor...');
+      console.log('Profil güncelleniyor:', formData);
       
-      // Sadece değişen alanları gönder
-      const updateData = {};
-      if (form.firstName !== undefined) updateData.firstName = form.firstName.trim();
-      if (form.lastName !== undefined) updateData.lastName = form.lastName.trim();
-      if (form.bio !== undefined) updateData.biography = form.bio.trim();
-      if (form.location) {
-        const [city, country] = form.location.split(',').map(s => s.trim());
-        updateData.country = country;
-        updateData.city = city;
-      }
-      if (currentProfileImage) updateData.profilePictureURL = currentProfileImage;
-      
-      console.log('📝 Güncelleme verisi:', updateData);
+      const updateData = {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        bio: formData.bio.trim(),
+        location: formData.location.trim(),
+        profilePictureURL: formData.profilePhoto,
+      };
+
       const result = await apiService.updateUserProfile(updateData);
-      console.log('📝 API yanıtı:', result);
-      
-      if (result) {
-        // API'den güncel kullanıcı bilgilerini al ve context'i güncelle
-        updateUser(result);
-        Alert.alert('Başarılı', 'Profil güncellendi');
-      } else {
-        Alert.alert('Hata', 'Profil güncellenemedi');
-      }
+      console.log('Profil güncelleme sonucu:', result);
+
+      // AuthContext'teki kullanıcı verisini güncelle
+      await updateUser({
+        ...user,
+        ...updateData,
+        profilePhoto: formData.profilePhoto,
+      });
+
+      Alert.alert('Başarılı', 'Profil bilgileriniz güncellendi', [
+        {
+          text: 'Tamam',
+          onPress: () => router.back()
+        }
+      ]);
     } catch (error: any) {
       console.error('Profil güncelleme hatası:', error);
-      Alert.alert('Hata', 'Profil güncellenemedi');
+      Alert.alert('Hata', error.message || 'Profil güncellenirken hata oluştu');
     } finally {
-      setSaving(false);
-      router.back();
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
     }
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
-        <StatusBar style="dark" />
-        
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft size={24} color="#1F2937" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profili Düzenle</Text>
-          <TouchableOpacity
-            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-            onPress={handleSave}
-            disabled={saving}
-          >
-            {saving ? (
-              <ActivityIndicator size={20} color="#FFFFFF" />
-            ) : (
-              <Save size={20} color="#FFFFFF" />
-            )}
-          </TouchableOpacity>
-        </View>
+    <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
+      <StatusBar style="dark" />
+      
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#1F2937" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profili Düzenle</Text>
+        <TouchableOpacity
+          style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Save size={20} color="#FFFFFF" />
+          )}
+        </TouchableOpacity>
+      </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Profil Fotoğrafı */}
-          <View style={styles.photoSection}>
-            <View style={styles.photoContainer}>
-              <Image source={{ uri: currentProfileImage }} style={styles.photo} />
-              <TouchableOpacity 
-                style={styles.cameraButton}
-                onPress={showProfileImageOptions}
-                disabled={imageLoading}
-              >
-                {imageLoading ? (
-                  <ActivityIndicator size={16} color="#FFFFFF" />
-                ) : (
-                  <Camera size={20} color="#FFFFFF" />
-                )}
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity onPress={showProfileImageOptions} disabled={imageLoading}>
-              <Text style={styles.photoText}>
-                {imageLoading ? 'Yükleniyor...' : 'Fotoğrafı değiştir'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Form */}
-          <View style={styles.formContainer}>
-            {/* Kullanıcı Adı */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Kullanıcı Adı *</Text>
-              <View style={styles.inputWrapper}>
-                <User size={20} color="#6366F1" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  value={form.username}
-                  onChangeText={(text) => setForm({ ...form, username: text })}
-                  placeholder="Kullanıcı adınız"
-                  placeholderTextColor="#9CA3AF"
-                  autoCapitalize="none"
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+          <View style={styles.content}>
+            {/* Profile Photo Section */}
+            <View style={styles.photoSection}>
+              <View style={styles.avatarContainer}>
+                <Image
+                  source={{ 
+                    uri: formData.profilePhoto || 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop' 
+                  }}
+                  style={styles.avatar}
                 />
+                <TouchableOpacity
+                  style={[styles.cameraButton, uploadingImage && styles.cameraButtonDisabled]}
+                  onPress={handleImagePicker}
+                  disabled={uploadingImage}
+                >
+                  {uploadingImage ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Camera size={16} color="#FFFFFF" />
+                  )}
+                </TouchableOpacity>
               </View>
+              <Text style={styles.photoText}>Profil Fotoğrafı</Text>
             </View>
 
-            {/* E-posta */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>E-posta *</Text>
-              <View style={styles.inputWrapper}>
-                <Mail size={20} color="#6366F1" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  value={form.email}
-                  onChangeText={(text) => setForm({ ...form, email: text })}
-                  placeholder="E-posta adresiniz"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
+            {/* Form Fields */}
+            <View style={styles.formContainer}>
+              {/* First Name */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Ad *</Text>
+                <View style={styles.inputContainer}>
+                  <User size={20} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, errors.firstName && styles.inputError]}
+                    value={formData.firstName}
+                    onChangeText={(value) => handleInputChange('firstName', value)}
+                    placeholder="Adınızı girin"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+                {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
               </View>
-            </View>
 
-            {/* Ad */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Ad</Text>
-              <View style={styles.inputWrapper}>
-                <User size={20} color="#6366F1" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  value={form.firstName}
-                  onChangeText={(text) => setForm({ ...form, firstName: text })}
-                  placeholder="Adınız"
-                  placeholderTextColor="#9CA3AF"
-                />
+              {/* Last Name */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Soyad *</Text>
+                <View style={styles.inputContainer}>
+                  <User size={20} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, errors.lastName && styles.inputError]}
+                    value={formData.lastName}
+                    onChangeText={(value) => handleInputChange('lastName', value)}
+                    placeholder="Soyadınızı girin"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+                {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
               </View>
-            </View>
 
-            {/* Soyad */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Soyad</Text>
-              <View style={styles.inputWrapper}>
-                <User size={20} color="#6366F1" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  value={form.lastName}
-                  onChangeText={(text) => setForm({ ...form, lastName: text })}
-                  placeholder="Soyadınız"
-                  placeholderTextColor="#9CA3AF"
-                />
+              {/* Email */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>E-posta *</Text>
+                <View style={styles.inputContainer}>
+                  <Mail size={20} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, errors.email && styles.inputError]}
+                    value={formData.email}
+                    onChangeText={(value) => handleInputChange('email', value)}
+                    placeholder="E-posta adresinizi girin"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+                {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
               </View>
-            </View>
 
-            {/* Konum */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Konum</Text>
-              <View style={styles.inputWrapper}>
-                <MapPin size={20} color="#6366F1" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  value={form.location}
-                  onChangeText={(text) => setForm({ ...form, location: text })}
-                  placeholder="Şehir, Ülke"
-                  placeholderTextColor="#9CA3AF"
-                />
+              {/* Location */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Konum</Text>
+                <View style={styles.inputContainer}>
+                  <MapPin size={20} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    value={formData.location}
+                    onChangeText={(value) => handleInputChange('location', value)}
+                    placeholder="Şehir, Ülke"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
               </View>
-            </View>
 
-            {/* Biyografi */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Hakkımda</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={form.bio}
-                onChangeText={(text) => setForm({ ...form, bio: text })}
-                placeholder="Kendiniz hakkında kısa bir açıklama yazın..."
-                placeholderTextColor="#9CA3AF"
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
+              {/* Bio */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Hakkımda</Text>
+                <View style={styles.inputContainer}>
+                  <Edit3 size={20} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    value={formData.bio}
+                    onChangeText={(value) => handleInputChange('bio', value)}
+                    placeholder="Kendiniz hakkında kısa bir açıklama yazın"
+                    placeholderTextColor="#9CA3AF"
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                  />
+                </View>
+              </View>
             </View>
           </View>
         </ScrollView>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
@@ -394,7 +329,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 50,
     paddingHorizontal: 24,
-    paddingBottom: 20,
+    paddingBottom: 16,
   },
   backButton: {
     width: 44,
@@ -434,26 +369,32 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   saveButtonDisabled: {
-    opacity: 0.6,
+    backgroundColor: '#9CA3AF',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
   },
   content: {
-    flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 32,
   },
   photoSection: {
     alignItems: 'center',
     marginBottom: 32,
   },
-  photoContainer: {
+  avatarContainer: {
     position: 'relative',
     marginBottom: 12,
   },
-  photo: {
+  avatar: {
     width: 120,
     height: 120,
     borderRadius: 60,
     borderWidth: 4,
-    borderColor: '#FFFFFF',
+    borderColor: '#E5E7EB',
   },
   cameraButton: {
     position: 'absolute',
@@ -468,62 +409,54 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#FFFFFF',
   },
+  cameraButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
   photoText: {
-    fontSize: 14,
-    color: '#6366F1',
+    fontSize: 16,
     fontWeight: '600',
+    color: '#374151',
   },
   formContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 100,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    gap: 20,
   },
-  inputContainer: {
-    marginBottom: 20,
+  inputGroup: {
+    marginBottom: 4,
   },
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
+    color: '#374151',
     marginBottom: 8,
   },
-  inputWrapper: {
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#D1D5DB',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   inputIcon: {
     marginRight: 12,
   },
   input: {
     flex: 1,
-    paddingVertical: 12,
     fontSize: 16,
     color: '#1F2937',
   },
+  inputError: {
+    borderColor: '#EF4444',
+  },
   textArea: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#1F2937',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    height: 100,
+    minHeight: 100,
     paddingTop: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#EF4444',
+    marginTop: 4,
   },
 });
