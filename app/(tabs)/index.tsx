@@ -314,7 +314,16 @@ export default function ExploreScreen() {
         setShowPetSelector(false);
       }}
     >
-      <Image source={{ uri: item.photos[0] }} style={styles.petSelectorImage} />
+      <Image 
+        source={
+          item.photos && item.photos.length > 0 && item.photos[0] 
+            ? { uri: item.photos[0] } 
+            : item.species === 'cat' 
+              ? require('@/assets/images/kedi2.png')
+              : require('@/assets/images/kopek2.png')
+        }
+        style={styles.petSelectorImage} 
+      />
       <View style={styles.petSelectorInfo}>
         <Text style={styles.petSelectorName}>{item.name}</Text>
         <Text style={styles.petSelectorBreed}>{item.breed}</Text>
@@ -384,7 +393,16 @@ export default function ExploreScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
               {selectedPet ? (
                 <>
-                  <Image source={{ uri: selectedPet.photos[0] }} style={styles.selectedPetImage} />
+                  <Image 
+                    source={
+                      selectedPet.photos && selectedPet.photos.length > 0 && selectedPet.photos[0] 
+                        ? { uri: selectedPet.photos[0] } 
+                        : selectedPet.species === 'cat' 
+                          ? require('@/assets/images/kedi2.png')
+                          : require('@/assets/images/kopek2.png')
+                    }
+                    style={styles.selectedPetImage} 
+                  />
                   <Text style={[styles.selectedPetName, { color: theme.colors.text }]}>{selectedPet.name}</Text>
                 </>
               ) : (

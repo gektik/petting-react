@@ -137,7 +137,13 @@ export default function MyPetsScreen() {
       activeOpacity={0.7}
     >
       <Image 
-        source={{ uri: item.photos[0] }} 
+        source={
+          item.photos && item.photos.length > 0 && item.photos[0] 
+            ? { uri: item.photos[0] } 
+            : item.species === 'cat' 
+              ? require('@/assets/images/kedi2.png')
+              : require('@/assets/images/kopek2.png')
+        }
         style={styles.petImage}
         onError={(error) => {
           console.log('My Pets: Resim yükleme hatası:', error.nativeEvent.error);

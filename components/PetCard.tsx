@@ -38,7 +38,13 @@ export function PetCard({
   return (
     <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
       <Image
-        source={{ uri: pet.photos[0] }}
+        source={
+          pet.photos && pet.photos.length > 0 && pet.photos[0] 
+            ? { uri: pet.photos[0] } 
+            : pet.species === 'cat' 
+              ? require('@/assets/images/kedi2.png')
+              : require('@/assets/images/kopek2.png')
+        }
         style={styles.image}
         resizeMode="cover"
       />
