@@ -617,13 +617,7 @@ export default function EditPetScreen() {
           <View style={styles.photoSection}>
             <View style={styles.photoContainer}>
               <Image 
-                source={
-                  currentImageUri || (pet.photos && pet.photos.length > 0 && pet.photos[0])
-                    ? { uri: currentImageUri || pet.photos[0] } 
-                    : pet.species === 'cat' 
-                      ? require('@/assets/images/kedi2.png')
-                      : require('@/assets/images/kopek2.png')
-                }
+                source={{ uri: currentImageUri || (pet.photos && pet.photos.length > 0 ? pet.photos[0] : '') }}
                 style={styles.photo} 
               />
               <TouchableOpacity 

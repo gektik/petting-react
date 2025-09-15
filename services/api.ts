@@ -73,13 +73,17 @@ class ApiService {
   private fixImageUrl(url: string): string {
     if (!url) return url;
     
-    // Eğer URL zaten wwwroot içeriyorsa /wwwroot/ kısmını kaldır
-    if (url.includes('/wwwroot/uploads/')) {
-      return url.replace('/wwwroot/uploads/', '/uploads/');
+    // Eğer URL zaten wwwroot içeriyorsa olduğu gibi döndür
+    if (url.includes('/wwwroot/')) {
+      return url;
     }
     
-    // URL'yi olduğu gibi döndür - API'den gelen format doğru
+    // Eğer URL /uploads/ ile başlıyorsa /wwwroot/ ekle
+    if (url.includes('/uploads/')) {
+      return url.replace('/uploads/', '/wwwroot/uploads/');
+    }
     
+    // Diğer durumlarda olduğu gibi döndür
     return url;
   }
 
@@ -365,7 +369,9 @@ class ApiService {
           age: apiPet.age || 0,
           gender: apiPet.gender === 0 ? 'female' : 'male',
           neutered: apiPet.isNeutered || false,
-          photos: apiPet.photos || (apiPet.profilePictureURL ? [this.fixImageUrl(apiPet.profilePictureURL)] : ['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400']),
+          photos: (apiPet.photos && apiPet.photos.length > 0) 
+            ? apiPet.photos.map((photo: string) => this.fixImageUrl(photo))
+            : (apiPet.profilePictureURL ? [this.fixImageUrl(apiPet.profilePictureURL)] : []),
           description: apiPet.description || '',
           color: apiPet.color || '',
           ownerId: (apiPet.userID || apiPet.ownerId || '').toString(),
@@ -425,7 +431,9 @@ class ApiService {
           age: apiPet.age || 0,
           gender: apiPet.gender === 0 ? 'female' : 'male',
           neutered: apiPet.isNeutered || false,
-          photos: apiPet.photos || (apiPet.profilePictureURL ? [this.fixImageUrl(apiPet.profilePictureURL)] : ['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400']),
+          photos: (apiPet.photos && apiPet.photos.length > 0) 
+            ? apiPet.photos.map((photo: string) => this.fixImageUrl(photo))
+            : (apiPet.profilePictureURL ? [this.fixImageUrl(apiPet.profilePictureURL)] : []),
           description: apiPet.description || '',
           color: apiPet.color || '',
           ownerId: (apiPet.userID || apiPet.ownerId || '').toString(),
