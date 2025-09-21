@@ -1,31 +1,34 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiService } from '@/services/api';
-import { mockPets } from '@/services/mockData';
+import { useAuth } from './AuthContext'; // AuthContext'i import et
 
 export interface Pet {
   id: string;
   name: string;
-  species: 'cat' | 'dog' | 'bird' | 'fish' | 'other';
+  species: 'cat' | 'dog' | 'other';
   breed: string;
   age: number;
   gender: 'male' | 'female';
-  color: string;
-  description: string;
-  photos: string[];
-  location: string;
-  isActive: boolean;
   neutered: boolean;
+  photos: string[];
+  description: string;
+  color: string;
   ownerId: string;
+  isActive: boolean;
+  location: string;
   createdAt: string;
+  birthDate?: string;
 }
 
 interface PetContextType {
   userPets: Pet[];
+  selectedPetId: string | null;
   loading: boolean;
   error: string | null;
   loadUserPets: () => Promise<void>;
-  addPet: (pet: Omit<Pet, 'id' | 'createdAt'>) => Promise<void>;
-  updatePet: (id: string, pet: Partial<Pet>) => Promise<void>;
+  selectPet: (petId: string) => void;
+  addPet: (petData: FormData) => Promise<Pet | undefined>;
+  updatePet: (id: string, petData: Partial<Pet>) => Promise<void>;
   deletePet: (id: string) => Promise<void>;
   refreshPets: () => Promise<void>;
 }
@@ -38,62 +41,84 @@ interface PetProviderProps {
 
 export function PetProvider({ children }: PetProviderProps) {
   const [userPets, setUserPets] = useState<Pet[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false); // Başlangıçta false yap
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth(); // isAuthenticated durumunu al
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadUserPets();
+    } else {
+      // Kullanıcı giriş yapmamışsa veya çıkış yapmışsa pet verilerini temizle
+      setUserPets([]);
+      setSelectedPetId(null);
+      setLoading(false);
+    }
+  }, [isAuthenticated]); // Sadece isAuthenticated değiştiğinde çalışsın
 
   const loadUserPets = async () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('PetContext: Uygulama başlangıcında pet yükleme atlanıyor...');
-      
-      // Don't load pets on app start
-      setUserPets([]);
+      console.log('PetContext: Kullanıcının hayvanları yükleniyor...');
+      const pets = await apiService.getUserPets();
+      console.log('PetContext: Yüklenen hayvanlar:', pets);
+      setUserPets(pets);
+
+      // Eğer petler yüklendiyse ve henüz bir pet seçilmediyse, ilkini seç
+      if (pets.length > 0) {
+        // Eğer seçili pet hala listede varsa onu koru, yoksa ilkini seç
+        const currentSelectedPetIsValid = pets.some(p => p.id === selectedPetId);
+        if (!currentSelectedPetIsValid) {
+          console.log(`PetContext: İlk hayvan seçildi: ${pets[0].name}`);
+          setSelectedPetId(pets[0].id);
+        }
+      } else {
+        // Hiç pet yoksa seçimi temizle
+        setSelectedPetId(null);
+      }
     } catch (err) {
-      console.error('Error loading user pets:', err);
-      setError('Hayvanlar yüklenirken hata oluştu');
+      console.error('PetContext: Hayvanlar yüklenirken hata oluştu:', err);
+      setError('Hayvanlar yüklenirken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
   };
 
-  const addPet = async (petData: Omit<Pet, 'id' | 'createdAt'>) => {
+  const selectPet = (petId: string) => {
+    console.log(`PetContext: Hayvan seçildi: ${petId}`);
+    setSelectedPetId(petId);
+  };
+  
+  const addPet = async (petData: FormData) => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Mock implementation - replace with actual API call
-      const newPet: Pet = {
-        ...petData,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-      };
-      
+      const newPet = await apiService.createPet(petData);
       setUserPets(prev => [...prev, newPet]);
-      console.log('Pet added:', newPet);
+      return newPet;
     } catch (err) {
-      console.error('Error adding pet:', err);
-      setError('Hayvan eklenirken hata oluştu');
+      console.error('PetContext: Hayvan eklenirken hata oluştu:', err);
+      setError('Hayvan eklenirken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
   };
-
+  
   const updatePet = async (id: string, petData: Partial<Pet>) => {
     try {
       setLoading(true);
       setError(null);
-      
+      await apiService.updatePet(id, petData);
       setUserPets(prev => 
         prev.map(pet => 
           pet.id === id ? { ...pet, ...petData } : pet
         )
       );
-      
-      console.log('Pet updated:', id, petData);
     } catch (err) {
-      console.error('Error updating pet:', err);
-      setError('Hayvan güncellenirken hata oluştu');
+      console.error('PetContext: Hayvan güncellenirken hata oluştu:', err);
+      setError('Hayvan güncellenirken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
@@ -103,12 +128,20 @@ export function PetProvider({ children }: PetProviderProps) {
     try {
       setLoading(true);
       setError(null);
-      
+      await apiService.deletePet(id);
       setUserPets(prev => prev.filter(pet => pet.id !== id));
-      console.log('Pet deleted:', id);
+      // Eğer silinen pet seçili olan ise, seçimi temizle veya başka bir pet seç
+      if (selectedPetId === id) {
+        const remainingPets = userPets.filter(p => p.id !== id);
+        if (remainingPets.length > 0) {
+          setSelectedPetId(remainingPets[0].id);
+        } else {
+          setSelectedPetId(null);
+        }
+      }
     } catch (err) {
-      console.error('Error deleting pet:', err);
-      setError('Hayvan silinirken hata oluştu');
+      console.error('PetContext: Hayvan silinirken hata oluştu:', err);
+      setError('Hayvan silinirken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
@@ -118,15 +151,13 @@ export function PetProvider({ children }: PetProviderProps) {
     await loadUserPets();
   };
 
-  useEffect(() => {
-    loadUserPets();
-  }, []);
-
-  const value: PetContextType = {
+  const value = {
     userPets,
+    selectedPetId,
     loading,
     error,
     loadUserPets,
+    selectPet,
     addPet,
     updatePet,
     deletePet,

@@ -4,6 +4,8 @@ import { mockPets, mockMatches, mockChats, mockAdoptionListings } from './mockDa
 import { Pet, Match, Chat, AdoptionListing } from '../types';
 
 const BASE_URL = 'https://pet.kervanbey.com/api';
+const DEFAULT_CAT_IMAGE = 'https://pet.kervanbey.com/wwwroot/uploads/pets/default-cat.png';
+const DEFAULT_DOG_IMAGE = 'https://pet.kervanbey.com/wwwroot/uploads/pets/default-dog.png';
 const USE_MOCK_DATA = false; // Gerçek API kullan
 
 export interface AuthResponse {
@@ -53,6 +55,17 @@ class ApiService {
   private token: string | null = null;
   private isOnline: boolean = true;
   private onUnauthorized: (() => void) | null = null;
+
+  // Mock methods
+  async getChats(): Promise<Chat[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return mockChats;
+  }
+
+  async getAdoptionListings(): Promise<AdoptionListing[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return mockAdoptionListings;
+  }
 
   constructor() {
     this.api = axios.create({
@@ -413,35 +426,23 @@ class ApiService {
   }
 
   // Get pets for matching (swipe cards)
-  async getPetsForMatching(): Promise<Pet[]> {
+  async getPetsForMatching(petId: string, location?: { latitude: number; longitude: number }): Promise<Pet[]> {
     try {
-      console.log('API: getPetsForMatching çağrılıyor...');
-      const response = await this.api.get('/pets/for-matching');
+      console.log(`API: getPetsForMatching (candidates) çağrılıyor... Pet ID: ${petId}`);
+      
+      const params: any = {
+        useCurrentLocation: location ? false : true,
+        radiusInKm: 50, // Varsayılan veya filtreden gelen değer
+        latitude: location?.latitude,
+        longitude: location?.longitude,
+      };
+
+      const response = await this.api.get(`/matching/candidates/${petId}`, { params });
+      
       console.log('API: getPetsForMatching yanıtı:', response.data);
       
-      // API'den gelen veriyi Pet tipine dönüştür
       const pets = response.data || [];
-      return pets
-        .filter((apiPet: any) => apiPet && (apiPet.petID || apiPet.id))
-        .map((apiPet: any) => ({
-          id: (apiPet.petID || apiPet.id || '').toString(),
-          name: apiPet.name || '',
-          species: apiPet.petTypeID === 1 ? 'cat' : 'dog',
-          breed: apiPet.breedName || apiPet.breed || '',
-          age: apiPet.age || 0,
-          gender: apiPet.gender === 0 ? 'female' : 'male',
-          neutered: apiPet.isNeutered || false,
-          photos: (apiPet.photos && apiPet.photos.length > 0) 
-            ? apiPet.photos.map((photo: string) => this.fixImageUrl(photo))
-            : (apiPet.profilePictureURL ? [this.fixImageUrl(apiPet.profilePictureURL)] : []),
-          description: apiPet.description || '',
-          color: apiPet.color || '',
-          ownerId: (apiPet.userID || apiPet.ownerId || '').toString(),
-          isActive: apiPet.isActiveForMatching !== false,
-          location: apiPet.location || 'Türkiye',
-          createdAt: apiPet.createdDate || apiPet.createdAt || new Date().toISOString(),
-          birthDate: apiPet.birthDate || undefined,
-        }));
+      return pets.map((apiPet: any) => this.transformPetData(apiPet));
     } catch (error: any) {
       console.error('API: getPetsForMatching hatası:', {
         message: error.message,
@@ -816,45 +817,157 @@ class ApiService {
       throw error;
     }
   }
-};
+
+  // Matching methods
+  async getMatches(petId: string): Promise<Match[]> {
+    try {
+      console.log(`API: getMatches çağrılıyor... Pet ID: ${petId}`);
+      // petId'yi sorgu parametresi olarak gönder
+      const response = await this.api.get('/matching/matches', { params: { petId } });
+      console.log('API: getMatches yanıtı:', response.data);
+      
+      // API'den gelen veriyi dönüştür
+      const matches = response.data || [];
+      return matches.map((match: any) => ({
+        id: match.matchID?.toString() || '',
+        petId: match.likerPetID?.toString() || '',
+        matchedPetId: match.likedPetID?.toString() || '',
+        status: match.status?.toLowerCase() || 'pending',
+        createdAt: match.createdDate || new Date().toISOString(),
+        matchedPet: match.likedPet ? {
+          id: match.likedPet.petID?.toString() || '',
+          name: match.likedPet.name || '',
+          species: match.likedPet.petTypeID === 1 ? 'cat' : 'dog',
+          breed: match.likedPet.breedName || '',
+          age: match.likedPet.age || 0,
+          gender: match.likedPet.gender === 0 ? 'female' : 'male',
+          neutered: match.likedPet.isNeutered || false,
+          photos: [match.likedPet.profilePictureURL || ''],
+          description: match.likedPet.description || '',
+          color: match.likedPet.color || '',
+          ownerId: match.likedPet.userID?.toString() || '',
+          isActive: match.likedPet.isActiveForMatching !== false,
+          location: match.likedPet.location || 'Türkiye',
+          createdAt: match.likedPet.createdDate || new Date().toISOString(),
+          birthDate: match.likedPet.birthDate
+        } : undefined
+      }));
+    } catch (error: any) {
+      console.error('API: getMatches hatası:', error);
+      return [];
+    }
+  }
+
+  async getLikedPets(petId: string): Promise<Pet[]> {
+    try {
+      console.log(`API: getLikedPets çağrılıyor... Pet ID: ${petId}`);
+      const response = await this.api.get('/matching/liked-pets', { params: { petId } });
+      console.log('API: getLikedPets yanıtı:', response.data);
+      const pets = response.data || [];
+      return pets.map((apiPet: any) => this.transformPetData(apiPet));
+    } catch (error: any) {
+      console.error('API: getLikedPets hatası:', error);
+      return [];
+    }
+  }
+
+  async getPassedPets(petId: string): Promise<Pet[]> {
+    try {
+      console.log(`API: getPassedPets çağrılıyor... Pet ID: ${petId}`);
+      const response = await this.api.get('/matching/passed-pets', { params: { petId } });
+      console.log('API: getPassedPets yanıtı:', response.data);
+      const pets = response.data || [];
+      return pets.map((apiPet: any) => this.transformPetData(apiPet));
+    } catch (error: any) {
+      console.error('API: getPassedPets hatası:', error);
+      return [];
+    }
+  }
+
+  async likePet(likerPetId: string, likedPetId: string): Promise<any> {
+    try {
+      console.log('API: likePet çağrılıyor...', { likerPetId, likedPetId });
+      const response = await this.api.post('/matching/like', { likerPetId, likedPetId });
+      console.log('API: likePet yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API: likePet hatası:', error);
+      throw error;
+    }
+  }
+
+  async unlikePet(likerPetId: string, likedPetId: string): Promise<any> {
+    try {
+      console.log('API: unlikePet çağrılıyor...', { likerPetId, likedPetId });
+      // HTTP metodunu DELETE olarak değiştir ve veriyi 'data' içinde gönder
+      const response = await this.api.delete('/matching/unlike', { data: { likerPetId, likedPetId } });
+      console.log('API: unlikePet yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API: unlikePet hatası:', error);
+      throw error;
+    }
+  }
+
+  async unpassPet(passerPetId: string, passedPetId: string): Promise<any> {
+    try {
+      console.log('API: unpassPet çağrılıyor...', { passerPetId, passedPetId });
+       // HTTP metodunu DELETE olarak değiştir ve veriyi 'data' içinde gönder
+      const response = await this.api.delete('/matching/unpass', { data: { passerPetId, passedPetId } });
+      console.log('API: unpassPet yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API: unpassPet hatası:', error);
+      throw error;
+    }
+  }
+
+  async passPet(passerPetId: string, passedPetId: string): Promise<any> {
+    try {
+      console.log('API: passPet çağrılıyor...', { passerPetId, passedPetId });
+      const response = await this.api.post('/matching/pass', { passerPetId, passedPetId });
+      console.log('API: passPet yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API: passPet hatası:', error);
+      throw error;
+    }
+  }
+
+  // Helper function to transform pet data from API to our Pet type
+  private transformPetData(apiPet: any): Pet {
+    let photos = (apiPet.photos && apiPet.photos.length > 0) 
+      ? apiPet.photos.map((photo: string) => this.fixImageUrl(photo))
+      : (apiPet.profilePictureURL ? [this.fixImageUrl(apiPet.profilePictureURL)] : []);
+
+    if (photos.length === 0) {
+      if (apiPet.petTypeID === 1 || apiPet.species === 'cat') {
+        photos = [DEFAULT_CAT_IMAGE];
+      } else if (apiPet.petTypeID === 2 || apiPet.species === 'dog') {
+        photos = [DEFAULT_DOG_IMAGE];
+      }
+    }
+
+    return {
+      id: (apiPet.petID || apiPet.id || '').toString(),
+      name: apiPet.name || '',
+      species: apiPet.petTypeID === 1 ? 'cat' : (apiPet.petTypeID === 2 ? 'dog' : 'other'),
+      breed: apiPet.breedName || apiPet.breed || '',
+      age: apiPet.age || 0,
+      gender: apiPet.gender === 0 ? 'female' : 'male',
+      neutered: apiPet.isNeutered || false,
+      photos: photos,
+      description: apiPet.description || '',
+      color: apiPet.color || '',
+      ownerId: (apiPet.userID || apiPet.ownerId || '').toString(),
+      isActive: apiPet.isActiveForMatching !== false,
+      location: apiPet.location || 'Bilinmiyor', // Konum yoksa varsayılan değer
+      distanceKm: apiPet.distanceKm, // Mesafe bilgisini ekle
+      createdAt: apiPet.createdDate || apiPet.createdAt || new Date().toISOString(),
+      birthDate: apiPet.birthDate || undefined,
+    };
+  }
+}
 
 // Create instance of ApiService
 export const apiService = new ApiService();
-
-// Mock API methods for features not yet implemented
-const mockApiMethods = {
-  async getPetsForMatching(): Promise<Pet[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockPets;
-  },
-
-  async getMatches(): Promise<Match[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockMatches;
-  },
-
-  async getChats(): Promise<Chat[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockChats;
-  },
-
-  async getAdoptionListings(): Promise<AdoptionListing[]> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockAdoptionListings;
-  },
-
-  async likePet(petId: string): Promise<{ success: boolean }> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    console.log(`Mock: Liked pet ${petId}`);
-    // Simulate random match
-    const matched = Math.random() > 0.7;
-    return { success: true, matched };
-  }
-};
-
-// Add mock methods to apiService for backward compatibility
-apiService.getPetsForMatching = mockApiMethods.getPetsForMatching;
-apiService.getMatches = mockApiMethods.getMatches;
-apiService.getChats = mockApiMethods.getChats;
-apiService.getAdoptionListings = mockApiMethods.getAdoptionListings;
-apiService.likePet = mockApiMethods.likePet;

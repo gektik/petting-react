@@ -18,8 +18,9 @@ interface PetCardProps {
   onLike?: () => void;
   onPass?: () => void;
   showActions?: boolean;
-  swipeDirection?: 'left' | 'right' | null;
-  swipeOpacity?: Animated.AnimatedAddition;
+  likeOpacity?: Animated.AnimatedInterpolation<number>; // Değiştirildi
+  passOpacity?: Animated.AnimatedInterpolation<number>; // Değiştirildi
+  distanceKm?: number;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -30,8 +31,9 @@ export function PetCard({
   onLike, 
   onPass, 
   showActions = true, 
-  swipeDirection,
-  swipeOpacity 
+  likeOpacity, // Değiştirildi
+  passOpacity, // Değiştirildi
+  distanceKm,
 }: PetCardProps) {
   const { theme } = useTheme();
 
@@ -49,17 +51,17 @@ export function PetCard({
       />
       
       {/* Swipe Indicators */}
-      {swipeDirection === 'right' && swipeOpacity && (
-        <Animated.View style={[styles.swipeIndicator, styles.likeIndicator, { opacity: swipeOpacity, backgroundColor: `${theme.colors.success}20` }]}>
+      {likeOpacity && (
+        <Animated.View style={[styles.swipeIndicator, styles.likeIndicator, { opacity: likeOpacity, backgroundColor: `${theme.colors.success}20` }]}>
           <Heart size={40} color={theme.colors.success} fill={theme.colors.success} />
-          <Text style={styles.swipeText}>BEĞENDİM</Text>
+          <Text style={[styles.swipeText, { color: theme.colors.success }]}>BEĞENDİM</Text>
         </Animated.View>
       )}
       
-      {swipeDirection === 'left' && swipeOpacity && (
-        <Animated.View style={[styles.swipeIndicator, styles.passIndicator, { opacity: swipeOpacity, backgroundColor: `${theme.colors.error}20` }]}>
+      {passOpacity && (
+        <Animated.View style={[styles.swipeIndicator, styles.passIndicator, { opacity: passOpacity, backgroundColor: `${theme.colors.error}20` }]}>
           <X size={40} color={theme.colors.error} />
-          <Text style={styles.swipeText}>GEÇ</Text>
+          <Text style={[styles.swipeText, { color: theme.colors.error }]}>GEÇ</Text>
         </Animated.View>
       )}
       
@@ -72,6 +74,12 @@ export function PetCard({
         <Text style={styles.breed}>{pet.breed}</Text>
         
         <View style={styles.info}>
+          {distanceKm !== undefined && distanceKm !== null && (
+            <View style={styles.infoItem}>
+              <MapPin size={14} color="#FFFFFF" />
+              <Text style={styles.infoText}>{distanceKm.toFixed(1)} km yakınında</Text>
+            </View>
+          )}
           <View style={styles.infoItem}>
             <Calendar size={14} color="#FFFFFF" />
             <Text style={styles.infoText}>

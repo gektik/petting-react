@@ -18,35 +18,45 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { ChevronDown, User, Filter, Menu, Plus, Heart, X } from 'lucide-react-native';
 import { PetCard } from '@/components/PetCard';
-import { Pet, User as UserType } from '@/types';
+import { Pet } from '@/types';
 import { apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePet } from '@/contexts/PetContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { mockPets } from '@/services/mockData';
 // import { NotificationService } from '@/services/notificationService'; // Removed for SDK 54 compatibility
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
+interface Filters {
+  distance: number;
+  // Gelecekte eklenebilecek diğer filtreler
+  // species: 'cat' | 'dog' | null;
+  // gender: 'male' | 'female' | null;
+}
+
 export default function ExploreScreen() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
+  const { userPets, selectedPetId, selectPet } = usePet();
   const { theme, isDark } = useTheme();
+  
   const [pets, setPets] = useState<Pet[]>([]);
-  const [userPets, setUserPets] = useState<Pet[]>([]);
-  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
-  const [showPetSelector, setShowPetSelector] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showPetSelector, setShowPetSelector] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [matchFound, setMatchFound] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(true);
+  const [filters, setFilters] = useState<Filters>({ distance: 50 });
   
   const position = useRef(new Animated.ValueXY()).current;
   const rotation = useRef(new Animated.Value(0)).current;
   const drawerAnimation = useRef(new Animated.Value(-300)).current;
   const tutorialLikeAnim = useRef(new Animated.Value(0)).current;
   const tutorialPassAnim = useRef(new Animated.Value(0)).current;
+
+  // Aktif pet'i context'ten al
+  const selectedPet = userPets.find(p => p.id === selectedPetId);
 
   const drawerMenu = [
     {
@@ -82,7 +92,7 @@ export default function ExploreScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await logout();
+              // await logout(); // Removed as per new_code
               router.replace('/welcome');
             } catch (error) {
               console.error('Logout error:', error);
@@ -95,10 +105,14 @@ export default function ExploreScreen() {
   };
 
   useEffect(() => {
-    loadPets();
-    loadUserPets();
+    if (selectedPetId) {
+      loadPetsForMatching();
+    }
+  }, [selectedPetId, filters]); // Filtreler değiştiğinde de yeniden yükle
+
+  useEffect(() => {
+    // Bu useEffect sadece animasyon için kalabilir veya kaldırılabilir
     startTutorialAnimation();
-    // requestNotificationPermissions(); // Removed for SDK 54 compatibility
   }, []);
 
   // Removed notification permissions for SDK 54 compatibility
@@ -146,97 +160,66 @@ export default function ExploreScreen() {
     setShowDrawer(!showDrawer);
   };
 
-  const loadPets = async () => {
+  const loadPetsForMatching = async () => {
+    if (!selectedPetId) {
+      setPets([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     try {
-      console.log('Loading pets for matching from API...');
-      
-      // Try to load from API first
-      const petData = await apiService.getPetsForMatching();
-      console.log('API\'den yüklenen hayvanlar (matching):', petData);
+      // API'ye kullanıcının konumunu ve filtreleri gönder
+      const petData = await apiService.getPetsForMatching(selectedPetId, { 
+        radiusInKm: filters.distance,
+        // Konum servisinden alınacak gerçek user location
+        // latitude: user.latitude, 
+        // longitude: user.longitude 
+      });
       setPets(petData);
     } catch (error) {
-      console.error('Error loading pets:', error);
-      // Fallback to mock data
-      console.log('Mock data kullanılıyor (matching):', mockPets);
-      setPets(mockPets);
+      console.error('Error loading pets for matching:', error);
+      setPets([]);
     } finally {
       setLoading(false);
+      setCurrentIndex(0);
+      position.setValue({ x: 0, y: 0 });
+      rotation.setValue(0);
     }
   };
+  
+  const handleSwipeAction = (action: 'like' | 'pass') => {
+    const petToInteract = pets[currentIndex];
+    if (!petToInteract || !selectedPetId) return;
 
-  const loadUserPets = async () => {
-    try {
-      console.log('Loading user pets from API...');
-      
-      // Try to load from API first
-      const userPetsData = await apiService.getUserPets();
-      console.log('API\'den yüklenen hayvanlar:', userPetsData);
-      setUserPets(userPetsData);
-      
-      if (userPetsData.length > 0) {
-        setSelectedPet(userPetsData[0]);
-        console.log('İlk hayvan seçildi:', userPetsData[0].name);
-      }
-    } catch (error) {
-      console.error('Error loading user pets:', error);
-      // Fallback to mock data
-      const mockUserPets = mockPets.slice(0, 3);
-      console.log('Mock data kullanılıyor:', mockUserPets);
-      setUserPets(mockUserPets);
-      if (mockUserPets.length > 0) {
-        setSelectedPet(mockUserPets[0]);
-        console.log('İlk hayvan seçildi (mock):', mockUserPets[0].name);
-      }
-    }
-  };
+    // Önce kartı animasyonla gönder
+    const xValue = action === 'like' ? screenWidth * 1.5 : -screenWidth * 1.5;
+    const rotateValue = action === 'like' ? 1 : -1;
 
-  const handleLike = async () => {
-    const currentPet = pets[currentIndex];
-    if (!currentPet) return;
-
-    try {
-      const result = await apiService.likePet(currentPet.id);
-        if (result.matched) {
-          setMatchFound(true);
-          setTimeout(() => {
-            setMatchFound(false);
-            // Show match alert
-            Alert.alert('🎉 Eşleştiniz!', `${currentPet.name} ile eşleştiniz! Artık mesajlaşabilirsiniz.`);
-          }, 2000);
+    Animated.timing(position, {
+      toValue: { x: xValue, y: 0 },
+      duration: 400,
+      useNativeDriver: false,
+    }).start(async () => {
+      // Animasyon bittikten sonra API çağrısını yap
+      try {
+        if (action === 'like') {
+          const result = await apiService.likePet(selectedPetId, petToInteract.id);
+          if (result.isMatch) {
+            setMatchFound(true);
+            setTimeout(() => setMatchFound(false), 2000);
+            Alert.alert('🎉 Eşleştiniz!', `${petToInteract.name} ile eşleştiniz!`);
+          }
         } else {
-          // Show like alert
-          Alert.alert('❤️ Beğeni!', `${currentPet.name} beğenildi!`);
+          await apiService.passPet(selectedPetId, petToInteract.id);
         }
-    } catch (error) {
-      Alert.alert('Hata', 'Beğeni işlemi sırasında bir hata oluştu.');
-    }
+      } catch (error) {
+        console.error(`Error on ${action}:`, error);
+        Alert.alert('Hata', `İşlem sırasında bir hata oluştu.`);
+      }
 
-    animateCardOut(screenWidth * 1.5);
-  };
-
-  const handlePass = () => {
-    const currentPet = pets[currentIndex];
-    if (currentPet) {
-      // Show pass alert
-      Alert.alert('➡️ Geçildi!', `${currentPet.name} geçildi.`);
-    }
-    animateCardOut(-screenWidth * 1.5);
-  };
-
-  const animateCardOut = (toValue: number) => {
-    Animated.parallel([
-      Animated.timing(position, {
-        toValue: { x: toValue, y: 0 },
-        duration: 250,
-        useNativeDriver: false,
-      }),
-      Animated.timing(rotation, {
-        toValue: toValue > 0 ? 1 : -1,
-        duration: 250,
-        useNativeDriver: false,
-      }),
-    ]).start(() => {
-      setCurrentIndex(prevIndex => prevIndex + 1);
+      // State'i güncelle ve kart pozisyonunu sıfırla
+      setCurrentIndex(prev => prev + 1);
       position.setValue({ x: 0, y: 0 });
       rotation.setValue(0);
     });
@@ -245,27 +228,24 @@ export default function ExploreScreen() {
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: (_, gestureState) => {
-        position.setValue({ x: gestureState.dx, y: 0 });
-        rotation.setValue(gestureState.dx / (screenWidth * 0.8));
+      onPanResponderMove: (_, gesture) => {
+        position.setValue({ x: gesture.dx, y: 0 });
+        rotation.setValue(gesture.dx / screenWidth);
       },
-      onPanResponderRelease: (_, gestureState) => {
-        const dx = gestureState?.dx || 0;
-        
-        if (Math.abs(dx) > screenWidth * 0.25) {
-          if (dx > 0) {
-            handleLike();
-          } else {
-            handlePass();
-          }
+      onPanResponderRelease: (_, gesture) => {
+        if (gesture.dx > 120) {
+          handleSwipeAction('like');
+        } else if (gesture.dx < -120) {
+          handleSwipeAction('pass');
         } else {
           Animated.spring(position, {
             toValue: { x: 0, y: 0 },
+            friction: 4,
             useNativeDriver: false,
           }).start();
           Animated.spring(rotation, {
             toValue: 0,
+            friction: 4,
             useNativeDriver: false,
           }).start();
         }
@@ -307,10 +287,10 @@ export default function ExploreScreen() {
     <TouchableOpacity
       style={[
         styles.petSelectorItem,
-        selectedPet?.id === item.id && styles.selectedPetItem,
+        selectedPetId === item.id && styles.selectedPetItem,
       ]}
       onPress={() => {
-        setSelectedPet(item);
+        selectPet(item.id); // Context'teki aktif pet'i güncelle
         setShowPetSelector(false);
       }}
     >
@@ -325,6 +305,62 @@ export default function ExploreScreen() {
     </TouchableOpacity>
   );
 
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          style={[styles.menuButton, { backgroundColor: theme.colors.surface }]}
+          onPress={toggleDrawer}
+        >
+          <Menu size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+
+        <View style={styles.welcomeContainer}>
+          <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Hoşgeldiniz 👋</Text>
+          <Text style={[styles.userName, { color: theme.colors.text }]}>{user?.firstName || 'Kaşif'}</Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.petSelector, { backgroundColor: theme.colors.surface }]}
+          onPress={() => setShowPetSelector(true)}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            {selectedPet ? (
+              <>
+                <Image
+                  source={{ uri: selectedPet.photos?.[0] || '' }}
+                  style={styles.selectedPetImage}
+                />
+                <Text
+                  style={[styles.selectedPetName, { color: theme.colors.text }]}
+                  numberOfLines={1}
+                >
+                  {selectedPet.name}
+                </Text>
+              </>
+            ) : (
+              <Text style={[styles.selectedPetName, { color: theme.colors.text }]}>Hayvan Seç</Text>
+            )}
+          </View>
+          <ChevronDown size={16} color={theme.colors.textSecondary} style={styles.chevronIcon} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>Şimdilik hepsi bu kadar!</Text>
+      <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+        {selectedPet?.name || "Dostun"} için çevredeki tüm sevimli patileri gördün.
+        Daha sonra tekrar kontrol et veya filtrelerini genişletmeyi dene!
+      </Text>
+      <TouchableOpacity style={styles.refreshButton} onPress={loadPetsForMatching}>
+        <Text style={styles.refreshButtonText}>Yeniden Dene</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   if (loading) {
     return (
       <LinearGradient colors={theme.colors.gradient} style={styles.loadingContainer}>
@@ -334,250 +370,96 @@ export default function ExploreScreen() {
     );
   }
 
-  if (currentIndex >= pets.length) {
-    return (
-      <LinearGradient colors={theme.colors.gradient} style={styles.container}>
-        <StatusBar style={isDark ? "light" : "dark"} />
-        <View style={styles.header}>
-          <View style={styles.welcomeContainer}>
-            <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Hoşgeldiniz</Text>
-            <Text style={[styles.usernameText, { color: theme.colors.text }]}>
-              {user?.firstName && user?.lastName 
-                ? `${user.firstName} ${user.lastName}` 
-                : user?.username}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>Tüm hayvanları gördünüz!</Text>
-          <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>Yeni hayvanlar için daha sonra tekrar kontrol edin.</Text>
-        </View>
-      </LinearGradient>
-    );
-  }
-
   const currentPet = pets[currentIndex];
 
   return (
     <LinearGradient colors={theme.colors.gradient} style={styles.container}>
       <StatusBar style={isDark ? "light" : "dark"} />
-      
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={[styles.menuButton, { backgroundColor: theme.colors.surface }]}
-            onPress={toggleDrawer}
-          >
-            <Menu size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-          
-          <View style={styles.welcomeContainer}>
-            <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Hoşgeldiniz</Text>
-            <Text style={[styles.usernameText, { color: theme.colors.text }]}>
-              {user?.firstName && user?.lastName 
-                ? `${user.firstName} ${user.lastName}` 
-                : user?.username}
-            </Text>
-          </View>
-          
-          <TouchableOpacity
-            style={[styles.petSelector, { backgroundColor: theme.colors.surface }]}
-            onPress={() => setShowPetSelector(true)}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              {selectedPet ? (
-                <>
-                  <Image 
-                    source={{ uri: selectedPet.photos?.[0] || '' }}
-                    style={styles.selectedPetImage}
+      {renderHeader()}
+
+      {pets.length > 0 && currentPet ? (
+        <View style={styles.cardContainer}>
+          {pets.map((pet, index) => {
+            if (index < currentIndex) {
+              return null;
+            }
+            if (index === currentIndex) {
+              const rotate = rotation.interpolate({
+                inputRange: [-1, 1],
+                outputRange: ['-15deg', '15deg'],
+              });
+
+              const likeOpacity = position.x.interpolate({
+                inputRange: [0, screenWidth / 2],
+                outputRange: [0, 1],
+                extrapolate: 'clamp',
+              });
+
+              const passOpacity = position.x.interpolate({
+                inputRange: [-screenWidth / 2, 0],
+                outputRange: [1, 0],
+                extrapolate: 'clamp',
+              });
+
+              return (
+                <Animated.View
+                  key={pet.id}
+                  style={[
+                    styles.animatedCard,
+                    {
+                      transform: [
+                        { translateX: position.x },
+                        { rotate: rotate },
+                      ],
+                    },
+                  ]}
+                  {...panResponder.panHandlers}
+                >
+                  <PetCard
+                    pet={pet}
+                    onLike={() => handleSwipeAction('like')}
+                    onPass={() => handleSwipeAction('pass')}
+                    likeOpacity={likeOpacity}
+                    passOpacity={passOpacity}
+                    distanceKm={pet.distanceKm}
                   />
-                  <Text style={[styles.selectedPetName, { color: theme.colors.text }]}>{selectedPet.name}</Text>
-                </>
-              ) : (
-                <>
-                  <View style={[styles.defaultPetIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-                    <User size={20} color={theme.colors.primary} />
-                  </View>
-                  <Text style={[styles.selectedPetName, { color: theme.colors.text }]}>Hayvan Seç</Text>
-                </>
-              )}
-            </View>
-            <ChevronDown size={16} color={theme.colors.textSecondary} style={styles.chevronIcon} />
+                </Animated.View>
+              );
+            }
+            // Render the next card behind
+            if (index === currentIndex + 1) {
+              return (
+                <Animated.View key={pet.id} style={[styles.animatedCard, { transform: [{ scale: 0.95 }] }]}>
+                  <PetCard pet={pet} showActions={false} />
+                </Animated.View>
+              );
+            }
+            return null;
+          }).reverse()}
+        </View>
+      ) : (
+        renderEmptyState()
+      )}
+
+      {/* Action Buttons */}
+      {!loading && pets.length > 0 && currentPet && (
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.passButton, { backgroundColor: theme.colors.surface }]}
+            onPress={() => handleSwipeAction('pass')}
+          >
+            <X size={32} color={theme.colors.error} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.likeButton, { backgroundColor: theme.colors.surface }]}
+            onPress={() => handleSwipeAction('like')}
+          >
+            <Heart size={32} color={theme.colors.success} fill={theme.colors.success} />
           </TouchableOpacity>
         </View>
+      )}
 
-        <TouchableOpacity
-          style={[styles.locationAlert, { backgroundColor: `${theme.colors.primary}20` }]}
-          onPress={() => setShowFilterModal(true)}
-        >
-          <Text style={[styles.locationAlertText, { color: theme.colors.primary }]}>
-            Ankara'da 50 km yakınındaki sevimli dostlar ✨
-          </Text>
-          <Filter size={16} color={theme.colors.secondary} style={styles.filterIcon} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.cardContainer}>
-        {/* Tutorial Overlay */}
-        {showTutorial && currentIndex === 0 && (
-          <View style={styles.tutorialOverlay}>
-            <Animated.View
-              style={[
-                styles.tutorialIndicator,
-                styles.tutorialLike,
-                {
-                  opacity: tutorialLikeAnim,
-                  transform: [
-                    {
-                      translateX: tutorialLikeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, 50],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <Heart size={32} color="#10B981" fill="#10B981" />
-              <Text style={styles.tutorialText}>Sağa kaydır</Text>
-              <Text style={styles.tutorialSubtext}>Beğen</Text>
-            </Animated.View>
-
-            <Animated.View
-              style={[
-                styles.tutorialIndicator,
-                styles.tutorialPass,
-                {
-                  opacity: tutorialPassAnim,
-                  transform: [
-                    {
-                      translateX: tutorialPassAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, -50],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <X size={32} color="#EF4444" />
-              <Text style={styles.tutorialText}>Sola kaydır</Text>
-              <Text style={styles.tutorialSubtext}>Geç</Text>
-            </Animated.View>
-
-            <TouchableOpacity
-              style={styles.tutorialCloseButton}
-              onPress={() => setShowTutorial(false)}
-            >
-              <Text style={styles.tutorialCloseText}>Anladım</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Tutorial Overlay */}
-        {showTutorial && currentIndex === 0 && (
-          <View style={styles.tutorialOverlay}>
-            <Animated.View
-              style={[
-                styles.tutorialIndicator,
-                styles.tutorialLike,
-                {
-                  opacity: tutorialLikeAnim,
-                  transform: [
-                    {
-                      translateX: tutorialLikeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, 50],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <Heart size={32} color="#10B981" fill="#10B981" />
-              <Text style={styles.tutorialText}>Sağa kaydır</Text>
-              <Text style={styles.tutorialSubtext}>Beğen</Text>
-            </Animated.View>
-
-            <Animated.View
-              style={[
-                styles.tutorialIndicator,
-                styles.tutorialPass,
-                {
-                  opacity: tutorialPassAnim,
-                  transform: [
-                    {
-                      translateX: tutorialPassAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, -50],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <X size={32} color="#EF4444" />
-              <Text style={styles.tutorialText}>Sola kaydır</Text>
-              <Text style={styles.tutorialSubtext}>Geç</Text>
-            </Animated.View>
-
-            <TouchableOpacity
-              style={styles.tutorialCloseButton}
-              onPress={() => setShowTutorial(false)}
-            >
-              <Text style={styles.tutorialCloseText}>Anladım</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {pets.slice(currentIndex, currentIndex + 2).map((pet, index) => {
-          if (index === 0) {
-            return (
-              <Animated.View
-                key={pet.id}
-                style={[
-                  styles.animatedCard,
-                  {
-                    transform: [
-                      ...position.getTranslateTransform(),
-                      { rotate: rotateCard },
-                    ],
-                    opacity: cardOpacity,
-                  },
-                ]}
-                {...panResponder.panHandlers}
-              >
-                <PetCard
-                  pet={pet}
-                  onLike={handleLike}
-                  onPass={handlePass}
-                  swipeDirection={swipeDirection}
-                  swipeOpacity={swipeOpacity}
-                />
-                
-                <Animated.View
-                  style={[styles.swipeIndicator, styles.likeIndicator, { opacity: likeOpacity }]}
-                >
-                  <Text style={styles.likeText}>BEĞENDİM</Text>
-                </Animated.View>
-                
-                <Animated.View
-                  style={[styles.swipeIndicator, styles.passIndicator, { opacity: passOpacity }]}
-                >
-                  <Text style={styles.passText}>GEÇ</Text>
-                </Animated.View>
-              </Animated.View>
-            );
-          } else {
-            return (
-              <View key={pet.id} style={[styles.animatedCard, styles.backgroundCard]}>
-                <PetCard pet={pet} showActions={false} />
-              </View>
-            );
-          }
-        })}
-      </View>
-
+      {/* Modals and Drawer */}
       <Modal
         visible={showPetSelector}
         transparent
@@ -769,7 +651,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 4,
   },
-  usernameText: {
+  userName: {
     fontSize: 20,
     fontWeight: 'bold',
   },
@@ -1040,6 +922,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
+  refreshButton: {
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#6366F1',
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  refreshButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   matchOverlay: {
     position: 'absolute',
     top: 0,
@@ -1272,5 +1167,35 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  actions: {
+    position: 'absolute',
+    bottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    paddingHorizontal: 20,
+    zIndex: 10,
+  },
+  actionButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  likeButton: {
+    backgroundColor: '#10B981',
+  },
+  passButton: {
+    backgroundColor: '#EF4444',
   },
 });

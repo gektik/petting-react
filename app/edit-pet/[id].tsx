@@ -19,6 +19,7 @@ import { ArrowLeft, Camera, Save, Calendar, Trash2 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
+import { usePet } from '@/contexts/PetContext'; // PetContext'i import et
 import { mockPets } from '@/services/mockData';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
@@ -39,6 +40,7 @@ interface EditPetForm {
 export default function EditPetScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { userPets, updatePet, refreshPets } = usePet(); // updatePet ve refreshPets'i context'ten al
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [pet, setPet] = useState<Pet | null>(null);
@@ -100,96 +102,77 @@ export default function EditPetScreen() {
     if (id) {
       loadPetData();
     }
-  }, [id]);
+  }, [id, userPets]); // userPets değiştiğinde de tetikle
 
   const loadPetData = async () => {
-    try {
-      setLoading(true);
-      console.log('Loading pet data for ID:', id);
+    setLoading(true);
+    // Veriyi context'ten al, API çağrısını tekrar yapma
+    const foundPet = userPets.find(p => p.id === id);
+    
+    if (foundPet) {
+      setPet(foundPet);
+      setCurrentImageUri(foundPet.photos?.[0] || '');
       
-      let pets;
-      if (Platform.OS === 'web') {
-        // Use mock data for web platform to avoid CORS issues
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-        pets = mockPets;
-      } else {
-        pets = await apiService.getUserPets();
-      }
-      
-      console.log('All pets from API:', pets);
-      
-      const foundPet = pets.find(p => p.id === id);
-      console.log('Found pet:', foundPet);
-      
-      if (foundPet) {
-        setPet(foundPet);
-        setCurrentImageUri(foundPet.photos[0]);
-        
-        // Parse birth date
-        let birthDate = new Date();
-        if (foundPet.birthDate) {
-          console.log('API birthDate:', foundPet.birthDate);
-          const parsedDate = new Date(foundPet.birthDate);
-          if (!isNaN(parsedDate.getTime())) {
-            birthDate = parsedDate;
-          }
-          console.log('Parsed birthDate:', birthDate);
-        } else {
-          console.log('No birthDate from API, using current date');
+      // Parse birth date
+      let birthDate = new Date();
+      if (foundPet.birthDate) {
+        console.log('API birthDate:', foundPet.birthDate);
+        const parsedDate = new Date(foundPet.birthDate);
+        if (!isNaN(parsedDate.getTime())) {
+          birthDate = parsedDate;
         }
-        
-        // API'den gelen cins ismini hardcoded listede bul
-        const petTypeID = foundPet.species === 'cat' ? 1 : 2;
-        const availableBreeds = petTypeID === 1 ? catBreeds : dogBreeds;
-        const matchingBreed = availableBreeds.find(breed => 
-          breed.name.toLowerCase() === foundPet.breed.toLowerCase()
-        );
-        
-        console.log('API breed name:', foundPet.breed);
-        console.log('Available breeds:', availableBreeds.map(b => b.name));
-        console.log('Matching breed found:', matchingBreed);
-        
-        console.log('Setting form data:', {
-          name: foundPet.name,
-          petTypeID: petTypeID,
-          breedID: matchingBreed ? matchingBreed.id : null,
-          breedName: foundPet.breed,
-          birthDate: birthDate,
-          gender: foundPet.gender === 'male' ? 1 : 0,
-          isNeutered: foundPet.neutered,
-          description: foundPet.description,
-          color: foundPet.color,
-          isActiveForMatching: foundPet.isActive,
-        });
-
-        setForm({
-          name: foundPet.name,
-          petTypeID: petTypeID,
-          breedID: matchingBreed ? matchingBreed.id : null,
-          breedName: foundPet.breed,
-          birthDate: birthDate,
-          gender: foundPet.gender === 'male' ? 1 : 0,
-          isNeutered: foundPet.neutered,
-          description: foundPet.description,
-          color: foundPet.color || colors[0], // İlk rengi default yap
-          isActiveForMatching: foundPet.isActive,
-        });
-        
-        console.log('Final form data set:', {
-          breedID: matchingBreed ? matchingBreed.id : null,
-          breedName: foundPet.breed,
-          color: foundPet.color || colors[0]
-        });
+        console.log('Parsed birthDate:', birthDate);
       } else {
-        console.log('Pet not found with ID:', id);
-        Alert.alert('Hata', 'Hayvan bulunamadı.');
+        console.log('No birthDate from API, using current date');
       }
-    } catch (error) {
-      console.error('Error loading pet data:', error);
-      Alert.alert('Hata', 'Hayvan bilgileri yüklenirken hata oluştu.');
-    } finally {
-      setLoading(false);
+      
+      // API'den gelen cins ismini hardcoded listede bul
+      const petTypeID = foundPet.species === 'cat' ? 1 : 2;
+      const availableBreeds = petTypeID === 1 ? catBreeds : dogBreeds;
+      const matchingBreed = availableBreeds.find(breed => 
+        breed.name.toLowerCase() === foundPet.breed.toLowerCase()
+      );
+      
+      console.log('API breed name:', foundPet.breed);
+      console.log('Available breeds:', availableBreeds.map(b => b.name));
+      console.log('Matching breed found:', matchingBreed);
+      
+      console.log('Setting form data:', {
+        name: foundPet.name,
+        petTypeID: petTypeID,
+        breedID: matchingBreed ? matchingBreed.id : null,
+        breedName: foundPet.breed,
+        birthDate: birthDate,
+        gender: foundPet.gender === 'male' ? 1 : 0,
+        isNeutered: foundPet.neutered,
+        description: foundPet.description,
+        color: foundPet.color,
+        isActiveForMatching: foundPet.isActive,
+      });
+
+      setForm({
+        name: foundPet.name,
+        petTypeID: petTypeID,
+        breedID: matchingBreed ? matchingBreed.id : null,
+        breedName: foundPet.breed,
+        birthDate: birthDate,
+        gender: foundPet.gender === 'male' ? 1 : 0,
+        isNeutered: foundPet.neutered,
+        description: foundPet.description,
+        color: foundPet.color || colors[0], // İlk rengi default yap
+        isActiveForMatching: foundPet.isActive,
+      });
+      
+      console.log('Final form data set:', {
+        breedID: matchingBreed ? matchingBreed.id : null,
+        breedName: foundPet.breed,
+        color: foundPet.color || colors[0]
+      });
+    } else if (userPets.length > 0) { // Petler yüklendi ama bu ID bulunamadı
+        Alert.alert('Hata', 'Hayvan bulunamadı. Liste güncel olmayabilir.');
+        router.back();
     }
+    setLoading(false);
   };
 
   const calculateAge = (birthDate: Date): number => {
@@ -263,7 +246,7 @@ export default function EditPetScreen() {
           // Pet bilgilerini hemen güncelle
           try {
             console.log('Pet profil resmi güncelleniyor...');
-            await apiService.updatePet(id!, { profilePictureURL: newImageUrl });
+            await updatePet(id!, { profilePictureURL: newImageUrl });
             console.log('Pet profil resmi başarıyla güncellendi');
           } catch (updateError) {
             console.error('Pet profil resmi güncellenirken hata:', updateError);
@@ -363,7 +346,7 @@ export default function EditPetScreen() {
           // Pet bilgilerini hemen güncelle
           try {
             console.log('Pet profil resmi güncelleniyor...');
-            await apiService.updatePet(id!, { profilePictureURL: newImageUrl });
+            await updatePet(id!, { profilePictureURL: newImageUrl });
             console.log('Pet profil resmi başarıyla güncellendi');
           } catch (updateError) {
             console.error('Pet profil resmi güncellenirken hata:', updateError);
@@ -403,65 +386,33 @@ export default function EditPetScreen() {
   };
 
   const handleSave = async () => {
+    if (!id) return;
+    setSaving(true);
     try {
-      setSaving(true);
-      console.log('Starting save process...');
-      
-      // Format birthDate to YYYY-MM-DD format for API
       const formattedBirthDate = form.birthDate.toISOString().split('T')[0];
-      console.log('Original birthDate:', form.birthDate);
-      console.log('Formatted birthDate for API:', formattedBirthDate);
       
-      // Ensure Turkish characters are properly encoded
       const updateData = {
-        name: form.name.trim(), // UTF-8 encoding will be handled by axios
+        name: form.name.trim(),
         petTypeID: form.petTypeID,
-        breedID: form.breedID,
-        breedName: form.breedName, // Cins adını da gönder
+        breedName: form.breedName.trim(),
         gender: form.gender,
-        birthDate: formattedBirthDate, // YYYY-MM-DD formatında
+        birthDate: formattedBirthDate,
         isNeutered: form.isNeutered,
-        description: form.description.trim(), // UTF-8 encoding will be handled by axios
+        description: form.description.trim(),
         color: form.color,
-        profilePictureURL: currentImageUri || pet?.photos[0] || '',
         isActiveForMatching: form.isActiveForMatching,
+        // profilePictureURL'i ayrı yönetildiği için buradan kaldırıyoruz
       };
       
-      console.log('Update data being sent to API:', updateData);
-      console.log('Color value being sent:', form.color);
-      console.log('Form color before API call:', form.color);
-      console.log('Updating pet with data:', updateData);
-      const result = await apiService.updatePet(id!, updateData);
-      console.log('Update result:', result);
-      
-      // API renk alanını kaydetmiyorsa uyarı ver
-      if (updateData.color && result.color === null) {
-        console.warn('⚠️ API renk alanını kaydetmiyor! Gönderilen:', updateData.color, 'Dönen:', result.color);
-        Alert.alert(
-          'Uyarı', 
-          'Renk bilgisi kaydedilemedi. API renk alanını desteklemiyor olabilir.',
-          [{ text: 'Tamam' }]
-        );
-      }
+      await updatePet(id, updateData);
       
       Alert.alert('Başarılı', 'Hayvan bilgileri güncellendi.', [
         { text: 'Tamam', onPress: () => router.back() }
       ]);
+      
     } catch (error: any) {
       console.error('Error updating pet:', error);
-      console.error('Error details:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
-      Alert.alert(
-        'Hata', 
-        'Güncelleme sırasında hata oluştu. Lütfen tekrar deneyin.',
-        [
-          { text: 'Tamam' },
-          { text: 'Tekrar Dene', onPress: handleSave }
-        ]
-      );
+      Alert.alert('Hata', 'Güncelleme sırasında hata oluştu.');
     } finally {
       setSaving(false);
     }
