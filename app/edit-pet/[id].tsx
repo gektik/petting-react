@@ -226,44 +226,9 @@ export default function EditPetScreen() {
       if (!result.canceled && result.assets[0]) {
         const selectedImage = result.assets[0];
         console.log('Seçilen resim:', selectedImage);
-        
-        try {
-          // Resmi API'ye yükle
-          console.log('Resim API\'ye yükleniyor...');
-          const uploadResult = await apiService.uploadImage(selectedImage.uri, id);
-          console.log('Resim yükleme sonucu:', uploadResult);
-          
-          // Resim URI'sini güncelle
-         const newImageUrl = uploadResult.imageUrl;
-          console.log('Yeni resim URL\'si:', newImageUrl);
-         
-         if (!newImageUrl) {
-           throw new Error('Upload başarılı ama resim URL\'si alınamadı');
-         }
-         
-          setCurrentImageUri(newImageUrl);
-          
-          // Pet bilgilerini hemen güncelle
-          try {
-            console.log('Pet profil resmi güncelleniyor...');
-            await updatePet(id!, { profilePictureURL: newImageUrl });
-            console.log('Pet profil resmi başarıyla güncellendi');
-          } catch (updateError) {
-            console.error('Pet profil resmi güncellenirken hata:', updateError);
-          }
-          
-          Alert.alert('Başarılı', 'Resim başarıyla yüklendi!');
-        } catch (uploadError) {
-          console.error('Resim yükleme hatası:', uploadError);
-          Alert.alert(
-            'Yükleme Hatası', 
-            'Resim yüklenirken hata oluştu. Lütfen tekrar deneyin.',
-            [
-              { text: 'Tamam' },
-              { text: 'Tekrar Dene', onPress: pickImage }
-            ]
-          );
-        }
+        // State'i yeni resim URI'si ile güncelle, API çağrısı yapma
+        setCurrentImageUri(selectedImage.uri);
+        Alert.alert('Fotoğraf Seçildi', 'Değişiklikleri kaydetmek için ekranın üstündeki Kaydet butonuna dokunun.');
       }
     } catch (error) {
       console.error('Resim seçme hatası:', error);
@@ -275,28 +240,16 @@ export default function EditPetScreen() {
 
   const deletePhoto = async () => {
     Alert.alert(
-      'Fotoğrafı Sil',
-      'Bu hayvanın fotoğrafını silmek istediğinize emin misiniz?',
+      'Fotoğrafı Kaldır',
+      'Bu hayvanın fotoğrafını kaldırmak istediğinize emin misiniz? Değişiklikler kaydedildiğinde geçerli olacaktır.',
       [
         { text: 'İptal', style: 'cancel' },
         {
-          text: 'Sil',
+          text: 'Kaldır',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('Deleting photo for pet:', pet?.name, 'ID:', id);
-              // API'ye fotoğraf silme isteği gönder
-              await apiService.deletePetPhoto(id!);
-              
-              // Local state'i güncelle - fotoğrafı kaldır
-              setCurrentImageUri('');
-              
-              Alert.alert('Başarılı', 'Hayvanın fotoğrafı silindi.');
-            } catch (error) {
-              console.error('Delete photo error:', error);
-              const errorMessage = error instanceof Error ? error.message : 'Fotoğraf silinirken bir hata oluştu.';
-              Alert.alert('Silme Hatası', errorMessage);
-            }
+          onPress: () => {
+            // Sadece state'i güncelle, API çağrısı yapma
+            setCurrentImageUri('');
           },
         },
       ]
@@ -326,44 +279,9 @@ export default function EditPetScreen() {
       if (!result.canceled && result.assets[0]) {
         const takenPhoto = result.assets[0];
         console.log('Çekilen fotoğraf:', takenPhoto);
-        
-        try {
-          // Fotoğrafı API'ye yükle
-          console.log('Fotoğraf API\'ye yükleniyor...');
-          const uploadResult = await apiService.uploadImage(takenPhoto.uri, id);
-          console.log('Fotoğraf yükleme sonucu:', uploadResult);
-          
-          // Resim URI'sini güncelle
-         const newImageUrl = uploadResult.imageUrl;
-          console.log('Yeni fotoğraf URL\'si:', newImageUrl);
-         
-         if (!newImageUrl) {
-           throw new Error('Upload başarılı ama fotoğraf URL\'si alınamadı');
-         }
-         
-          setCurrentImageUri(newImageUrl);
-          
-          // Pet bilgilerini hemen güncelle
-          try {
-            console.log('Pet profil resmi güncelleniyor...');
-            await updatePet(id!, { profilePictureURL: newImageUrl });
-            console.log('Pet profil resmi başarıyla güncellendi');
-          } catch (updateError) {
-            console.error('Pet profil resmi güncellenirken hata:', updateError);
-          }
-          
-          Alert.alert('Başarılı', 'Fotoğraf başarıyla yüklendi!');
-        } catch (uploadError) {
-          console.error('Fotoğraf yükleme hatası:', uploadError);
-          Alert.alert(
-            'Yükleme Hatası', 
-            'Fotoğraf yüklenirken hata oluştu. Lütfen tekrar deneyin.',
-            [
-              { text: 'Tamam' },
-              { text: 'Tekrar Dene', onPress: takePhoto }
-            ]
-          );
-        }
+        // State'i yeni resim URI'si ile güncelle, API çağrısı yapma
+        setCurrentImageUri(takenPhoto.uri);
+        Alert.alert('Fotoğraf Çekildi', 'Değişiklikleri kaydetmek için ekranın üstündeki Kaydet butonuna dokunun.');
       }
     } catch (error) {
       console.error('Fotoğraf çekme hatası:', error);
@@ -389,22 +307,25 @@ export default function EditPetScreen() {
     if (!id) return;
     setSaving(true);
     try {
-      const formattedBirthDate = form.birthDate.toISOString().split('T')[0];
-      
-      const updateData = {
+      // Pet arayüzüne uygun tam bir nesne oluştur
+      const updatedPetData: Partial<Pet> = {
         name: form.name.trim(),
-        petTypeID: form.petTypeID,
-        breedName: form.breedName.trim(),
-        gender: form.gender,
-        birthDate: formattedBirthDate,
-        isNeutered: form.isNeutered,
+        species: form.petTypeID === 1 ? 'cat' : 'dog',
+        breed: form.breedName.trim(),
+        gender: form.gender === 1 ? 'male' : 'female',
+        birthDate: form.birthDate.toISOString(),
+        neutered: form.isNeutered,
         description: form.description.trim(),
         color: form.color,
-        isActiveForMatching: form.isActiveForMatching,
-        // profilePictureURL'i ayrı yönetildiği için buradan kaldırıyoruz
+        isActive: form.isActiveForMatching,
+        // Fotoğraf değiştiyse yeni URL'i ekle, değişmediyse eskisini koru
+        photos: [currentImageUri || ''], 
       };
+
+      await updatePet(id, updatedPetData);
       
-      await updatePet(id, updateData);
+      // Context'i yenile
+      await refreshPets();
       
       Alert.alert('Başarılı', 'Hayvan bilgileri güncellendi.', [
         { text: 'Tamam', onPress: () => router.back() }
@@ -412,7 +333,8 @@ export default function EditPetScreen() {
       
     } catch (error: any) {
       console.error('Error updating pet:', error);
-      Alert.alert('Hata', 'Güncelleme sırasında hata oluştu.');
+      const errorMessage = error.response?.data?.message || error.message || 'Güncelleme sırasında bir hata oluştu.';
+      Alert.alert('Hata', errorMessage);
     } finally {
       setSaving(false);
     }

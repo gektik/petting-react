@@ -52,8 +52,6 @@ export default function ExploreScreen() {
   const position = useRef(new Animated.ValueXY()).current;
   const rotation = useRef(new Animated.Value(0)).current;
   const drawerAnimation = useRef(new Animated.Value(-300)).current;
-  const tutorialLikeAnim = useRef(new Animated.Value(0)).current;
-  const tutorialPassAnim = useRef(new Animated.Value(0)).current;
 
   // Aktif pet'i context'ten al
   const selectedPet = userPets.find(p => p.id === selectedPetId);
@@ -110,46 +108,6 @@ export default function ExploreScreen() {
     }
   }, [selectedPetId, filters]); // Filtreler değiştiğinde de yeniden yükle
 
-  useEffect(() => {
-    // Bu useEffect sadece animasyon için kalabilir veya kaldırılabilir
-    startTutorialAnimation();
-  }, []);
-
-  // Removed notification permissions for SDK 54 compatibility
-
-  const startTutorialAnimation = () => {
-    const animateSequence = () => {
-      Animated.sequence([
-        Animated.timing(tutorialLikeAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(tutorialLikeAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(tutorialPassAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(tutorialPassAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        if (showTutorial) {
-          setTimeout(animateSequence, 1000);
-        }
-      });
-    };
-    
-    setTimeout(animateSequence, 2000);
-  };
-
   const toggleDrawer = () => {
     const toValue = showDrawer ? -300 : 0;
     Animated.timing(drawerAnimation, {
@@ -194,12 +152,11 @@ export default function ExploreScreen() {
 
     // Önce kartı animasyonla gönder
     const xValue = action === 'like' ? screenWidth * 1.5 : -screenWidth * 1.5;
-    const rotateValue = action === 'like' ? 1 : -1;
-
+    
     Animated.timing(position, {
       toValue: { x: xValue, y: 0 },
       duration: 400,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start(async () => {
       // Animasyon bittikten sonra API çağrısını yap
       try {
@@ -218,7 +175,6 @@ export default function ExploreScreen() {
         Alert.alert('Hata', `İşlem sırasında bir hata oluştu.`);
       }
 
-      // State'i güncelle ve kart pozisyonunu sıfırla
       setCurrentIndex(prev => prev + 1);
       position.setValue({ x: 0, y: 0 });
       rotation.setValue(0);
@@ -241,47 +197,17 @@ export default function ExploreScreen() {
           Animated.spring(position, {
             toValue: { x: 0, y: 0 },
             friction: 4,
-            useNativeDriver: false,
+            useNativeDriver: true,
           }).start();
           Animated.spring(rotation, {
             toValue: 0,
             friction: 4,
-            useNativeDriver: false,
+            useNativeDriver: true,
           }).start();
         }
       },
     })
   ).current;
-
-  const rotateCard = rotation.interpolate({
-    inputRange: [-1.5, 0, 1.5],
-    outputRange: ['-20deg', '0deg', '20deg'],
-  });
-
-  const cardOpacity = position.x.interpolate({
-    inputRange: [-screenWidth * 0.5, 0, screenWidth * 0.5],
-    outputRange: [0.5, 1, 0.5],
-    extrapolate: 'clamp',
-  });
-
-  const likeOpacity = position.x.interpolate({
-    inputRange: [0, screenWidth * 0.3],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  const passOpacity = position.x.interpolate({
-    inputRange: [-screenWidth * 0.3, 0],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  const swipeDirection = position.x._value > 50 ? 'right' : position.x._value < -50 ? 'left' : null;
-  const swipeOpacity = position.x.interpolate({
-    inputRange: [-150, -50, 50, 150],
-    outputRange: [1, 0, 0, 1],
-    extrapolate: 'clamp',
-  });
 
   const renderPetSelector = ({ item }: { item: Pet }) => (
     <TouchableOpacity
@@ -361,6 +287,8 @@ export default function ExploreScreen() {
     </View>
   );
 
+  const currentPet = pets[currentIndex];
+
   if (loading) {
     return (
       <LinearGradient colors={theme.colors.gradient} style={styles.loadingContainer}>
@@ -370,8 +298,6 @@ export default function ExploreScreen() {
     );
   }
 
-  const currentPet = pets[currentIndex];
-
   return (
     <LinearGradient colors={theme.colors.gradient} style={styles.container}>
       <StatusBar style={isDark ? "light" : "dark"} />
@@ -380,61 +306,52 @@ export default function ExploreScreen() {
       {pets.length > 0 && currentPet ? (
         <View style={styles.cardContainer}>
           {pets.map((pet, index) => {
-            if (index < currentIndex) {
-              return null;
-            }
-            if (index === currentIndex) {
-              const rotate = rotation.interpolate({
-                inputRange: [-1, 1],
-                outputRange: ['-15deg', '15deg'],
-              });
+            if (index < currentIndex) return null; // Geçmiş kartları render etme
+            if (index > currentIndex + 1) return null; // Çok ilerideki kartları render etme
 
-              const likeOpacity = position.x.interpolate({
-                inputRange: [0, screenWidth / 2],
-                outputRange: [0, 1],
-                extrapolate: 'clamp',
-              });
+            const isFirstCard = index === currentIndex;
+            const isSecondCard = index === currentIndex + 1;
 
-              const passOpacity = position.x.interpolate({
-                inputRange: [-screenWidth / 2, 0],
-                outputRange: [1, 0],
-                extrapolate: 'clamp',
-              });
+            const rotate = position.x.interpolate({
+              inputRange: [-screenWidth / 2, 0, screenWidth / 2],
+              outputRange: ['-10deg', '0deg', '10deg'],
+              extrapolate: 'clamp',
+            });
 
-              return (
-                <Animated.View
-                  key={pet.id}
-                  style={[
-                    styles.animatedCard,
-                    {
-                      transform: [
-                        { translateX: position.x },
-                        { rotate: rotate },
-                      ],
-                    },
-                  ]}
-                  {...panResponder.panHandlers}
-                >
-                  <PetCard
-                    pet={pet}
-                    onLike={() => handleSwipeAction('like')}
-                    onPass={() => handleSwipeAction('pass')}
-                    likeOpacity={likeOpacity}
-                    passOpacity={passOpacity}
-                    distanceKm={pet.distanceKm}
-                  />
-                </Animated.View>
-              );
-            }
-            // Render the next card behind
-            if (index === currentIndex + 1) {
-              return (
-                <Animated.View key={pet.id} style={[styles.animatedCard, { transform: [{ scale: 0.95 }] }]}>
-                  <PetCard pet={pet} showActions={false} />
-                </Animated.View>
-              );
-            }
-            return null;
+            const cardStyle = isFirstCard
+              ? {
+                  transform: [{ translateX: position.x }, { rotate }],
+                }
+              : isSecondCard
+              ? { transform: [{ scale: 0.95 }], zIndex: -1 }
+              : { display: 'none' };
+
+            const likeOpacity = position.x.interpolate({
+              inputRange: [20, screenWidth / 2],
+              outputRange: [0, 1],
+              extrapolate: 'clamp',
+            });
+
+            const passOpacity = position.x.interpolate({
+              inputRange: [-screenWidth / 2, -20],
+              outputRange: [1, 0],
+              extrapolate: 'clamp',
+            });
+
+            return (
+              <Animated.View
+                key={pet.id}
+                style={[styles.animatedCard, cardStyle]}
+                {...(isFirstCard ? panResponder.panHandlers : {})}
+              >
+                <PetCard
+                  pet={pet}
+                  likeOpacity={isFirstCard ? likeOpacity : 0}
+                  passOpacity={isFirstCard ? passOpacity : 0}
+                  distanceKm={pet.distanceKm}
+                />
+              </Animated.View>
+            );
           }).reverse()}
         </View>
       ) : (

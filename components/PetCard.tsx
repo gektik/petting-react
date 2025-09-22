@@ -28,11 +28,8 @@ const cardWidth = screenWidth - 32;
 
 export function PetCard({ 
   pet, 
-  onLike, 
-  onPass, 
-  showActions = true, 
-  likeOpacity, // Değiştirildi
-  passOpacity, // Değiştirildi
+  likeOpacity,
+  passOpacity,
   distanceKm,
 }: PetCardProps) {
   const { theme } = useTheme();
@@ -100,24 +97,6 @@ export function PetCard({
           </Text>
         )}
       </View>
-
-      {showActions && (
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.passButton, { backgroundColor: `${theme.colors.error}20` }]}
-            onPress={onPass}
-          >
-            <X size={24} color={theme.colors.error} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.actionButton, styles.likeButton, { backgroundColor: `${theme.colors.success}20` }]}
-            onPress={onLike}
-          >
-            <Heart size={24} color={theme.colors.success} fill={theme.colors.success} />
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 }

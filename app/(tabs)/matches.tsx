@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
-  Dimensions, // Eksik import'u ekle
+  Dimensions,
+  Animated,
+  PanResponder,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -27,71 +29,6 @@ interface MatchWithPet extends Match {
 }
 
 type TabType = 'matches' | 'likes' | 'passes';
-
-// SwipeableItem component for swipe-to-delete functionality
-const SwipeableItem = ({ children, onDelete, theme }: { 
-  children: React.ReactNode; 
-  onDelete: () => void; 
-  theme: any;
-}) => {
-  const translateX = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(1)).current;
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dx < 0) {
-          translateX.setValue(gestureState.dx);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx < -screenWidth * 0.3) {
-          // Swipe threshold reached, delete item
-          Animated.parallel([
-            Animated.timing(translateX, {
-              toValue: -screenWidth,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-            Animated.timing(opacity, {
-              toValue: 0,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-          ]).start(() => {
-            onDelete();
-          });
-        } else {
-          // Return to original position
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-        }
-      },
-    })
-  ).current;
-
-  return (
-    <Animated.View
-      style={[
-        styles.swipeableContainer,
-        {
-          transform: [{ translateX }],
-          opacity,
-        },
-      ]}
-      {...panResponder.panHandlers}
-    >
-      {children}
-      <View style={[styles.deleteBackground, { backgroundColor: theme.colors.error }]}>
-        <X size={24} color="#FFFFFF" />
-      </View>
-    </Animated.View>
-  );
-};
 
 const PetDetailModal = ({ pet, visible, onClose, theme }: { pet: Pet | null, visible: boolean, onClose: () => void, theme: any }) => {
   if (!pet) return null;
