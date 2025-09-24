@@ -84,7 +84,7 @@ class ApiService {
 
   // Resim URL'ini düzelt - /wwwroot/ ekle
   private fixImageUrl(url: string): string {
-    if (!url) return url;
+    if (!url) return '';
     
     // Eğer URL zaten wwwroot içeriyorsa olduğu gibi döndür
     if (url.includes('/wwwroot/')) {
@@ -426,15 +426,15 @@ class ApiService {
   }
 
   // Get pets for matching (swipe cards)
-  async getPetsForMatching(petId: string, location?: { latitude: number; longitude: number }): Promise<Pet[]> {
+  async getPetsForMatching(petId: string, options?: { location?: { latitude: number; longitude: number }; radiusInKm?: number }): Promise<Pet[]> {
     try {
       console.log(`API: getPetsForMatching (candidates) çağrılıyor... Pet ID: ${petId}`);
-      
+
       const params: any = {
-        useCurrentLocation: location ? false : true,
-        radiusInKm: 50, // Varsayılan veya filtreden gelen değer
-        latitude: location?.latitude,
-        longitude: location?.longitude,
+        useCurrentLocation: options?.location ? false : true,
+        radiusInKm: options?.radiusInKm ?? 50, // Varsayılan veya filtreden gelen değer
+        latitude: options?.location?.latitude,
+        longitude: options?.location?.longitude,
       };
 
       const response = await this.api.get(`/matching/candidates/${petId}`, { params });
@@ -828,30 +828,38 @@ class ApiService {
       
       // API'den gelen veriyi dönüştür
       const matches = response.data || [];
-      return matches.map((match: any) => ({
-        id: match.matchID?.toString() || '',
-        petId: match.likerPetID?.toString() || '',
-        matchedPetId: match.likedPetID?.toString() || '',
-        status: match.status?.toLowerCase() || 'pending',
-        createdAt: match.createdDate || new Date().toISOString(),
-        matchedPet: match.likedPet ? {
-          id: match.likedPet.petID?.toString() || '',
-          name: match.likedPet.name || '',
-          species: match.likedPet.petTypeID === 1 ? 'cat' : 'dog',
-          breed: match.likedPet.breedName || '',
-          age: match.likedPet.age || 0,
-          gender: match.likedPet.gender === 0 ? 'female' : 'male',
-          neutered: match.likedPet.isNeutered || false,
-          photos: [match.likedPet.profilePictureURL || ''],
-          description: match.likedPet.description || '',
-          color: match.likedPet.color || '',
-          ownerId: match.likedPet.userID?.toString() || '',
-          isActive: match.likedPet.isActiveForMatching !== false,
-          location: match.likedPet.location || 'Türkiye',
-          createdAt: match.likedPet.createdDate || new Date().toISOString(),
-          birthDate: match.likedPet.birthDate
-        } : undefined
-      }));
+      return matches.map((match: any) => {
+        // Hangi pet'in eşleşmesi olduğunu belirle
+        const isCurrentPetLiker = match.likerPetID?.toString() === petId;
+        const currentPetId = isCurrentPetLiker ? match.likerPetID?.toString() : match.likedPetID?.toString();
+        const matchedPetId = isCurrentPetLiker ? match.likedPetID?.toString() : match.likerPetID?.toString();
+        const matchedPet = isCurrentPetLiker ? match.likedPet : match.likerPet;
+        
+        return {
+          id: match.matchID?.toString() || '',
+          petId: currentPetId || '',
+          matchedPetId: matchedPetId || '',
+          status: match.status?.toLowerCase() || 'pending',
+          createdAt: match.createdDate || new Date().toISOString(),
+          matchedPet: matchedPet ? {
+            id: matchedPet.petID?.toString() || '',
+            name: matchedPet.name || '',
+            species: matchedPet.petTypeID === 1 ? 'cat' : 'dog',
+            breed: matchedPet.breedName || '',
+            age: matchedPet.age || 0,
+            gender: matchedPet.gender === 0 ? 'female' : 'male',
+            neutered: matchedPet.isNeutered || false,
+            photos: [matchedPet.profilePictureURL || ''],
+            description: matchedPet.description || '',
+            color: matchedPet.color || '',
+            ownerId: matchedPet.userID?.toString() || '',
+            isActive: matchedPet.isActiveForMatching !== false,
+            location: matchedPet.location || 'Türkiye',
+            createdAt: matchedPet.createdDate || new Date().toISOString(),
+            birthDate: matchedPet.birthDate
+          } : undefined
+        };
+      });
     } catch (error: any) {
       console.error('API: getMatches hatası:', error);
       return [];
@@ -935,30 +943,92 @@ class ApiService {
   }
 
   // Helper function to transform pet data from API to our Pet type
-  private transformPetData(apiPet: any): Pet {
-    let photos = (apiPet.photos && apiPet.photos.length > 0) 
-      ? apiPet.photos.map((photo: string) => this.fixImageUrl(photo))
-      : (apiPet.profilePictureURL ? [this.fixImageUrl(apiPet.profilePictureURL)] : []);
+  // String normalization to fix encoding issues
+  private normalizeString(str: string): string {
+    if (!str || typeof str !== 'string') return '';
+    
+    // Doğrudan Türkçe kelime eşleştirmeleri
+    if (str === "Dişi Kedi 1" || str === "DiÅŸi Kedi 1" || str === "DiÃ§i Kedi 1") {
+      return "Dişi Kedi 1";
+    }
+    
+    if (str === "Dişi Kedi 2" || str === "DiÅŸi Kedi 2" || str === "DiÃ§i Kedi 2") {
+      return "Dişi Kedi 2";
+    }
+    
+    // Fix common UTF-8 encoding issues for Turkish characters
+    let normalized = str
+      .replace(/Ã§/g, 'ç')
+      .replace(/Ä±/g, 'ı')
+      .replace(/Äž/g, 'ğ')
+      .replace(/Ã¼/g, 'ü')
+      .replace(/Ã¶/g, 'ö')
+      .replace(/Å\x9F/g, 'ş')
+      .replace(/Ä°/g, 'İ')
+      .replace(/Ä/g, 'Ğ')
+      .replace(/Ã\x9C/g, 'Ü')
+      .replace(/Ã\x96/g, 'Ö')
+      .replace(/Å\x9E/g, 'Ş')
+      .replace(/Ã\x87/g, 'Ç')
+      .replace(/DiÅŸi/g, 'Dişi')
+      .replace(/DiÃ§i/g, 'Dişi')
+      .replace(/Erkek/g, 'Erkek')
+      .trim();
+      
+    // Türkçe kelimeler için özel düzeltmeler
+    if (normalized.includes('DiÅŸi') || normalized.includes('DiÃ§i')) {
+      normalized = 'Dişi';
+    }
+    
+    return normalized;
+  }
 
-    if (photos.length === 0) {
+  private transformPetData(apiPet: any): Pet {
+    // API'den gelen fotoğraf bilgilerini kontrol et ve düzelt
+    let photos: string[] = [];
+    
+    // Önce photos dizisini kontrol et
+    if (apiPet.photos && Array.isArray(apiPet.photos) && apiPet.photos.length > 0) {
+      photos = apiPet.photos
+        .filter((photo: any) => photo && typeof photo === 'string' && photo.trim() !== '')
+        .map((photo: string) => this.fixImageUrl(photo));
+    }
+    
+    // Eğer photos dizisi boşsa, profilePictureURL'i kontrol et
+    if (photos.length === 0 && apiPet.profilePictureURL && typeof apiPet.profilePictureURL === 'string' && apiPet.profilePictureURL.trim() !== '') {
+      photos = [this.fixImageUrl(apiPet.profilePictureURL)];
+    }
+    
+    // Hala fotoğraf yoksa, türüne göre varsayılan resim ata
+    if (photos.length === 0 || !photos[0] || photos[0].trim() === '') {
+      console.log('Adding default image for pet:', apiPet.name, 'Type:', apiPet.petTypeID);
       if (apiPet.petTypeID === 1 || apiPet.species === 'cat') {
         photos = [DEFAULT_CAT_IMAGE];
       } else if (apiPet.petTypeID === 2 || apiPet.species === 'dog') {
         photos = [DEFAULT_DOG_IMAGE];
+      } else {
+        // Türü belirsizse kedi resmi ata
+        photos = [DEFAULT_CAT_IMAGE];
       }
     }
+    
+    // Safe string normalization to fix encoding issues
+    const safeName = this.normalizeString(apiPet.name || '');
+    const safeBreed = this.normalizeString(apiPet.breedName || apiPet.breed || '');
+    const safeDescription = this.normalizeString(apiPet.description || '');
+    const safeColor = this.normalizeString(apiPet.color || '');
 
     return {
       id: (apiPet.petID || apiPet.id || '').toString(),
-      name: apiPet.name || '',
+      name: safeName,
       species: apiPet.petTypeID === 1 ? 'cat' : (apiPet.petTypeID === 2 ? 'dog' : 'other'),
-      breed: apiPet.breedName || apiPet.breed || '',
+      breed: safeBreed,
       age: apiPet.age || 0,
       gender: apiPet.gender === 0 ? 'female' : 'male',
       neutered: apiPet.isNeutered || false,
       photos: photos,
-      description: apiPet.description || '',
-      color: apiPet.color || '',
+      description: safeDescription,
+      color: safeColor,
       ownerId: (apiPet.userID || apiPet.ownerId || '').toString(),
       isActive: apiPet.isActiveForMatching !== false,
       location: apiPet.location || 'Bilinmiyor', // Konum yoksa varsayılan değer

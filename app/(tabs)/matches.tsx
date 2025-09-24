@@ -43,7 +43,10 @@ const PetDetailModal = ({ pet, visible, onClose, theme }: { pet: Pet | null, vis
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
           <ScrollView>
-            <Image source={{ uri: pet.photos[0] }} style={styles.modalImage} />
+            <Image 
+            source={{ uri: pet.photos[0] || '' }} 
+            style={styles.modalImage}
+          />
             <Text style={[styles.modalPetName, { color: theme.colors.text }]}>{pet.name}</Text>
             <Text style={[styles.modalPetBreed, { color: theme.colors.textSecondary }]}>{pet.breed}</Text>
             
@@ -96,50 +99,48 @@ export default function MatchesScreen() {
   const [selectedPetForDetails, setSelectedPetForDetails] = useState<Pet | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!selectedPetId) {
-        console.log('Aktif pet seçilmedi, veri çekilemiyor.');
-        setLoading(false);
-        return;
-      }
+    // Eşleşmeler sekmesine gelince ilk sekme (matches) seçilsin
+    setActiveTab('matches');
+  }, []);
 
-      setLoading(true);
-      try {
-        switch (activeTab) {
-          case 'matches':
-            const matchData = await apiService.getMatches(selectedPetId);
-            console.log('Matches data:', matchData);
-            const matchesWithPets = matchData
-              .filter(match => match.matchedPet && match.status === 'matched')
-              .map(match => ({
-                ...match,
-                matchedPet: match.matchedPet
-              }));
-            console.log('Processed matches:', matchesWithPets);
-            setMatches(matchesWithPets);
-            break;
-          
-          case 'likes':
-            const likedPets = await apiService.getLikedPets(selectedPetId);
-            console.log('Liked pets:', likedPets);
-            setLikes(likedPets);
-            break;
-          
-          case 'passes':
-            const passedPets = await apiService.getPassedPets(selectedPetId);
-            console.log('Passed pets:', passedPets);
-            setPasses(passedPets);
-            break;
+  // Sekme değişiminde verileri yenile
+  useEffect(() => {
+    if (selectedPetId) {
+      const fetchData = async () => {
+        setLoading(true);
+        try {
+          switch (activeTab) {
+            case 'matches':
+              const matchData = await apiService.getMatches(selectedPetId);
+              const matchesWithPets = matchData
+                .filter(match => match.matchedPet && match.status === 'matched')
+                .map(match => ({
+                  ...match,
+                  matchedPet: match.matchedPet
+                }));
+              setMatches(matchesWithPets);
+              break;
+            
+            case 'likes':
+              const likedPets = await apiService.getLikedPets(selectedPetId);
+              setLikes(likedPets);
+              break;
+            
+            case 'passes':
+              const passedPets = await apiService.getPassedPets(selectedPetId);
+              setPasses(passedPets);
+              break;
+          }
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
+      fetchData();
+    }
+  }, [activeTab, selectedPetId]);
 
-    fetchData();
-  }, [activeTab, selectedPetId]); // activeTab veya selectedPetId değiştiğinde verileri yeniden yükle
 
   const loadData = () => {
     // Artık useEffect içindeki fetchData fonksiyonu kullanılıyor
@@ -176,18 +177,19 @@ export default function MatchesScreen() {
 
   const renderMatch = ({ item }: { item: MatchWithPet }) => (
     <View style={styles.itemCard}>
-      <Image source={{ uri: item.matchedPet.photos[0] }} style={styles.petImage} />
+      <Image 
+        source={{ uri: item.matchedPet.photos[0] || '' }} 
+        style={styles.petImage}
+      />
       
       <View style={styles.itemInfo}>
-        <Text style={styles.petName}>{item.matchedPet.name}</Text>
-        <Text style={styles.petBreed}>{item.matchedPet.breed}</Text>
-        
-        <View style={styles.petDetails}>
-          <Text style={styles.petAge}>{item.matchedPet.age} yaşında</Text>
-          <Text style={styles.petGender}>
-            {item.matchedPet.gender === 'male' ? 'Erkek' : 'Dişi'}
+        <Text>
+          <Text style={styles.petName}>{item.matchedPet.name}</Text>{'\n'}
+          <Text style={styles.petBreed}>{item.matchedPet.breed}</Text>{'\n'}
+          <Text style={styles.petDetails}>
+            {item.matchedPet.age} yaşında • {item.matchedPet.gender === 'male' ? 'Erkek' : 'Dişi'}
           </Text>
-        </View>
+        </Text>
         
         {item.matchedPet.location && (
           <View style={styles.locationContainer}>
@@ -214,18 +216,19 @@ export default function MatchesScreen() {
   const renderInteractiveItem = ({ item, type }: { item: Pet, type: 'likes' | 'passes' }) => {
     return (
       <TouchableOpacity onPress={() => handleDetailsPress(item)} activeOpacity={0.8} style={styles.itemCard}>
-        <Image source={{ uri: item.photos[0] }} style={styles.petImage} />
+        <Image 
+          source={{ uri: item.photos[0] || '' }} 
+          style={styles.petImage}
+        />
         
         <View style={styles.itemInfo}>
-          <Text style={styles.petName}>{item.name}</Text>
-          <Text style={styles.petBreed}>{item.breed}</Text>
-          
-          <View style={styles.petDetails}>
-            <Text style={styles.petAge}>{item.age} yaşında</Text>
-            <Text style={styles.petGender}>
-              {item.gender === 'male' ? 'Erkek' : 'Dişi'}
+          <Text>
+            <Text style={styles.petName}>{item.name}</Text>{'\n'}
+            <Text style={styles.petBreed}>{item.breed}</Text>{'\n'}
+            <Text style={styles.petDetails}>
+              {item.age} yaşında • {item.gender === 'male' ? 'Erkek' : 'Dişi'}
             </Text>
-          </View>
+          </Text>
           
           {item.location && (
             <View style={styles.locationContainer}>
@@ -326,7 +329,10 @@ export default function MatchesScreen() {
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'matches' && styles.activeTab]}
-          onPress={() => setActiveTab('matches')}
+          onPress={() => {
+            setActiveTab('matches');
+            console.log('🔍 DEBUG: Matches sekmesi seçildi, veriler yenileniyor...');
+          }}
         >
           <Users size={16} color={activeTab === 'matches' ? '#FFFFFF' : '#6B7280'} />
           <Text style={[styles.tabText, activeTab === 'matches' && styles.activeTabText]}>
@@ -336,7 +342,10 @@ export default function MatchesScreen() {
 
         <TouchableOpacity
           style={[styles.tab, activeTab === 'likes' && styles.activeTab]}
-          onPress={() => setActiveTab('likes')}
+          onPress={() => {
+            setActiveTab('likes');
+            console.log('🔍 DEBUG: Likes sekmesi seçildi, veriler yenileniyor...');
+          }}
         >
           <Heart size={16} color={activeTab === 'likes' ? '#FFFFFF' : '#6B7280'} />
           <Text style={[styles.tabText, activeTab === 'likes' && styles.activeTabText]}>
@@ -346,7 +355,10 @@ export default function MatchesScreen() {
 
         <TouchableOpacity
           style={[styles.tab, activeTab === 'passes' && styles.activeTab]}
-          onPress={() => setActiveTab('passes')}
+          onPress={() => {
+            setActiveTab('passes');
+            console.log('🔍 DEBUG: Passes sekmesi seçildi, veriler yenileniyor...');
+          }}
         >
           <SkipForward size={16} color={activeTab === 'passes' ? '#FFFFFF' : '#6B7280'} />
           <Text style={[styles.tabText, activeTab === 'passes' && styles.activeTabText]}>
@@ -478,20 +490,12 @@ const styles = StyleSheet.create({
   petBreed: {
     fontSize: 14, // Slightly smaller
     color: '#6B7280',
-    marginBottom: 6,
+    lineHeight: 20, // Add line height for spacing
   },
   petDetails: {
-    flexDirection: 'row',
-    marginBottom: 6,
-  },
-  petAge: {
     fontSize: 12,
     color: '#6B7280',
-    marginRight: 12,
-  },
-  petGender: {
-    fontSize: 12,
-    color: '#6B7280',
+    lineHeight: 18,
   },
   locationContainer: {
     flexDirection: 'row',

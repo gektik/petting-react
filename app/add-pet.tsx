@@ -59,13 +59,12 @@ export default function AddPetScreen() {
   ];
 
   const catBreeds = [
-    { id: 1, name: 'Tekir' },
-    { id: 2, name: 'Van Kedisi' },
-    { id: 3, name: 'Ankara Kedisi' },
-    { id: 4, name: 'Persian' },
-    { id: 5, name: 'British Shorthair' },
-    { id: 6, name: 'Scottish Fold' },
-    { id: 7, name: 'Maine Coon' },
+    { id: 1, name: 'Scottish Fold' },
+    { id: 2, name: 'British Shorthair' },
+    { id: 4, name: 'Tekir' },
+    { id: 8, name: 'Golden Retriever' },
+    { id: 9, name: 'Labrador Retriever' },
+    { id: 10, name: 'Alman Kurdu' },
   ];
 
   const dogBreeds = [

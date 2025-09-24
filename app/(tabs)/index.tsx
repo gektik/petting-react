@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,15 @@ import {
   Image,
   Modal,
   FlatList,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { ChevronDown, User, Filter, Menu, Plus, Heart, X } from 'lucide-react-native';
 import { PetCard } from '@/components/PetCard';
+import { PetDetailModal } from '@/components/PetDetailModal';
 import { Pet } from '@/types';
 import { apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,10 +31,11 @@ import { useTheme } from '@/contexts/ThemeContext';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface Filters {
-  distance: number;
-  // Gelecekte eklenebilecek diğer filtreler
-  // species: 'cat' | 'dog' | null;
-  // gender: 'male' | 'female' | null;
+  distance: number | null; // null = mesafe sınırı yok
+  petType: 'all' | 'cat' | 'dog';
+  neutered: 'all' | 'yes' | 'no';
+  color: 'all' | string;
+  breed: 'all' | string;
 }
 
 export default function ExploreScreen() {
@@ -41,17 +45,40 @@ export default function ExploreScreen() {
   const { theme, isDark } = useTheme();
   
   const [pets, setPets] = useState<Pet[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const petsRef = useRef<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPetSelector, setShowPetSelector] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [matchFound, setMatchFound] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
-  const [filters, setFilters] = useState<Filters>({ distance: 50 });
+  const [filters, setFilters] = useState<Filters>({ 
+    distance: null, // Mesafe sınırı yok
+    petType: 'all', 
+    neutered: 'all', 
+    color: 'all',
+    breed: 'all'
+  });
   
+  // Filters object'ini memoize et
+  const memoizedFilters = useMemo(() => filters, [filters.distance, filters.petType, filters.neutered, filters.color, filters.breed]);
+  const [isSwiping, setIsSwiping] = useState(false); // Swipe durumunu takip et
+  const [notification, setNotification] = useState<{ message: string; type: 'like' | 'pass' } | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedPetForDetails, setSelectedPetForDetails] = useState<Pet | null>(null);
+
   const position = useRef(new Animated.ValueXY()).current;
   const rotation = useRef(new Animated.Value(0)).current;
   const drawerAnimation = useRef(new Animated.Value(-300)).current;
+  const notificationAnim = useRef(new Animated.Value(-100)).current; // Bildirim animasyonu
+  
+  // Global selectedPetId - sadece pet selector'dan değiştirilebilir
+  const globalSelectedPetId = useRef<string | null>(selectedPetId);
+
+  // selectedPetId değiştiğinde global değeri güncelle
+  useEffect(() => {
+    globalSelectedPetId.current = selectedPetId;
+    console.log('🔍 DEBUG: Global selectedPetId güncellendi:', selectedPetId);
+  }, [selectedPetId]);
 
   // Aktif pet'i context'ten al
   const selectedPet = userPets.find(p => p.id === selectedPetId);
@@ -106,7 +133,67 @@ export default function ExploreScreen() {
     if (selectedPetId) {
       loadPetsForMatching();
     }
-  }, [selectedPetId, filters]); // Filtreler değiştiğinde de yeniden yükle
+  }, [selectedPetId, memoizedFilters]); // Filtreler değiştiğinde de yeniden yükle
+
+  // Debug için pets state'ini takip et
+  useEffect(() => {
+    console.log('🐛 pets state güncellendi:', pets.length, 'kart');
+    petsRef.current = pets; // Ref'i güncelle
+    if (pets.length > 0) {
+      console.log('🐛 İlk kart:', pets[0].name);
+    }
+  }, [pets]);
+
+  const loadPetsForMatching = useCallback(async () => {
+    console.log('loadPetsForMatching çağrıldı - selectedPetId:', selectedPetId, 'pets.length:', pets.length);
+
+    if (!selectedPetId) {
+      console.log('loadPetsForMatching: selectedPetId yok');
+      setPets([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('loadPetsForMatching: API çağrısı yapılıyor...');
+      // API'ye kullanıcının konumunu ve filtreleri gönder
+      const petData = await apiService.getPetsForMatching(selectedPetId, {
+        radiusInKm: memoizedFilters.distance,
+        petType: memoizedFilters.petType !== 'all' ? memoizedFilters.petType : undefined,
+        neutered: memoizedFilters.neutered !== 'all' ? memoizedFilters.neutered === 'yes' : undefined,
+        color: memoizedFilters.color !== 'all' ? memoizedFilters.color : undefined,
+        breed: memoizedFilters.breed !== 'all' ? memoizedFilters.breed : undefined,
+        // Konum servisinden alınacak gerçek user location
+        // location: {
+        //   latitude: user.latitude,
+        //   longitude: user.longitude
+        // }
+      });
+      console.log('loadPetsForMatching: API yanıtı alındı, petData.length:', petData.length);
+      console.log('loadPetsForMatching: İlk kart:', petData.length > 0 ? petData[0].name : 'Yok');
+      setPets(petData);
+      petsRef.current = petData; // Ref'i de güncelle
+      console.log('loadPetsForMatching: pets state ve ref güncellendi');
+    } catch (error) {
+      console.error('loadPetsForMatching: Error loading pets for matching:', error);
+      setPets([]);
+    } finally {
+      setLoading(false);
+      position.setValue({ x: 0, y: 0 });
+      rotation.setValue(0);
+    }
+  }, [selectedPetId, memoizedFilters.distance]);
+
+  // Eşleşmeler sekmesinden dönünce listeyi yenile
+  useFocusEffect(
+    useCallback(() => {
+      if (selectedPetId) {
+        console.log('🔍 DEBUG: Eşleşmelerden dönüldü, liste yenileniyor...');
+        loadPetsForMatching();
+      }
+    }, [selectedPetId, loadPetsForMatching])
+  );
 
   const toggleDrawer = () => {
     const toValue = showDrawer ? -300 : 0;
@@ -118,94 +205,184 @@ export default function ExploreScreen() {
     setShowDrawer(!showDrawer);
   };
 
-  const loadPetsForMatching = async () => {
-    if (!selectedPetId) {
-      setPets([]);
-      setLoading(false);
+  const handleInfoPress = (pet: Pet) => {
+    console.log('🔍 DEBUG: Info butonu tıklandı:', pet.name);
+    setSelectedPetForDetails(pet);
+    setModalVisible(true);
+  };
+  
+  const showNotification = (message: string, type: 'like' | 'pass') => {
+    setNotification({ message, type });
+    Animated.sequence([
+      Animated.timing(notificationAnim, {
+        toValue: 0, // Filtre üstüne getir
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2000),
+      Animated.timing(notificationAnim, {
+        toValue: -100, // Ekranın dışına çıkar
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setNotification(null);
+    });
+  };
+
+  const handleSwipeAction = async (action: 'like' | 'pass') => {
+    // Global selectedPetId'yi kullan - değişmez
+    const currentSelectedPetId = globalSelectedPetId.current;
+    console.log('handleSwipeAction çağrıldı:', action, 'pets.length:', pets.length, 'petsRef.length:', petsRef.current.length, 'isSwiping:', isSwiping);
+    console.log('🔍 DEBUG: handleSwipeAction - globalSelectedPetId:', currentSelectedPetId);
+
+    if (isSwiping) {
+      console.log('Swipe engellendi: Şu anda başka bir swipe işlemi devam ediyor');
       return;
     }
 
-    setLoading(true);
-    try {
-      // API'ye kullanıcının konumunu ve filtreleri gönder
-      const petData = await apiService.getPetsForMatching(selectedPetId, { 
-        radiusInKm: filters.distance,
-        // Konum servisinden alınacak gerçek user location
-        // latitude: user.latitude, 
-        // longitude: user.longitude 
-      });
-      setPets(petData);
-    } catch (error) {
-      console.error('Error loading pets for matching:', error);
-      setPets([]);
-    } finally {
-      setLoading(false);
-      setCurrentIndex(0);
-      position.setValue({ x: 0, y: 0 });
-      rotation.setValue(0);
-    }
-  };
-  
-  const handleSwipeAction = (action: 'like' | 'pass') => {
-    const petToInteract = pets[currentIndex];
-    if (!petToInteract || !selectedPetId) return;
+    setIsSwiping(true);
+    const petToInteract = petsRef.current[0]; // Ref'ten al, her zaman güncel
 
-    // Önce kartı animasyonla gönder
-    const xValue = action === 'like' ? screenWidth * 1.5 : -screenWidth * 1.5;
-    
-    Animated.timing(position, {
-      toValue: { x: xValue, y: 0 },
-      duration: 400,
-      useNativeDriver: true,
-    }).start(async () => {
-      // Animasyon bittikten sonra API çağrısını yap
-      try {
-        if (action === 'like') {
-          const result = await apiService.likePet(selectedPetId, petToInteract.id);
-          if (result.isMatch) {
-            setMatchFound(true);
-            setTimeout(() => setMatchFound(false), 2000);
-            Alert.alert('🎉 Eşleştiniz!', `${petToInteract.name} ile eşleştiniz!`);
-          }
-        } else {
-          await apiService.passPet(selectedPetId, petToInteract.id);
-        }
-      } catch (error) {
-        console.error(`Error on ${action}:`, error);
-        Alert.alert('Hata', `İşlem sırasında bir hata oluştu.`);
+    if (!petToInteract) {
+      console.log('Etkileşim için pet bulunamadı - pets.length:', pets.length, 'petsRef.length:', petsRef.current.length);
+      setIsSwiping(false);
+
+      // Kartlar bittiyse yeni kartlar yükle
+      if (currentSelectedPetId) {
+        console.log('Kartlar bitti, loadPetsForMatching çağrılıyor');
+        loadPetsForMatching();
       }
+      return;
+    }
 
-      setCurrentIndex(prev => prev + 1);
-      position.setValue({ x: 0, y: 0 });
-      rotation.setValue(0);
-    });
+    if (!currentSelectedPetId) {
+      console.log('Seçili pet bulunamadı, işlem iptal edildi');
+      setIsSwiping(false);
+      return;
+    }
+
+    const xValue = action === 'like' ? screenWidth * 1.5 : -screenWidth * 1.5;
+
+    try {
+      console.log(`${action.toUpperCase()} API isteği gönderiliyor:`, currentSelectedPetId, petToInteract.id);
+      console.log('🔍 DEBUG: selectedPetId değeri:', currentSelectedPetId, 'tip:', typeof currentSelectedPetId);
+      console.log('🔍 DEBUG: petToInteract.id değeri:', petToInteract.id, 'tip:', typeof petToInteract.id);
+      
+      if (action === 'like') {
+        const result = await apiService.likePet(currentSelectedPetId, petToInteract.id);
+        console.log('API yanıtı:', result);
+        showNotification(`💖 ${petToInteract.name} beğenildi!`, 'like');
+        if (result.isMatch) {
+          setMatchFound(true);
+          setTimeout(() => setMatchFound(false), 2000);
+          Alert.alert('🎉 Eşleştiniz!', `${petToInteract.name} ile eşleştiniz!`);
+        }
+      } else {
+        const result = await apiService.passPet(currentSelectedPetId, petToInteract.id);
+        console.log('API yanıtı:', result);
+        showNotification(`👋 ${petToInteract.name} geçildi`, 'pass');
+      }
+      
+      // API çağrısı başarılı oldu, şimdi animasyonu başlat
+      Animated.timing(position, {
+        toValue: { x: xValue, y: 0 },
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        console.log('Animasyon tamamlandı, kart kaldırılıyor');
+        // Animasyon tamamlandığında, mevcut kartı kaldır ve yeni kartı göster
+        setPets(currentPets => {
+          const newPets = currentPets.slice(1); // İlk kartı kaldır
+          petsRef.current = newPets; // Ref'i de güncelle
+
+          console.log('Yeni pets.length:', newPets.length);
+          // Eğer kartlar bittiyse ve seçili bir pet varsa yeni kartlar yükle
+          if (newPets.length === 0 && selectedPetId) {
+            console.log('Kartlar bitti, yenilerini yüklüyorum...');
+            loadPetsForMatching();
+          }
+
+          return newPets;
+        });
+
+        position.setValue({ x: 0, y: 0 });
+        rotation.setValue(0);
+        setIsSwiping(false);
+      });
+      
+    } catch (error) {
+      console.error(`Swipe işlemi sırasında hata oluştu (${action}):`, error);
+      Alert.alert('Hata', 'İşlem sırasında bir hata oluştu.');
+      setIsSwiping(false); // Hata durumunda kilidi kaldır
+    }
   };
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => !isSwiping, // Swipe işlemi yoksa başlat
+      onMoveShouldSetPanResponder: () => !isSwiping, // Swipe işlemi yoksa hareket et
+      onPanResponderGrant: () => {
+        // Kullanıcı dokunduğunda çağrılır
+        console.log('Swipe başladı');
+      },
       onPanResponderMove: (_, gesture) => {
+        // Sürükleme sırasında sürekli çağrılır
         position.setValue({ x: gesture.dx, y: 0 });
         rotation.setValue(gesture.dx / screenWidth);
       },
       onPanResponderRelease: (_, gesture) => {
-        if (gesture.dx > 120) {
+        console.log('onPanResponderRelease çağrıldı - dx:', gesture.dx, 'isSwiping:', isSwiping);
+
+        if (isSwiping) {
+          console.log('onPanResponderRelease: isSwiping true, işlem durduruldu');
+          return;
+        }
+
+        // Kullanıcı parmağını kaldırdığında çağrılır
+        console.log('Swipe bitti, dx:', gesture.dx);
+
+        // Sağa doğru yeterince sürüklendiyse beğen
+        if (gesture.dx > 50) {
+          console.log('Sağa swipe tetiklendi - beğen, handleSwipeAction çağrılıyor');
           handleSwipeAction('like');
-        } else if (gesture.dx < -120) {
+        }
+        else if (gesture.dx < -50) {
+          console.log('Sola swipe tetiklendi - geç, handleSwipeAction çağrılıyor');
           handleSwipeAction('pass');
-        } else {
+        }
+        else {
+          console.log('Yetersiz swipe - geri dön (dx:', gesture.dx, ')');
+          Animated.parallel([
+            Animated.spring(position, {
+              toValue: { x: 0, y: 0 },
+              friction: 4,
+              useNativeDriver: true,
+            }),
+            Animated.spring(rotation, {
+              toValue: 0,
+              friction: 4,
+              useNativeDriver: true,
+            })
+          ]).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        // Başka bir bileşen hareketi ele geçirirse
+        console.log('Swipe iptal edildi');
+        Animated.parallel([
           Animated.spring(position, {
             toValue: { x: 0, y: 0 },
             friction: 4,
             useNativeDriver: true,
-          }).start();
+          }),
           Animated.spring(rotation, {
             toValue: 0,
             friction: 4,
             useNativeDriver: true,
-          }).start();
-        }
-      },
+          })
+        ]).start();
+      }
     })
   ).current;
 
@@ -216,8 +393,14 @@ export default function ExploreScreen() {
         selectedPetId === item.id && styles.selectedPetItem,
       ]}
       onPress={() => {
-        selectPet(item.id); // Context'teki aktif pet'i güncelle
-        setShowPetSelector(false);
+        console.log('Pet seçildi:', item.id, 'Önceki selectedPetId:', selectedPetId);
+        // Global değeri hemen güncelle
+        globalSelectedPetId.current = item.id;
+        console.log('🔍 DEBUG: Global selectedPetId manuel güncellendi:', item.id);
+        selectPet(item.id, () => {
+          console.log('Pet seçimi tamamlandı, yeni selectedPetId:', item.id);
+          setShowPetSelector(false);
+        });
       }}
     >
       <Image 
@@ -225,8 +408,8 @@ export default function ExploreScreen() {
         style={styles.petSelectorImage}
       />
       <View style={styles.petSelectorInfo}>
-        <Text style={styles.petSelectorName}>{item.name}</Text>
-        <Text style={styles.petSelectorBreed}>{item.breed}</Text>
+        <Text style={styles.petSelectorName}>{`${item.name}`}</Text>
+        <Text style={styles.petSelectorBreed}>{`${item.breed}`}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -234,16 +417,18 @@ export default function ExploreScreen() {
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerRow}>
-        <TouchableOpacity
-          style={[styles.menuButton, { backgroundColor: theme.colors.surface }]}
-          onPress={toggleDrawer}
-        >
-          <Menu size={24} color={theme.colors.text} />
-        </TouchableOpacity>
+        <View style={styles.leftSection}>
+          <TouchableOpacity
+            style={[styles.menuButton, { backgroundColor: theme.colors.surface }]}
+            onPress={toggleDrawer}
+          >
+            <Menu size={24} color={theme.colors.text} />
+          </TouchableOpacity>
 
-        <View style={styles.welcomeContainer}>
-          <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Hoşgeldiniz 👋</Text>
-          <Text style={[styles.userName, { color: theme.colors.text }]}>{user?.firstName || 'Kaşif'}</Text>
+          <View style={styles.welcomeContainer}>
+            <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Hoşgeldiniz 👋</Text>
+            <Text style={[styles.userName, { color: theme.colors.text }]}>{`${user?.firstName || 'Kaşif'}`}</Text>
+          </View>
         </View>
 
         <TouchableOpacity
@@ -261,7 +446,7 @@ export default function ExploreScreen() {
                   style={[styles.selectedPetName, { color: theme.colors.text }]}
                   numberOfLines={1}
                 >
-                  {selectedPet.name}
+                  {`${selectedPet.name}`}
                 </Text>
               </>
             ) : (
@@ -271,6 +456,20 @@ export default function ExploreScreen() {
           <ChevronDown size={16} color={theme.colors.textSecondary} style={styles.chevronIcon} />
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity onPress={() => setShowFilterModal(true)} style={styles.locationAlert}>
+        <LinearGradient
+          colors={['#6366F1', '#8B5CF6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.locationAlertGradient}
+        >
+          <Text style={styles.locationAlertText} numberOfLines={1} ellipsizeMode='tail'>
+            Size en yakın sevimli dostlar görüntüleniyor
+          </Text>
+          <Filter size={16} color="#FFFFFF" style={styles.filterIcon} />
+        </LinearGradient>
+      </TouchableOpacity>
     </View>
   );
 
@@ -278,8 +477,7 @@ export default function ExploreScreen() {
     <View style={styles.emptyContainer}>
       <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>Şimdilik hepsi bu kadar!</Text>
       <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
-        {selectedPet?.name || "Dostun"} için çevredeki tüm sevimli patileri gördün.
-        Daha sonra tekrar kontrol et veya filtrelerini genişletmeyi dene!
+        {`${selectedPet?.name || "Dostun"} için çevredeki tüm sevimli patileri gördün. Daha sonra tekrar kontrol et veya filtrelerini genişletmeyi dene!`}
       </Text>
       <TouchableOpacity style={styles.refreshButton} onPress={loadPetsForMatching}>
         <Text style={styles.refreshButtonText}>Yeniden Dene</Text>
@@ -287,11 +485,11 @@ export default function ExploreScreen() {
     </View>
   );
 
-  const currentPet = pets[currentIndex];
+  const currentPet = pets.length > 0 ? pets[0] : null;
 
   if (loading) {
     return (
-      <LinearGradient colors={theme.colors.gradient} style={styles.loadingContainer}>
+      <LinearGradient colors={theme.colors.gradient as [string, string, ...string[]]} style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Sevimli dostlar yükleniyor...</Text>
       </LinearGradient>
@@ -299,18 +497,44 @@ export default function ExploreScreen() {
   }
 
   return (
-    <LinearGradient colors={theme.colors.gradient} style={styles.container}>
+    <LinearGradient colors={theme.colors.gradient as [string, string, ...string[]]} style={styles.container}>
       <StatusBar style={isDark ? "light" : "dark"} />
+      
+      <PetDetailModal 
+        pet={selectedPetForDetails}
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        theme={theme}
+      />
+      
       {renderHeader()}
+
+      {/* Swipe Bildirimi */}
+      {notification && (
+        <Animated.View 
+          style={[
+            styles.notification,
+            { transform: [{ translateY: notificationAnim }] }
+          ]}
+        >
+          <LinearGradient
+            colors={notification.type === 'like' ? ['#EC4899', '#F97316'] : ['#F59E0B', '#D97706']}
+            style={styles.notificationGradient}
+          >
+            <Text style={styles.notificationText}>{notification.message}</Text>
+          </LinearGradient>
+        </Animated.View>
+      )}
 
       {pets.length > 0 && currentPet ? (
         <View style={styles.cardContainer}>
           {pets.map((pet, index) => {
-            if (index < currentIndex) return null; // Geçmiş kartları render etme
-            if (index > currentIndex + 1) return null; // Çok ilerideki kartları render etme
+            if (index > 3) return null; // En fazla ilk dört kartı render et
 
-            const isFirstCard = index === currentIndex;
-            const isSecondCard = index === currentIndex + 1;
+            const isFirstCard = index === 0;
+            const isSecondCard = index === 1;
+            const isThirdCard = index === 2;
+            const isFourthCard = index === 3;
 
             const rotate = position.x.interpolate({
               inputRange: [-screenWidth / 2, 0, screenWidth / 2],
@@ -321,10 +545,27 @@ export default function ExploreScreen() {
             const cardStyle = isFirstCard
               ? {
                   transform: [{ translateX: position.x }, { rotate }],
+                  zIndex: 4,
                 }
               : isSecondCard
-              ? { transform: [{ scale: 0.95 }], zIndex: -1 }
-              : { display: 'none' };
+              ? {
+                  transform: [{ scale: 0.95 }, { translateY: -10 }],
+                  zIndex: 3,
+                  opacity: 0.8
+                }
+              : isThirdCard
+              ? {
+                  transform: [{ scale: 0.9 }, { translateY: -20 }],
+                  zIndex: 2,
+                  opacity: 0.6
+                }
+              : isFourthCard
+              ? {
+                  transform: [{ scale: 0.85 }, { translateY: -30 }],
+                  zIndex: 1,
+                  opacity: 0.4
+                }
+              : { display: 'none' as const };
 
             const likeOpacity = position.x.interpolate({
               inputRange: [20, screenWidth / 2],
@@ -344,12 +585,19 @@ export default function ExploreScreen() {
                 style={[styles.animatedCard, cardStyle]}
                 {...(isFirstCard ? panResponder.panHandlers : {})}
               >
-                <PetCard
-                  pet={pet}
-                  likeOpacity={isFirstCard ? likeOpacity : 0}
-                  passOpacity={isFirstCard ? passOpacity : 0}
-                  distanceKm={pet.distanceKm}
-                />
+                {pet.photos && pet.photos.length > 0 && pet.photos[0] ? (
+                  <PetCard
+                    pet={pet}
+                    likeOpacity={isFirstCard ? likeOpacity : undefined}
+                    passOpacity={isFirstCard ? passOpacity : undefined}
+                    distanceKm={pet.distanceKm ? Number(pet.distanceKm) : undefined}
+                    onInfoPress={() => handleInfoPress(pet)}
+                  />
+                ) : (
+                  <View style={styles.emptyCard}>
+                    <Text>Resim Yüklenemedi</Text>
+                  </View>
+                )}
               </Animated.View>
             );
           }).reverse()}
@@ -431,31 +679,200 @@ export default function ExploreScreen() {
               </TouchableOpacity>
             </View>
             
-            <View style={styles.filterContent}>
-              <Text style={styles.filterLabel}>Mesafe</Text>
-              <View style={styles.distanceOptions}>
-                {[10, 25, 50, 100, 200].map((distance) => (
+            <ScrollView style={styles.filterContent}>
+              {/* Mesafe Filtresi */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: theme.colors.text }]}>Mesafe</Text>
+                <View style={styles.optionRow}>
                   <TouchableOpacity
-                    key={distance}
                     style={[
-                      styles.distanceOption,
-                      distance === 50 && styles.selectedDistanceOption,
+                      styles.optionButton,
+                      { backgroundColor: theme.colors.background },
+                      filters.distance === null && styles.selectedOption,
                     ]}
+                    onPress={() => setFilters(prev => ({ ...prev, distance: null }))}
                   >
                     <Text style={[
-                      styles.distanceOptionText,
-                      distance === 50 && styles.selectedDistanceOptionText,
+                      styles.optionText,
+                      { color: theme.colors.text },
+                      filters.distance === null && styles.selectedOptionText,
                     ]}>
-                      {distance} km
+                      Sınırsız
                     </Text>
                   </TouchableOpacity>
-                ))}
+                  {[10, 25, 50, 100, 200].map((distance) => (
+                    <TouchableOpacity
+                      key={distance}
+                      style={[
+                        styles.optionButton,
+                        { backgroundColor: theme.colors.background },
+                        filters.distance === distance && styles.selectedOption,
+                      ]}
+                      onPress={() => setFilters(prev => ({ ...prev, distance }))}
+                    >
+                      <Text style={[
+                        styles.optionText,
+                        { color: theme.colors.text },
+                        filters.distance === distance && styles.selectedOptionText,
+                      ]}>
+                        {distance} km
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-              
-              <Text style={styles.filterLabel}>Şehir</Text>
-              <TouchableOpacity style={styles.citySelector}>
-                <Text style={styles.citySelectorText}>Ankara</Text>
-                <ChevronDown size={16} color="#6B7280" />
+
+              {/* Pet Türü Filtresi */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: theme.colors.text }]}>Pet Türü</Text>
+                <View style={styles.optionRow}>
+                  {[
+                    { value: 'all', label: 'Tümü' },
+                    { value: 'cat', label: 'Kedi' },
+                    { value: 'dog', label: 'Köpek' }
+                  ].map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.optionButton,
+                        { backgroundColor: theme.colors.background },
+                        filters.petType === option.value && styles.selectedOption,
+                      ]}
+                      onPress={() => setFilters(prev => ({ ...prev, petType: option.value as any }))}
+                    >
+                      <Text style={[
+                        styles.optionText,
+                        { color: theme.colors.text },
+                        filters.petType === option.value && styles.selectedOptionText,
+                      ]}>
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Cins Filtresi */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: theme.colors.text }]}>Cins</Text>
+                <View style={styles.optionRow}>
+                  {(() => {
+                    const selectedPet = userPets.find(pet => pet.id === selectedPetId);
+                    const petType = selectedPet?.species || 'cat';
+                    
+                    const breeds = petType === 'cat' ? [
+                      { value: 'all', label: 'Tümü' },
+                      { value: 'Scottish Fold', label: 'Scottish Fold' },
+                      { value: 'British Shorthair', label: 'British Shorthair' },
+                      { value: 'Tekir', label: 'Tekir' },
+                      { value: 'Van Kedisi', label: 'Van Kedisi' },
+                      { value: 'Persian', label: 'Persian' }
+                    ] : [
+                      { value: 'all', label: 'Tümü' },
+                      { value: 'Golden Retriever', label: 'Golden Retriever' },
+                      { value: 'Labrador Retriever', label: 'Labrador' },
+                      { value: 'Poodle', label: 'Poodle' },
+                      { value: 'Alman Kurdu', label: 'Alman Kurdu' },
+                      { value: 'Beagle', label: 'Beagle' }
+                    ];
+                    
+                    return breeds.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          styles.optionButton,
+                          { backgroundColor: theme.colors.background },
+                          filters.breed === option.value && styles.selectedOption,
+                        ]}
+                        onPress={() => setFilters(prev => ({ ...prev, breed: option.value }))}
+                      >
+                        <Text style={[
+                          styles.optionText,
+                          { color: theme.colors.text },
+                          filters.breed === option.value && styles.selectedOptionText,
+                        ]}>
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ));
+                  })()}
+                </View>
+              </View>
+
+              {/* Kısırlaştırma Filtresi */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: theme.colors.text }]}>Kısırlaştırma</Text>
+                <View style={styles.optionRow}>
+                  {[
+                    { value: 'all', label: 'Tümü' },
+                    { value: 'yes', label: 'Kısırlaştırılmış' },
+                    { value: 'no', label: 'Kısırlaştırılmamış' }
+                  ].map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.optionButton,
+                        { backgroundColor: theme.colors.background },
+                        filters.neutered === option.value && styles.selectedOption,
+                      ]}
+                      onPress={() => setFilters(prev => ({ ...prev, neutered: option.value as any }))}
+                    >
+                      <Text style={[
+                        styles.optionText,
+                        { color: theme.colors.text },
+                        filters.neutered === option.value && styles.selectedOptionText,
+                      ]}>
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Renk Filtresi */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: theme.colors.text }]}>Renk</Text>
+                <View style={styles.optionRow}>
+                  {[
+                    { value: 'all', label: 'Tümü' },
+                    { value: 'Siyah', label: 'Siyah' },
+                    { value: 'Beyaz', label: 'Beyaz' },
+                    { value: 'Gri', label: 'Gri' },
+                    { value: 'Sarı', label: 'Sarı' },
+                    { value: 'Kahverengi', label: 'Kahverengi' }
+                  ].map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.optionButton,
+                        { backgroundColor: theme.colors.background },
+                        filters.color === option.value && styles.selectedOption,
+                      ]}
+                      onPress={() => setFilters(prev => ({ ...prev, color: option.value }))}
+                    >
+                      <Text style={[
+                        styles.optionText,
+                        { color: theme.colors.text },
+                        filters.color === option.value && styles.selectedOptionText,
+                      ]}>
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Filtre Uygula Butonu */}
+            <View style={styles.filterFooter}>
+              <TouchableOpacity
+                style={[styles.applyFilterButton, { backgroundColor: theme.colors.primary }]}
+                onPress={() => {
+                  setShowFilterModal(false);
+                  // Filtreler zaten state'te güncelleniyor, useEffect tetiklenecek
+                }}
+              >
+                <Text style={styles.applyFilterText}>Filtreleri Uygula</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -488,10 +905,10 @@ export default function ExploreScreen() {
         >
           <Image 
             source={{ uri: user?.profilePhoto || 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=150' }} 
-            style={styles.drawerAvatar} 
+            style={styles.drawerAvatar}
           />
-          <Text style={styles.drawerUsername}>{user?.username}</Text>
-          <Text style={styles.drawerEmail}>{user?.email}</Text>
+          <Text style={styles.drawerUsername}>{`${user?.username || ''}`}</Text>
+          <Text style={styles.drawerEmail}>{`${user?.email || ''}`}</Text>
         </LinearGradient>
         
         <View style={styles.drawerMenu}>
@@ -524,6 +941,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  notification: {
+    position: 'absolute',
+    top: 90, // Filtre yazısı üzerine
+    left: 20,
+    right: 20,
+    borderRadius: 12,
+    zIndex: 1001, // Diğer her şeyin üzerinde
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  notificationGradient: {
+    padding: 8,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    minHeight: 32,
+  },
+  notificationText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -542,7 +986,13 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 12,
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   menuButton: {
     width: 44,
@@ -562,7 +1012,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   welcomeContainer: {
-    flex: 1,
+    alignItems: 'flex-start',
+    marginLeft: 4, // Hamburger menüye çok yakın
+    maxWidth: 200, // Uzun isimler için sınır
   },
   welcomeText: {
     fontSize: 16,
@@ -571,25 +1023,6 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: 'bold',
-  },
-  locationAlert: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    marginBottom: 0,
-  },
-  locationAlertText: {
-    fontSize: 12,
-    fontWeight: '500',
-    flex: 1,
-    lineHeight: 16,
-    color: '#6366F1',
-  },
-  filterIcon: {
-    marginLeft: 8,
   },
   petSelector: {
     flexDirection: 'row',
@@ -635,10 +1068,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: 120,
-    marginTop: 0,
+    marginTop: -20,
+    paddingHorizontal: 20,
   },
   animatedCard: {
     position: 'absolute',
+  },
+  emptyCard: {
+    width: screenWidth * 0.9, // Use screenWidth for full width
+    height: 600,
+    borderRadius: 24,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
   },
   backgroundCard: {
     transform: [{ scale: 0.92 }],
@@ -769,11 +1219,53 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 20,
-    maxHeight: '50%',
+    height: '80%',
   },
   filterContent: {
+    flex: 1,
     paddingHorizontal: 24,
     paddingBottom: 24,
+  },
+  filterSection: {
+    marginBottom: 24,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  optionButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  selectedOption: {
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+  },
+  optionText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  selectedOptionText: {
+    color: '#FFFFFF',
+  },
+  filterFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  applyFilterButton: {
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  applyFilterText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   filterLabel: {
     fontSize: 16,
@@ -1001,63 +1493,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  tutorialOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  tutorialIndicator: {
-    position: 'absolute',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderRadius: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  tutorialLike: {
-    right: '25%',
-  },
-  tutorialPass: {
-    left: '25%',
-  },
-  tutorialText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginTop: 8,
-  },
-  tutorialSubtext: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4,
-  },
-  tutorialCloseButton: {
-    position: 'absolute',
-    bottom: 100,
-    backgroundColor: '#6366F1',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 25,
-  },
-  tutorialCloseText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
   logoutContainer: {
     marginTop: 'auto',
     paddingHorizontal: 16,
@@ -1114,5 +1549,36 @@ const styles = StyleSheet.create({
   },
   passButton: {
     backgroundColor: '#EF4444',
+  },
+  locationAlert: {
+    marginHorizontal: 24,
+    marginTop: 0,
+    marginBottom: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  locationAlertGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+  },
+  locationAlertText: {
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+    color: '#FFFFFF',
+  },
+  filterIcon: {
+    marginLeft: 8,
   },
 });

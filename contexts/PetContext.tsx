@@ -26,7 +26,7 @@ interface PetContextType {
   loading: boolean;
   error: string | null;
   loadUserPets: () => Promise<void>;
-  selectPet: (petId: string) => void;
+  selectPet: (petId: string, callback?: () => void) => void;
   addPet: (petData: FormData) => Promise<Pet | undefined>;
   updatePet: (id: string, petData: Partial<Pet>) => Promise<void>;
   deletePet: (id: string) => Promise<void>;
@@ -86,9 +86,13 @@ export function PetProvider({ children }: PetProviderProps) {
     }
   };
 
-  const selectPet = (petId: string) => {
+  const selectPet = (petId: string, callback?: () => void) => {
     console.log(`PetContext: Hayvan seçildi: ${petId}`);
     setSelectedPetId(petId);
+    // State güncellemesi sonrası callback'i çalıştır
+    if (callback) {
+      setTimeout(callback, 0);
+    }
   };
   
   const addPet = async (petData: FormData) => {

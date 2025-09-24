@@ -14,8 +14,8 @@ export interface Theme {
     success: string;
     warning: string;
     error: string;
-    gradient: string[];
-    headerGradient: string[];
+    gradient: [string, string, ...string[]];
+    headerGradient: [string, string, ...string[]];
   };
   isDark: boolean;
 }

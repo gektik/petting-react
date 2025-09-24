@@ -5,22 +5,20 @@ import {
   Image,
   StyleSheet,
   Dimensions,
-  TouchableOpacity,
   Animated,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MapPin, Calendar, Heart, X } from 'lucide-react-native';
+import { Heart, X, Info } from 'lucide-react-native';
 import { Pet } from '@/types';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface PetCardProps {
   pet: Pet;
-  onLike?: () => void;
-  onPass?: () => void;
-  showActions?: boolean;
-  likeOpacity?: Animated.AnimatedInterpolation<number>; // Değiştirildi
-  passOpacity?: Animated.AnimatedInterpolation<number>; // Değiştirildi
+  likeOpacity?: Animated.AnimatedInterpolation<number>;
+  passOpacity?: Animated.AnimatedInterpolation<number>;
   distanceKm?: number;
+  onInfoPress?: () => void;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -31,8 +29,31 @@ export function PetCard({
   likeOpacity,
   passOpacity,
   distanceKm,
+  onInfoPress,
 }: PetCardProps) {
   const { theme } = useTheme();
+
+  // Güvenli değerler oluştur
+  const petName = pet.name || 'İsimsiz';
+  const petAge = pet.age || 0;
+  const petBreed = pet.breed || 'Bilinmiyor';
+  const petGender = pet.gender === 'male' ? 'Erkek' : 'Dişi';
+  const petLocation = pet.location || '';
+  const petDescription = pet.description || '';
+
+  // İnfo metni oluştur
+  let infoText = petGender;
+  if (distanceKm !== undefined && distanceKm !== null) {
+    const distanceStr = typeof distanceKm === 'number' ? 
+      distanceKm.toFixed(1) : 
+      String(distanceKm);
+    infoText = infoText + " • " + distanceStr + " km uzakta";
+  } else {
+    infoText = infoText + " • Konum yok";
+  }
+  if (petLocation) {
+    infoText = infoText + " • " + petLocation;
+  }
 
   return (
     <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
@@ -48,54 +69,31 @@ export function PetCard({
       />
       
       {/* Swipe Indicators */}
-      {likeOpacity && (
-        <Animated.View style={[styles.swipeIndicator, styles.likeIndicator, { opacity: likeOpacity, backgroundColor: `${theme.colors.success}20` }]}>
+      {likeOpacity ? (
+        <Animated.View style={[styles.swipeIndicator, styles.likeIndicator, { opacity: likeOpacity, backgroundColor: theme.colors.success + '20' }]}>
           <Heart size={40} color={theme.colors.success} fill={theme.colors.success} />
           <Text style={[styles.swipeText, { color: theme.colors.success }]}>BEĞENDİM</Text>
         </Animated.View>
-      )}
+      ) : null}
       
-      {passOpacity && (
-        <Animated.View style={[styles.swipeIndicator, styles.passIndicator, { opacity: passOpacity, backgroundColor: `${theme.colors.error}20` }]}>
+      {passOpacity ? (
+        <Animated.View style={[styles.swipeIndicator, styles.passIndicator, { opacity: passOpacity, backgroundColor: theme.colors.error + '20' }]}>
           <X size={40} color={theme.colors.error} />
           <Text style={[styles.swipeText, { color: theme.colors.error }]}>GEÇ</Text>
         </Animated.View>
-      )}
+      ) : null}
       
       <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.name}>{pet.name}</Text>
-          <Text style={styles.age}>{pet.age} yaşında</Text>
-        </View>
-        
-        <Text style={styles.breed}>{pet.breed}</Text>
-        
-        <View style={styles.info}>
-          {distanceKm !== undefined && distanceKm !== null && (
-            <View style={styles.infoItem}>
-              <MapPin size={14} color="#FFFFFF" />
-              <Text style={styles.infoText}>{distanceKm.toFixed(1)} km yakınında</Text>
-            </View>
-          )}
-          <View style={styles.infoItem}>
-            <Calendar size={14} color="#FFFFFF" />
-            <Text style={styles.infoText}>
-              {pet.gender === 'male' ? 'Erkek' : 'Dişi'}
-            </Text>
-          </View>
-          {pet.location && (
-            <View style={styles.infoItem}>
-              <MapPin size={14} color="#FFFFFF" />
-              <Text style={styles.infoText}>{pet.location}</Text>
-            </View>
+        <View style={styles.nameRow}>
+          <Text style={styles.name}>{petName}</Text>
+          {onInfoPress && (
+            <TouchableOpacity style={styles.infoButton} onPress={onInfoPress}>
+              <Info size={20} color="#FFFFFF" />
+            </TouchableOpacity>
           )}
         </View>
-        
-        {pet.description && (
-          <Text style={styles.description} numberOfLines={2}>
-            {pet.description}
-          </Text>
-        )}
+        <Text style={styles.breed}>{petBreed} • {petAge} yaşında</Text>
+        <Text style={styles.infoText}>{infoText}</Text>
       </View>
     </View>
   );
@@ -159,73 +157,40 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
   },
-  header: {
+  nameRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 4,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   name: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginRight: 8,
+    flex: 1,
   },
-  age: {
-    fontSize: 20,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
+  infoButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 20,
+    padding: 10,
+    marginLeft: 10,
+    borderWidth: 2,
+    borderColor: '#3B82F6', // Mavi çerçeve
   },
   breed: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: 12,
-  },
-  info: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
+    marginBottom: 8,
   },
   infoText: {
     fontSize: 14,
     color: '#FFFFFF',
-    marginLeft: 4,
     fontWeight: '500',
+    marginBottom: 8,
   },
   description: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
     lineHeight: 20,
-  },
-  actions: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  actionButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  passButton: {
-  },
-  likeButton: {
   },
 });

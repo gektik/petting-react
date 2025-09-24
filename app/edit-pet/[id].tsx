@@ -66,13 +66,12 @@ export default function EditPetScreen() {
   ];
 
   const catBreeds = [
-    { id: 1, name: 'Tekir' },
-    { id: 2, name: 'Van Kedisi' },
-    { id: 3, name: 'Ankara Kedisi' },
-    { id: 4, name: 'Persian' },
-    { id: 5, name: 'British Shorthair' },
-    { id: 6, name: 'Scottish Fold' },
-    { id: 7, name: 'Maine Coon' },
+    { id: 1, name: 'Scottish Fold' },
+    { id: 2, name: 'British Shorthair' },
+    { id: 4, name: 'Tekir' },
+    { id: 8, name: 'Golden Retriever' },
+    { id: 9, name: 'Labrador Retriever' },
+    { id: 10, name: 'Alman Kurdu' },
   ];
 
   const dogBreeds = [
@@ -307,19 +306,20 @@ export default function EditPetScreen() {
     if (!id) return;
     setSaving(true);
     try {
-      // Pet arayüzüne uygun tam bir nesne oluştur
-      const updatedPetData: Partial<Pet> = {
+      // API'ye uygun veri formatı oluştur
+      const updatedPetData = {
         name: form.name.trim(),
-        species: form.petTypeID === 1 ? 'cat' : 'dog',
-        breed: form.breedName.trim(),
-        gender: form.gender === 1 ? 'male' : 'female',
-        birthDate: form.birthDate.toISOString(),
-        neutered: form.isNeutered,
+        petTypeID: form.petTypeID,
+        breedID: form.breedID,
+        breedName: form.breedName.trim(),
+        gender: form.gender, // 0 veya 1 (API formatı)
+        birthDate: form.birthDate.toISOString().split('T')[0], // YYYY-MM-DD formatı
+        isNeutered: form.isNeutered,
         description: form.description.trim(),
         color: form.color,
-        isActive: form.isActiveForMatching,
+        isActiveForMatching: form.isActiveForMatching,
         // Fotoğraf değiştiyse yeni URL'i ekle, değişmediyse eskisini koru
-        photos: [currentImageUri || ''], 
+        profilePictureURL: currentImageUri || currentPet?.photos?.[0] || '', 
       };
 
       await updatePet(id, updatedPetData);
