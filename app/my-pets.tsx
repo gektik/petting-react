@@ -36,20 +36,24 @@ export default function MyPetsScreen() {
 
   const handleDeletePet = (pet: Pet) => {
     Alert.alert(
-      'Hayvanı Sil',
-      `${pet.name} adlı hayvanı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`,
+      '🗑️ Hayvanı Sil',
+      `"${pet.name}" adlı hayvanınızı silmek istediğinize emin misiniz?\n\n⚠️ Bu işlem ile birlikte:\n• Hayvanın tüm fotoğrafları\n• Eşleşme geçmişi\n• Sohbet kayıtları\n• Sağlık kayıtları\n• Tüm ilgili veriler\n\nKalıcı olarak silinecektir ve bu işlem geri alınamaz!`,
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: '❌ İptal', style: 'cancel' },
         {
-          text: 'Sil',
+          text: '🗑️ Evet, Sil',
           style: 'destructive',
           onPress: async () => {
             try {
               await deletePet(pet.id);
-              Alert.alert('Başarılı', `${pet.name} başarıyla silindi.`);
+              Alert.alert(
+                '✅ Başarılı', 
+                `"${pet.name}" adlı hayvanınız ve tüm verileri başarıyla silindi.`,
+                [{ text: 'Tamam', style: 'default' }]
+              );
             } catch (error) {
               const errorMessage = error instanceof Error ? error.message : 'Hayvan silinirken bir hata oluştu.';
-              Alert.alert('Silme Hatası', errorMessage);
+              Alert.alert('❌ Silme Hatası', errorMessage);
             }
           },
         },
@@ -68,17 +72,23 @@ export default function MyPetsScreen() {
       onPress={() => handleEditPet(item)}
       activeOpacity={0.7}
     >
-      <Image 
-        source={{ uri: item.photos?.[0] || '' }}
-        style={styles.petImage}
-        onError={(error) => {
-          console.log('My Pets: Resim yükleme hatası:', error.nativeEvent.error);
-          console.log('My Pets: Hatalı URL:', item.photos[0]);
-        }}
-        onLoad={() => {
-          console.log('My Pets: Resim başarıyla yüklendi:', item.photos[0]);
-        }}
-      />
+      {item.photos && item.photos.length > 0 && item.photos[0] ? (
+        <Image 
+          source={{ uri: item.photos[0] }}
+          style={styles.petImage}
+          onError={(error) => {
+            console.log('My Pets: Resim yükleme hatası:', error.nativeEvent.error);
+            console.log('My Pets: Hatalı URL:', item.photos[0]);
+          }}
+          onLoad={() => {
+            console.log('My Pets: Resim başarıyla yüklendi:', item.photos[0]);
+          }}
+        />
+      ) : (
+        <View style={[styles.petImage, styles.placeholderImage]}>
+          <Text style={styles.placeholderText}>Resim Yok</Text>
+        </View>
+      )}
       
       <TouchableOpacity 
         style={styles.petInfo}
@@ -167,7 +177,7 @@ export default function MyPetsScreen() {
         <FlatList
           data={userPets}
           renderItem={renderPet}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
         />
@@ -332,5 +342,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginLeft: 8,
+  },
+  placeholderImage: {
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontWeight: '500',
   },
 });

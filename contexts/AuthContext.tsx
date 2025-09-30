@@ -1,18 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Platform } from 'react-native';
 import { apiService, AuthResponse, RegisterRequest, LoginRequest, SocialLoginRequest } from '@/services/api';
-
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  profilePhoto?: string;
-  firstName?: string;
-  lastName?: string;
-  location?: string;
-  bio?: string;
-  createdAt?: string;
-}
+import { User } from '@/types'; // User interface'ini types'dan import et
 
 interface AuthContextType {
   user: User | null;
@@ -56,7 +45,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout();
     });
     
-    checkAuthStatus();
+    // Otomatik giriş kontrolünü kaldırdık - kullanıcı manuel giriş yapmalı
+    console.log('AuthContext: Uygulama başlatıldı, kullanıcı giriş yapmalı');
+    setIsLoading(false);
     
     return () => {
       isMountedRef.current = false;
@@ -65,22 +56,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
-  const checkAuthStatus = async () => {
-    try {
-      console.log('AuthContext: Uygulama başlangıcında auth kontrolü atlanıyor...');
-      
-      if (isMountedRef.current) {
-        setUser(null);
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error('AuthContext: checkAuthStatus hatası:', error);
-      if (isMountedRef.current) {
-        setUser(null);
-        setIsLoading(false);
-      }
-    }
-  };
 
   const login = async (data: LoginRequest) => {
     try {
@@ -103,8 +78,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           profilePhoto: response.user?.profilePictureURL || undefined,
         };
         
+        console.log('AuthContext: Yeni kullanıcı verisi oluşturuldu:', userData.id, userData.username);
+        
         console.log('AuthContext: İlk kullanıcı verisi:', userData);
         if (isMountedRef.current) {
+          console.log('AuthContext: setUser çağrılıyor, kullanıcı değişecek...');
           setUser(userData);
         }
         

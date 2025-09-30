@@ -224,12 +224,15 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Çıkış Yap',
-      'Hesabınızdan çıkmak istediğinize emin misiniz?',
+      '🚪 Güvenli Çıkış',
+      'Hesabınızdan çıkmak istediğinize emin misiniz?\n\n⚠️ Çıkış yaptığınızda:\n• Tüm oturum verileriniz silinecek\n• Eşleşmeleriniz korunacak\n• Tekrar giriş yapabilirsiniz\n\nGüvenli bir şekilde çıkış yapmak istiyor musunuz?',
       [
-        { text: 'İptal', style: 'cancel' },
+        { 
+          text: '❌ İptal', 
+          style: 'cancel' 
+        },
         {
-          text: 'Çıkış Yap',
+          text: '✅ Evet, Çıkış Yap',
           style: 'destructive',
           onPress: () => {
             logout().then(() => {

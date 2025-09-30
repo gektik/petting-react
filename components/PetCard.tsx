@@ -7,6 +7,7 @@ import {
   Dimensions,
   Animated,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, X, Info } from 'lucide-react-native';
@@ -35,7 +36,7 @@ export function PetCard({
 
   // Güvenli değerler oluştur
   const petName = pet.name || 'İsimsiz';
-  const petAge = pet.age || 0;
+  const petAge = pet.birthDate ? Math.floor((new Date().getTime() - new Date(pet.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : 0;
   const petBreed = pet.breed || 'Bilinmiyor';
   const petGender = pet.gender === 'male' ? 'Erkek' : 'Dişi';
   const petLocation = pet.location || '';
@@ -57,11 +58,19 @@ export function PetCard({
 
   return (
     <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-      <Image
-        source={{ uri: pet.photos?.[0] || '' }}
-        style={styles.image}
-        resizeMode="cover"
-      />
+      {pet.photos && pet.photos.length > 0 && pet.photos[0] ? (
+        <Image
+          source={{ uri: pet.photos[0] }}
+          style={styles.image}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={[styles.image, styles.placeholderImage, { backgroundColor: theme.colors.background }]}>
+          <Text style={[styles.placeholderText, { color: theme.colors.textSecondary }]}>
+            Resim Yok
+          </Text>
+        </View>
+      )}
       
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.7)']}
@@ -86,10 +95,29 @@ export function PetCard({
       <View style={styles.content}>
         <View style={styles.nameRow}>
           <Text style={styles.name}>{petName}</Text>
-          {onInfoPress && (
-            <TouchableOpacity style={styles.infoButton} onPress={onInfoPress}>
-              <Info size={20} color="#FFFFFF" />
-            </TouchableOpacity>
+          {onInfoPress ? (
+            <View style={styles.infoButtonContainer}>
+              <TouchableOpacity 
+                style={styles.infoButton} 
+                onPressIn={() => {
+                  console.log('🔍 DEBUG: Info butonu tıklandı (PetCard)');
+                  if (onInfoPress) {
+                    onInfoPress();
+                  }
+                }}
+                onPressOut={() => {
+                  console.log('🔍 DEBUG: Info butonu bırakıldı (onPressOut)');
+                }}
+                activeOpacity={0.7}
+                hitSlop={{ top: 40, bottom: 40, left: 40, right: 40 }}
+                delayPressIn={0}
+                delayPressOut={0}
+              >
+                <Info size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            console.log('🔍 DEBUG: onInfoPress prop\'u yok!')
           )}
         </View>
         <Text style={styles.breed}>{petBreed} • {petAge} yaşında</Text>
@@ -169,13 +197,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     flex: 1,
   },
+  infoButtonContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 99999, // En üstte
+    pointerEvents: 'auto', // Dokunma olaylarını kabul et
+    elevation: 15, // Android için
+  },
   infoButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 20,
-    padding: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Koyu arka plan
+    borderRadius: 25, // Daha büyük
+    padding: 12, // Daha büyük padding
     marginLeft: 10,
-    borderWidth: 2,
-    borderColor: '#3B82F6', // Mavi çerçeve
+    minWidth: 44, // Minimum dokunma alanı
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   breed: {
     fontSize: 16,
@@ -192,5 +230,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
     lineHeight: 20,
+  },
+  placeholderImage: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

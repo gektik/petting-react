@@ -70,11 +70,10 @@ class ApiService {
   constructor() {
     this.api = axios.create({
       baseURL: BASE_URL,
-      timeout: 15000,
+      timeout: 30000, // 30 saniye timeout
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Accept-Charset': 'utf-8',
       },
     });
 
@@ -147,6 +146,11 @@ class ApiService {
   // Public method to set auth token from AuthContext
   setAuthToken(token: string | null) {
     this.token = token;
+  }
+
+  // Public method to get auth token
+  getToken(): string | null {
+    return this.token;
   }
 
   // Authentication methods
@@ -404,7 +408,21 @@ class ApiService {
         isNetworkError: !error.response,
         fullError: error
       });
-      throw error;
+      
+      // Daha anlaşılır hata mesajları
+      if (error.response?.status === 401) {
+        throw new Error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
+      } else if (error.response?.status === 403) {
+        throw new Error('Bu işlem için yetkiniz yok.');
+      } else if (error.response?.status === 404) {
+        throw new Error('API endpoint bulunamadı.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
+      } else if (!error.response) {
+        throw new Error('İnternet bağlantınızı kontrol edin.');
+      } else {
+        throw new Error(error.message || 'Beklenmeyen bir hata oluştu.');
+      }
     }
   }
 
@@ -426,9 +444,18 @@ class ApiService {
   }
 
   // Get pets for matching (swipe cards)
-  async getPetsForMatching(petId: string, options?: { location?: { latitude: number; longitude: number }; radiusInKm?: number }): Promise<Pet[]> {
+  async getPetsForMatching(petId: string, options?: { 
+    location?: { latitude: number; longitude: number }; 
+    radiusInKm?: number | null;
+    neutered?: boolean;
+    color?: string;
+    breed?: number;
+  }): Promise<Pet[]> {
     try {
       console.log(`API: getPetsForMatching (candidates) çağrılıyor... Pet ID: ${petId}`);
+      console.log('🔍 Token kontrolü:', !!this.token);
+      console.log('🔍 Token değeri:', this.token ? this.token.substring(0, 20) + '...' : 'null');
+      console.log('🔍 Filtreler API\'ye gönderiliyor:', options);
 
       const params: any = {
         useCurrentLocation: options?.location ? false : true,
@@ -437,11 +464,25 @@ class ApiService {
         longitude: options?.location?.longitude,
       };
 
+      // Filtreleri ekle
+      if (options?.neutered !== undefined) {
+        params.neutered = options.neutered;
+      }
+      if (options?.color) {
+        params.color = options.color;
+      }
+      if (options?.breed) {
+        params.breed = options.breed;
+      }
+
+      console.log('🔍 API parametreleri:', params);
+
       const response = await this.api.get(`/matching/candidates/${petId}`, { params });
       
       console.log('API: getPetsForMatching yanıtı:', response.data);
       
       const pets = response.data || [];
+      console.log(`🔍 API'den ${pets.length} hayvan geldi (backend zaten aktif olanları filtreliyor)`);
       return pets.map((apiPet: any) => this.transformPetData(apiPet));
     } catch (error: any) {
       console.error('API: getPetsForMatching hatası:', {
@@ -539,7 +580,9 @@ class ApiService {
       
       console.log('API: FormData hazırlandı:', { filename, petId });
       
-      const response = await this.api.post(`/pets/${petId}/upload-image`, formData, {
+      // Yeni pet için genel upload endpoint'i kullan
+      const endpoint = petId ? `/pets/${petId}/upload-image` : '/users/me/upload-profile-image';
+      const response = await this.api.post(endpoint, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -829,34 +872,49 @@ class ApiService {
       // API'den gelen veriyi dönüştür
       const matches = response.data || [];
       return matches.map((match: any) => {
-        // Hangi pet'in eşleşmesi olduğunu belirle
-        const isCurrentPetLiker = match.likerPetID?.toString() === petId;
-        const currentPetId = isCurrentPetLiker ? match.likerPetID?.toString() : match.likedPetID?.toString();
-        const matchedPetId = isCurrentPetLiker ? match.likedPetID?.toString() : match.likerPetID?.toString();
-        const matchedPet = isCurrentPetLiker ? match.likedPet : match.likerPet;
+        // API'den gelen veri otherPet içeriyor
+        const otherPet = match.otherPet;
         
         return {
           id: match.matchID?.toString() || '',
-          petId: currentPetId || '',
-          matchedPetId: matchedPetId || '',
-          status: match.status?.toLowerCase() || 'pending',
-          createdAt: match.createdDate || new Date().toISOString(),
-          matchedPet: matchedPet ? {
-            id: matchedPet.petID?.toString() || '',
-            name: matchedPet.name || '',
-            species: matchedPet.petTypeID === 1 ? 'cat' : 'dog',
-            breed: matchedPet.breedName || '',
-            age: matchedPet.age || 0,
-            gender: matchedPet.gender === 0 ? 'female' : 'male',
-            neutered: matchedPet.isNeutered || false,
-            photos: [matchedPet.profilePictureURL || ''],
-            description: matchedPet.description || '',
-            color: matchedPet.color || '',
-            ownerId: matchedPet.userID?.toString() || '',
-            isActive: matchedPet.isActiveForMatching !== false,
-            location: matchedPet.location || 'Türkiye',
-            createdAt: matchedPet.createdDate || new Date().toISOString(),
-            birthDate: matchedPet.birthDate
+          petId: petId,
+          matchedPetId: otherPet?.petID?.toString() || '',
+          status: 'matched', // API'den gelen eşleşmeler zaten matched
+          createdAt: match.matchDate || new Date().toISOString(),
+          chatId: match.chatId,
+          otherPet: otherPet ? {
+            id: otherPet.petID?.toString() || '',
+            name: otherPet.name || '',
+            species: otherPet.petTypeID === 1 ? 'cat' : 'dog',
+            breed: otherPet.breedName || '',
+            age: otherPet.age || 0,
+            gender: otherPet.gender === 0 ? 'female' : 'male',
+            neutered: otherPet.isNeutered || false,
+            photos: [otherPet.profilePictureURL || ''],
+            description: otherPet.description || '',
+            color: otherPet.color || '',
+            ownerId: otherPet.userID?.toString() || '',
+            isActive: otherPet.isActiveForMatching !== false,
+            location: otherPet.location || 'Türkiye',
+            createdAt: otherPet.createdDate || new Date().toISOString(),
+            birthDate: otherPet.birthDate
+          } : undefined,
+          matchedPet: otherPet ? {
+            id: otherPet.petID?.toString() || '',
+            name: otherPet.name || '',
+            species: otherPet.petTypeID === 1 ? 'cat' : 'dog',
+            breed: otherPet.breedName || '',
+            age: otherPet.age || 0,
+            gender: otherPet.gender === 0 ? 'female' : 'male',
+            neutered: otherPet.isNeutered || false,
+            photos: [otherPet.profilePictureURL || ''],
+            description: otherPet.description || '',
+            color: otherPet.color || '',
+            ownerId: otherPet.userID?.toString() || '',
+            isActive: otherPet.isActiveForMatching !== false,
+            location: otherPet.location || 'Türkiye',
+            createdAt: otherPet.createdDate || new Date().toISOString(),
+            birthDate: otherPet.birthDate
           } : undefined
         };
       });
@@ -895,7 +953,10 @@ class ApiService {
   async likePet(likerPetId: string, likedPetId: string): Promise<any> {
     try {
       console.log('API: likePet çağrılıyor...', { likerPetId, likedPetId });
-      const response = await this.api.post('/matching/like', { likerPetId, likedPetId });
+      const response = await this.api.post('/matching/like', { 
+        likerPetId: parseInt(likerPetId), 
+        likedPetId: parseInt(likedPetId) 
+      });
       console.log('API: likePet yanıtı:', response.data);
       return response.data;
     } catch (error: any) {
@@ -908,7 +969,12 @@ class ApiService {
     try {
       console.log('API: unlikePet çağrılıyor...', { likerPetId, likedPetId });
       // HTTP metodunu DELETE olarak değiştir ve veriyi 'data' içinde gönder
-      const response = await this.api.delete('/matching/unlike', { data: { likerPetId, likedPetId } });
+      const response = await this.api.delete('/matching/unlike', { 
+        data: { 
+          likerPetId: parseInt(likerPetId), 
+          likedPetId: parseInt(likedPetId) 
+        } 
+      });
       console.log('API: unlikePet yanıtı:', response.data);
       return response.data;
     } catch (error: any) {
@@ -921,7 +987,12 @@ class ApiService {
     try {
       console.log('API: unpassPet çağrılıyor...', { passerPetId, passedPetId });
        // HTTP metodunu DELETE olarak değiştir ve veriyi 'data' içinde gönder
-      const response = await this.api.delete('/matching/unpass', { data: { passerPetId, passedPetId } });
+      const response = await this.api.delete('/matching/unpass', { 
+        data: { 
+          passerPetId: parseInt(passerPetId), 
+          passedPetId: parseInt(passedPetId) 
+        } 
+      });
       console.log('API: unpassPet yanıtı:', response.data);
       return response.data;
     } catch (error: any) {
@@ -933,7 +1004,10 @@ class ApiService {
   async passPet(passerPetId: string, passedPetId: string): Promise<any> {
     try {
       console.log('API: passPet çağrılıyor...', { passerPetId, passedPetId });
-      const response = await this.api.post('/matching/pass', { passerPetId, passedPetId });
+      const response = await this.api.post('/matching/pass', { 
+        passerPetId: parseInt(passerPetId), 
+        passedPetId: parseInt(passedPetId) 
+      });
       console.log('API: passPet yanıtı:', response.data);
       return response.data;
     } catch (error: any) {
@@ -999,17 +1073,10 @@ class ApiService {
       photos = [this.fixImageUrl(apiPet.profilePictureURL)];
     }
     
-    // Hala fotoğraf yoksa, türüne göre varsayılan resim ata
+    // API'den gelen resim yoksa boş bırak, frontend placeholder gösterecek
     if (photos.length === 0 || !photos[0] || photos[0].trim() === '') {
-      console.log('Adding default image for pet:', apiPet.name, 'Type:', apiPet.petTypeID);
-      if (apiPet.petTypeID === 1 || apiPet.species === 'cat') {
-        photos = [DEFAULT_CAT_IMAGE];
-      } else if (apiPet.petTypeID === 2 || apiPet.species === 'dog') {
-        photos = [DEFAULT_DOG_IMAGE];
-      } else {
-        // Türü belirsizse kedi resmi ata
-        photos = [DEFAULT_CAT_IMAGE];
-      }
+      console.log('No image from API for pet:', apiPet.name, 'Type:', apiPet.petTypeID);
+      photos = []; // Boş bırak, frontend placeholder gösterecek
     }
     
     // Safe string normalization to fix encoding issues
@@ -1036,6 +1103,146 @@ class ApiService {
       createdAt: apiPet.createdDate || apiPet.createdAt || new Date().toISOString(),
       birthDate: apiPet.birthDate || undefined,
     };
+  }
+
+  // Sohbet fonksiyonları
+  async getChatInfo(chatId: string): Promise<any> {
+    try {
+      console.log('💬 API: getChatInfo çağrılıyor...', { chatId });
+      const response = await this.api.get(`/chat/${chatId}`);
+      console.log('💬 API: getChatInfo yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('💬 API: getChatInfo hatası:', error);
+      throw error;
+    }
+  }
+
+  async getChatMessages(chatId: string): Promise<any[]> {
+    try {
+      console.log('💬 API: getChatMessages çağrılıyor...', { chatId });
+      const response = await this.api.get(`/chat/${chatId}/messages`);
+      console.log('💬 API: getChatMessages yanıtı:', response.data);
+      return response.data || [];
+    } catch (error: any) {
+      console.error('💬 API: getChatMessages hatası:', error);
+      throw error;
+    }
+  }
+
+  async sendChatMessage(chatId: string, messageData: { content: string; senderPetId: string }): Promise<any> {
+    try {
+      console.log('💬 API: sendChatMessage çağrılıyor...', { chatId, messageData });
+      const response = await this.api.post(`/chat/${chatId}/messages`, {
+        content: messageData.content,
+        petId: messageData.senderPetId
+      });
+      console.log('💬 API: sendChatMessage yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('💬 API: sendChatMessage hatası:', error);
+      throw error;
+    }
+  }
+
+  // Mesaj durumu güncelleme
+  async markMessageAsRead(chatId: string, messageId: string, petId: string): Promise<any> {
+    try {
+      console.log('💬 API: markMessageAsRead çağrılıyor...', { chatId, messageId, petId });
+      const response = await this.api.put(`/chat/${chatId}/messages/${messageId}/read`, {
+        petId: petId
+      });
+      console.log('💬 API: markMessageAsRead yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('💬 API: markMessageAsRead hatası:', error);
+      throw error;
+    }
+  }
+
+  // Tüm mesajları okundu olarak işaretle
+  async markAllMessagesAsRead(chatId: string, petId: string): Promise<any> {
+    try {
+      console.log('💬 API: markAllMessagesAsRead çağrılıyor...', { chatId, petId });
+      const response = await this.api.put(`/chat/${chatId}/read-all`, {
+        petId: petId
+      });
+      console.log('💬 API: markAllMessagesAsRead yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('💬 API: markAllMessagesAsRead hatası:', error);
+      throw error;
+    }
+  }
+
+  // Chat listesi al
+  async getChatList(petId: string): Promise<any[]> {
+    try {
+      console.log('💬 API: getChatList çağrılıyor...', { petId });
+      const response = await this.api.get(`/chat/list`, {
+        params: { petId }
+      });
+      console.log('💬 API: getChatList yanıtı:', response.data);
+      return response.data || [];
+    } catch (error: any) {
+      console.error('💬 API: getChatList hatası:', error);
+      throw error;
+    }
+  }
+
+  // Chat oluştur (eşleşme sonrası)
+  async createChat(matchId: string, petId: string): Promise<any> {
+    try {
+      console.log('💬 API: createChat çağrılıyor...', { matchId, petId });
+      const response = await this.api.post(`/chat/create`, {
+        matchId: matchId,
+        petId: petId
+      });
+      console.log('💬 API: createChat yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('💬 API: createChat hatası:', error);
+      throw error;
+    }
+  }
+
+  // Send chat message
+  async sendChatMessage(chatId: string, messageData: { content: string; senderPetId: string }): Promise<any> {
+    try {
+      console.log('💬 API: sendChatMessage çağrılıyor...', { chatId, messageData });
+      const response = await this.api.post(`/chat/${chatId}/messages`, {
+        content: messageData.content,
+        petId: messageData.senderPetId
+      });
+      console.log('💬 API: sendChatMessage yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('💬 API: sendChatMessage hatası:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method,
+        isNetworkError: !error.response,
+        isTimeout: error.code === 'ECONNABORTED',
+        errorCode: error.code
+      });
+      throw error;
+    }
+  }
+
+  // Delete match
+  async deleteMatch(matchId: string): Promise<any> {
+    try {
+      console.log('🗑️ API: deleteMatch çağrılıyor...', { matchId });
+      const response = await this.api.delete(`/matching/matches/${matchId}`);
+      console.log('🗑️ API: deleteMatch yanıtı:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('🗑️ API: deleteMatch hatası:', error);
+      throw error;
+    }
   }
 }
 

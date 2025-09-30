@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,222 +7,376 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  Alert,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Send, Camera, Smile } from 'lucide-react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Chat, Message, User } from '@/types';
-import { apiService } from '@/services/api';
-import { mockChats, mockMessages } from '@/services/mockData';
+import { Send, ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+import { usePet } from '@/contexts/PetContext';
+import { apiService } from '@/services/api';
+// import { useTheme } from '@/contexts/ThemeContext';
+
+interface Message {
+  id: string;
+  content: string;
+  senderId: string;
+  senderPetId: string;
+  senderPetName: string;
+  timestamp: string;
+  isOwn: boolean;
+}
+
+interface ChatData {
+  id: string;
+  matchId: string;
+  otherPet: {
+    id: string;
+    name: string;
+    photos: string[];
+    breed: string;
+    age: number;
+    gender: string;
+  };
+  messages: Message[];
+}
 
 export default function ChatScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const { id: chatId } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
-  const { theme, isDark } = useTheme();
-  const [chat, setChat] = useState<Chat | null>(null);
+  const { selectedPet } = usePet();
+  const insets = useSafeAreaInsets();
+  // Sabit renkler - theme hatası için
+  const colors = {
+    background: '#F8FAFC',
+    surface: '#FFFFFF',
+    text: '#1F2937',
+    textSecondary: '#6B7280',
+    border: '#E2E8F0'
+  };
+  
+  const [chatData, setChatData] = useState<ChatData | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const flatListRef = useRef<FlatList>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) {
-      loadChat();
+    console.log('🔍 Chat useEffect çağrıldı:', { chatId, selectedPet: !!selectedPet });
+    if (!chatId || !selectedPet) {
+      console.log('🔍 Chat useEffect: chatId veya selectedPet yok, çıkılıyor');
+      return;
     }
-  }, [id]);
 
-  const loadChat = async () => {
+    console.log('🔍 Chat useEffect: loadChatData çağrılıyor');
+    loadChatData();
+  }, [chatId, selectedPet]);
+
+  const loadChatData = async () => {
     try {
-      setLoading(true);
-      // Mock data kullan
-      const foundChat = mockChats.find(c => c.id === id);
-      if (foundChat) {
-        setChat(foundChat);
-        setMessages(foundChat.messages);
+      setIsLoading(true);
+      setError(null);
+      console.log('💬 Sohbet verisi yükleniyor:', chatId);
+      
+      if (!chatId) {
+        throw new Error('Sohbet ID bulunamadı');
       }
-    } catch (error) {
-      console.error('Error loading chat:', error);
-      Alert.alert('Hata', 'Sohbet yüklenirken hata oluştu.');
+      
+      // API'den sohbet verilerini al
+      const [chatInfo, chatMessages] = await Promise.all([
+        apiService.getChatInfo(chatId),
+        apiService.getChatMessages(chatId)
+      ]);
+      
+      console.log('✅ Sohbet bilgileri:', chatInfo);
+      console.log('✅ Sohbet mesajları:', chatMessages);
+
+      // ChatData'yı oluştur
+      const chatData: ChatData = {
+        id: chatId,
+        matchId: chatInfo.matchId || '',
+        otherPet: {
+          id: chatInfo.otherPet?.id || '',
+          name: chatInfo.otherPet?.name || 'Bilinmeyen Hayvan',
+          photos: chatInfo.otherPet?.photos || [],
+          breed: chatInfo.otherPet?.breed || '',
+          age: chatInfo.otherPet?.age || 0,
+          gender: chatInfo.otherPet?.gender || 'male'
+        },
+        messages: (chatMessages || []).map((msg: any) => ({
+          id: msg.id || Date.now().toString(),
+          content: msg.content || '',
+          senderId: msg.senderId || '',
+          senderPetId: msg.senderPetId || '',
+          senderPetName: msg.senderPetName || 'Pet',
+          timestamp: msg.timestamp || new Date().toISOString(),
+          isOwn: msg.isOwn || false
+        }))
+      };
+
+      setChatData(chatData);
+      setMessages(chatData.messages);
+      console.log('✅ Sohbet verisi başarıyla yüklendi');
+    } catch (error: any) {
+      console.error('❌ Sohbet verisi yüklenirken hata:', error);
+      
+      // Hata durumunda boş veri set et
+      setChatData({
+        id: chatId || '',
+        matchId: '',
+        otherPet: {
+          id: '',
+          name: 'Bilinmeyen Hayvan',
+          photos: [],
+          breed: '',
+          age: 0,
+          gender: 'male'
+        },
+        messages: []
+      });
+      setMessages([]);
+      
+      // Hata mesajını ayarla
+      const errorMessage = error.message || 'Sohbet yüklenemedi';
+      setError(errorMessage);
+      
+      Alert.alert('Hata', `Sohbet yüklenemedi: ${errorMessage}`);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || sending) return;
+    if (!newMessage.trim() || !selectedPet) {
+      Alert.alert('Hata', 'Mesaj boş olamaz veya pet seçilmemiş');
+      return;
+    }
+
+    if (!chatId) {
+      Alert.alert('Hata', 'Sohbet ID bulunamadı');
+      return;
+    }
 
     const messageText = newMessage.trim();
     setNewMessage('');
-    setSending(true);
+
+    // Optimistic update
+    const tempMessage: Message = {
+      id: Date.now().toString(),
+      content: messageText,
+      senderId: user?.id || '',
+      senderPetId: selectedPet.id,
+      senderPetName: selectedPet.name,
+      timestamp: new Date().toISOString(),
+      isOwn: true
+    };
+
+    setMessages(prev => [...prev, tempMessage]);
 
     try {
-      // Optimistic update
-      const tempMessage: Message = {
-        id: Date.now().toString(),
-        senderId: user?.id || '1',
-        receiverId: chat?.participants.find(p => p.id !== user?.id)?.id || '2',
-        content: messageText,
-        type: 'text',
-        createdAt: new Date().toISOString(),
-      };
-
-      setMessages(prev => [...prev, tempMessage]);
-
-      // Scroll to bottom
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('💬 Mesaj gönderiliyor:', { 
+        chatId, 
+        messageText, 
+        senderPetId: selectedPet.id,
+        selectedPetName: selectedPet.name,
+        userId: user?.id 
+      });
       
-      console.log('Message sent:', messageText);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      Alert.alert('Hata', 'Mesaj gönderilirken hata oluştu.');
-      // Remove failed message
-      setMessages(prev => prev.slice(0, -1));
-    } finally {
-      setSending(false);
+      // HTTP API ile mesaj gönder
+      const result = await apiService.sendChatMessage(chatId, {
+        content: messageText,
+        senderPetId: selectedPet.id
+      });
+      
+      console.log('✅ Mesaj başarıyla gönderildi:', result);
+      
+      // Başarılı gönderim sonrası mesajı güncelle
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempMessage.id 
+          ? { ...msg, id: result.id || tempMessage.id }
+          : msg
+      ));
+      
+    } catch (error: any) {
+      console.error('❌ Mesaj gönderilirken hata:', error);
+      
+      // Hata durumunda optimistic update'i geri al
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+      
+      // Detaylı hata mesajı
+      let errorMessage = 'Bilinmeyen hata';
+      
+      if (error.response) {
+        // Sunucu hatası
+        errorMessage = `Sunucu hatası: ${error.response.status} - ${error.response.data || error.message}`;
+      } else if (error.request) {
+        // Ağ hatası
+        errorMessage = 'Sunucuya bağlanılamıyor. İnternet bağlantınızı kontrol edin.';
+      } else {
+        // Diğer hatalar
+        errorMessage = error.message || 'Bilinmeyen hata';
+      }
+      
+      Alert.alert('Mesaj Gönderilemedi', `${errorMessage}\n\nLütfen tekrar deneyin.`);
     }
   };
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('tr-TR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isMyMessage = item.senderId === user?.id;
-    const otherUser = chat?.participants.find(p => p.id !== user?.id);
-
-    return (
-      <View style={[styles.messageContainer, isMyMessage ? styles.myMessageContainer : styles.otherMessageContainer]}>
-        {!isMyMessage && (
-          <Image
-            source={{ uri: otherUser?.profilePhoto }}
-            style={styles.messageAvatar}
-          />
-        )}
-        
-        <View style={[
-          styles.messageBubble,
-          isMyMessage ? styles.myMessageBubble : styles.otherMessageBubble,
+  const renderMessage = ({ item }: { item: Message }) => (
+    <View style={[
+      styles.messageContainer,
+      item.isOwn ? styles.ownMessage : styles.otherMessage
+    ]}>
+      <View style={[
+        styles.messageBubble,
+        item.isOwn ? styles.ownBubble : styles.otherBubble
+      ]}>
+        <Text style={[
+          styles.messageText,
+          { color: item.isOwn ? '#FFFFFF' : colors.text }
         ]}>
-          <Text style={[
-            styles.messageText,
-            isMyMessage ? styles.myMessageText : styles.otherMessageText,
-          ]}>
-            {item.content}
-          </Text>
-          <Text style={[
-            styles.messageTime,
-            isMyMessage ? styles.myMessageTime : styles.otherMessageTime,
-          ]}>
-            {formatTime(item.createdAt)}
-          </Text>
-        </View>
+          {item.content}
+        </Text>
+        <Text style={[
+          styles.messageTime,
+          { color: item.isOwn ? '#E5E7EB' : colors.textSecondary }
+        ]}>
+          {new Date(item.timestamp).toLocaleTimeString('tr-TR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </Text>
       </View>
-    );
-  };
+    </View>
+  );
 
-  if (loading || !chat) {
+  if (isLoading) {
     return (
-      <LinearGradient colors={theme.colors.gradient} style={styles.loadingContainer}>
-        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Sohbet yükleniyor...</Text>
-      </LinearGradient>
+      <View style={[styles.container, styles.loadingContainer, { paddingTop: insets.top }]}>
+        <ActivityIndicator size="large" color="#6366F1" />
+        <Text style={[styles.loadingText, { color: colors.text }]}>
+          Sohbet yükleniyor...
+        </Text>
+      </View>
     );
   }
 
-  const otherUser = chat.participants.find(p => p.id !== user?.id);
-
-  return (
-    <LinearGradient colors={theme.colors.gradient} style={styles.container}>
-      <StatusBar style={isDark ? "light" : "dark"} />
-      
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
-        <TouchableOpacity
+  if (error) {
+    return (
+      <View style={[styles.container, styles.errorContainer, { paddingTop: insets.top }]}>
+        <Text style={[styles.errorText, { color: colors.text }]}>❌ {error}</Text>
+        <TouchableOpacity 
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        
-        <View style={styles.headerInfo}>
-          <Image
-            source={{ uri: otherUser?.profilePhoto }}
-            style={styles.headerAvatar}
-          />
-          <View style={styles.headerText}>
-            <Text style={[styles.headerName, { color: theme.colors.text }]}>{otherUser?.username}</Text>
-            <Text style={[styles.headerStatus, { color: theme.colors.success }]}>Çevrimiçi</Text>
-          </View>
-        </View>
-        
-        <TouchableOpacity style={styles.headerAction}>
-          <Camera size={24} color={theme.colors.textSecondary} />
+          <Text style={styles.backButtonText}>Geri Dön</Text>
         </TouchableOpacity>
       </View>
+    );
+  }
 
-      {/* Messages */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        style={styles.messagesList}
-        contentContainerStyle={styles.messagesContent}
-        showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-      />
+  if (!chatData) {
+    return (
+      <View style={[styles.container, styles.errorContainer]}>
+        <Text style={[styles.errorText, { color: colors.text }]}>
+          Sohbet yüklenemedi
+        </Text>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.backButtonText}>Geri Dön</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
-      {/* Input */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.inputContainer}
-      >
-        <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surface }]}>
-          <TouchableOpacity style={styles.inputAction}>
-            <Smile size={24} color={theme.colors.textSecondary} />
+  return (
+    <SafeAreaProvider>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+        <KeyboardAvoidingView 
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: colors.surface }]}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
           
+          <View style={styles.headerInfo}>
+            <Image
+              source={{ uri: chatData.otherPet.photos[0] || 'https://via.placeholder.com/40' }}
+              style={styles.headerAvatar}
+            />
+            <View style={styles.headerText}>
+              <Text style={[styles.headerName, { color: colors.text }]}>
+                {chatData.otherPet.name}
+              </Text>
+              <Text style={[styles.headerBreed, { color: colors.textSecondary }]}>
+                {chatData.otherPet.breed} • {chatData.otherPet.age} yaşında
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Messages */}
+        <FlatList
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          style={styles.messagesList}
+          contentContainerStyle={styles.messagesContent}
+          showsVerticalScrollIndicator={false}
+        />
+
+        {/* Input */}
+        <View style={[styles.inputContainer, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 16 }]}>
           <TextInput
-            style={[styles.textInput, { color: theme.colors.text }]}
+            style={[
+              styles.textInput,
+              { 
+                backgroundColor: colors.background,
+                color: colors.text,
+                borderColor: colors.border
+              }
+            ]}
             value={newMessage}
             onChangeText={setNewMessage}
-            placeholder="Mesaj yazın..."
-            placeholderTextColor={theme.colors.textSecondary}
+            placeholder="Mesajınızı yazın..."
+            placeholderTextColor={colors.textSecondary}
             multiline
             maxLength={500}
           />
-          
           <TouchableOpacity
-            style={[styles.sendButton, { backgroundColor: theme.colors.primary }]}
+            style={[
+              styles.sendButton,
+              { backgroundColor: newMessage.trim() ? '#6366F1' : '#9CA3AF' }
+            ]}
             onPress={sendMessage}
-            disabled={!newMessage.trim() || sending}
+            disabled={!newMessage.trim()}
           >
             <Send size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </LinearGradient>
+        </KeyboardAvoidingView>
+      </View>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardView: {
     flex: 1,
   },
   loadingContainer: {
@@ -231,30 +385,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
+    marginTop: 16,
     fontSize: 16,
-    fontWeight: '500',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  backButtonText: {
+    color: '#6366F1',
+    fontSize: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 50,
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    minHeight: 60,
   },
   headerInfo: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 12,
   },
   headerAvatar: {
     width: 40,
@@ -266,124 +435,112 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 2,
+    fontSize: 16,
+    fontWeight: '600',
   },
-  headerStatus: {
+  headerBreed: {
     fontSize: 14,
-    fontWeight: '500',
-  },
-  headerAction: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginTop: 2,
   },
   messagesList: {
     flex: 1,
   },
   messagesContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    padding: 16,
+    paddingBottom: 20,
+    flexGrow: 1,
   },
   messageContainer: {
-    flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  ownMessage: {
     alignItems: 'flex-end',
   },
-  myMessageContainer: {
-    justifyContent: 'flex-end',
-  },
-  otherMessageContainer: {
-    justifyContent: 'flex-start',
-  },
-  messageAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 8,
+  otherMessage: {
+    alignItems: 'flex-start',
   },
   messageBubble: {
-    maxWidth: '75%',
+    maxWidth: '80%',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 20,
   },
-  myMessageBubble: {
+  ownBubble: {
     backgroundColor: '#6366F1',
-    borderBottomRightRadius: 6,
+    borderBottomRightRadius: 4,
   },
-  otherMessageBubble: {
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: 6,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  otherBubble: {
+    backgroundColor: '#F3F4F6',
+    borderBottomLeftRadius: 4,
   },
   messageText: {
     fontSize: 16,
     lineHeight: 20,
-    marginBottom: 4,
-  },
-  myMessageText: {
-    color: '#FFFFFF',
-  },
-  otherMessageText: {
-    color: '#1F2937',
   },
   messageTime: {
     fontSize: 12,
-  },
-  myMessageTime: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'right',
-  },
-  otherMessageTime: {
-    color: '#9CA3AF',
+    marginTop: 4,
   },
   inputContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 16,
-  },
-  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 4,
-  },
-  inputAction: {
-    marginRight: 12,
-    marginBottom: 4,
+    minHeight: 70,
   },
   textInput: {
     flex: 1,
-    fontSize: 16,
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginRight: 12,
     maxHeight: 100,
-    paddingVertical: 0,
+    minHeight: 44,
+    textAlignVertical: 'top',
+    fontSize: 16,
+    lineHeight: 20,
   },
   sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  backButton: {
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

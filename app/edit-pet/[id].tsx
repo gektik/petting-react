@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Switch,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -47,6 +48,8 @@ export default function EditPetScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const [currentImageUri, setCurrentImageUri] = useState<string>('');
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const notificationAnim = useRef(new Animated.Value(-100)).current;
   const [form, setForm] = useState<EditPetForm>({
     name: '',
     petTypeID: 1,
@@ -69,19 +72,40 @@ export default function EditPetScreen() {
     { id: 1, name: 'Scottish Fold' },
     { id: 2, name: 'British Shorthair' },
     { id: 4, name: 'Tekir' },
-    { id: 8, name: 'Golden Retriever' },
-    { id: 9, name: 'Labrador Retriever' },
-    { id: 10, name: 'Alman Kurdu' },
+    { id: 5, name: 'Van Kedisi' },
+    { id: 6, name: 'Persian' },
   ];
 
   const dogBreeds = [
-    { id: 8, name: 'Golden Retriever' },
-    { id: 9, name: 'Labrador Retriever' },
-    { id: 10, name: 'Alman Kurdu' },
+    { id: 7, name: 'Golden Retriever' },
+    { id: 8, name: 'Labrador' },
+    { id: 9, name: 'Alman Kurdu' },
+    { id: 10, name: 'Poodle' },
+    { id: 11, name: 'Beagle' },
   ];
 
   const getCurrentBreeds = () => {
     return form.petTypeID === 1 ? catBreeds : dogBreeds;
+  };
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    
+    Animated.sequence([
+      Animated.timing(notificationAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(3000),
+      Animated.timing(notificationAnim, {
+        toValue: -100,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setNotification(null);
+    });
   };
 
   const colors = [
@@ -168,8 +192,8 @@ export default function EditPetScreen() {
         color: foundPet.color || colors[0]
       });
     } else if (userPets.length > 0) { // Petler yüklendi ama bu ID bulunamadı
-        Alert.alert('Hata', 'Hayvan bulunamadı. Liste güncel olmayabilir.');
-        router.back();
+        showNotification('Hayvan bulunamadı. Liste güncel olmayabilir.', 'error');
+        setTimeout(() => router.back(), 2000);
     }
     setLoading(false);
   };
@@ -209,7 +233,7 @@ export default function EditPetScreen() {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (permissionResult.granted === false) {
-        Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri erişim izni gerekli.');
+        showNotification('Fotoğraf seçmek için galeri erişim izni gerekli.', 'error');
         return;
       }
 
@@ -225,34 +249,50 @@ export default function EditPetScreen() {
       if (!result.canceled && result.assets[0]) {
         const selectedImage = result.assets[0];
         console.log('Seçilen resim:', selectedImage);
-        // State'i yeni resim URI'si ile güncelle, API çağrısı yapma
-        setCurrentImageUri(selectedImage.uri);
-        Alert.alert('Fotoğraf Seçildi', 'Değişiklikleri kaydetmek için ekranın üstündeki Kaydet butonuna dokunun.');
+        
+        try {
+          // Fotoğrafı hemen API'ye yükle
+          console.log('Fotoğraf API\'ye yükleniyor...');
+          const uploadResult = await apiService.uploadImage(selectedImage.uri, id);
+          console.log('Fotoğraf yükleme sonucu:', uploadResult);
+          
+          // State'i güncelle
+          setCurrentImageUri(uploadResult.imageUrl);
+          setForm({ ...form, profilePictureURL: uploadResult.imageUrl });
+          
+          showNotification('📸 Fotoğraf seçildi ve kaydedildi! 🎉', 'success');
+        } catch (uploadError) {
+          console.error('Fotoğraf yükleme hatası:', uploadError);
+          showNotification('Fotoğraf seçildi ama yüklenirken hata oluştu.', 'error');
+          // Yine de state'i güncelle
+          setCurrentImageUri(selectedImage.uri);
+        }
       }
     } catch (error) {
       console.error('Resim seçme hatası:', error);
-      Alert.alert('Hata', 'Resim seçilirken bir hata oluştu.');
+      showNotification('Resim seçilirken bir hata oluştu.', 'error');
     } finally {
       setImageLoading(false);
     }
   };
 
   const deletePhoto = async () => {
-    Alert.alert(
-      'Fotoğrafı Kaldır',
-      'Bu hayvanın fotoğrafını kaldırmak istediğinize emin misiniz? Değişiklikler kaydedildiğinde geçerli olacaktır.',
-      [
-        { text: 'İptal', style: 'cancel' },
-        {
-          text: 'Kaldır',
-          style: 'destructive',
-          onPress: () => {
-            // Sadece state'i güncelle, API çağrısı yapma
-            setCurrentImageUri('');
-          },
-        },
-      ]
-    );
+    try {
+      if (id) {
+        // API'den fotoğrafı sil
+        await apiService.deletePetPhoto(id);
+        console.log('Fotoğraf API\'den silindi');
+      }
+      
+      // State'i güncelle
+      setCurrentImageUri('');
+      setForm({ ...form, profilePictureURL: '' });
+      
+      showNotification('🗑️ Fotoğraf silindi! 🎉', 'success');
+    } catch (error) {
+      console.error('Fotoğraf silme hatası:', error);
+      showNotification('Fotoğraf silinirken hata oluştu.', 'error');
+    }
   };
 
   const takePhoto = async () => {
@@ -263,7 +303,7 @@ export default function EditPetScreen() {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       
       if (permissionResult.granted === false) {
-        Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera erişim izni gerekli.');
+        showNotification('Fotoğraf çekmek için kamera erişim izni gerekli.', 'error');
         return;
       }
 
@@ -278,13 +318,28 @@ export default function EditPetScreen() {
       if (!result.canceled && result.assets[0]) {
         const takenPhoto = result.assets[0];
         console.log('Çekilen fotoğraf:', takenPhoto);
-        // State'i yeni resim URI'si ile güncelle, API çağrısı yapma
-        setCurrentImageUri(takenPhoto.uri);
-        Alert.alert('Fotoğraf Çekildi', 'Değişiklikleri kaydetmek için ekranın üstündeki Kaydet butonuna dokunun.');
+        
+        try {
+          // Fotoğrafı hemen API'ye yükle
+          console.log('Fotoğraf API\'ye yükleniyor...');
+          const uploadResult = await apiService.uploadImage(takenPhoto.uri, id);
+          console.log('Fotoğraf yükleme sonucu:', uploadResult);
+          
+          // State'i güncelle
+          setCurrentImageUri(uploadResult.imageUrl);
+          setForm({ ...form, profilePictureURL: uploadResult.imageUrl });
+          
+          showNotification('📸 Fotoğraf çekildi ve kaydedildi! 🎉', 'success');
+        } catch (uploadError) {
+          console.error('Fotoğraf yükleme hatası:', uploadError);
+          showNotification('Fotoğraf çekildi ama yüklenirken hata oluştu.', 'error');
+          // Yine de state'i güncelle
+          setCurrentImageUri(takenPhoto.uri);
+        }
       }
     } catch (error) {
       console.error('Fotoğraf çekme hatası:', error);
-      Alert.alert('Hata', 'Fotoğraf çekilirken bir hata oluştu.');
+      showNotification('Fotoğraf çekilirken bir hata oluştu.', 'error');
     } finally {
       setImageLoading(false);
     }
@@ -327,14 +382,13 @@ export default function EditPetScreen() {
       // Context'i yenile
       await refreshPets();
       
-      Alert.alert('Başarılı', 'Hayvan bilgileri güncellendi.', [
-        { text: 'Tamam', onPress: () => router.back() }
-      ]);
+      showNotification('Hayvan bilgileri başarıyla güncellendi! 🎉', 'success');
+      setTimeout(() => router.back(), 2000);
       
     } catch (error: any) {
       console.error('Error updating pet:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Güncelleme sırasında bir hata oluştu.';
-      Alert.alert('Hata', errorMessage);
+      showNotification(errorMessage, 'error');
     } finally {
       setSaving(false);
     }
@@ -485,6 +539,28 @@ export default function EditPetScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Notification */}
+        {notification && (
+          <Animated.View 
+            style={[
+              styles.notification,
+              { transform: [{ translateY: notificationAnim }] }
+            ]}
+          >
+            <LinearGradient
+              colors={notification.type === 'success' 
+                ? ['#10B981', '#059669'] 
+                : ['#EF4444', '#DC2626']
+              }
+              style={styles.notificationGradient}
+            >
+              <Text style={styles.notificationText}>
+                {notification.message}
+              </Text>
+            </LinearGradient>
+          </Animated.View>
+        )}
+
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Profil Fotoğrafı */}
           <View style={styles.photoSection}>
@@ -623,7 +699,15 @@ export default function EditPetScreen() {
               <Text style={styles.label}>Kısırlaştırıldı mı?</Text>
               <Switch
                 value={form.isNeutered}
-                onValueChange={(value) => setForm({ ...form, isNeutered: value })}
+                onValueChange={(value) => {
+                  try {
+                    console.log('Kısırlaştırma değiştiriliyor:', value);
+                    setForm(prevForm => ({ ...prevForm, isNeutered: value }));
+                    console.log('Kısırlaştırma güncellendi');
+                  } catch (error) {
+                    console.error('Kısırlaştırma güncelleme hatası:', error);
+                  }
+                }}
                 trackColor={{ false: '#E5E7EB', true: '#6366F1' }}
                 thumbColor={form.isNeutered ? '#FFFFFF' : '#F3F4F6'}
               />
@@ -909,5 +993,30 @@ const styles = StyleSheet.create({
   },
   selectedPetTypeButtonText: {
     color: '#FFFFFF',
+  },
+  notification: {
+    position: 'absolute',
+    top: 100,
+    left: 20,
+    right: 20,
+    borderRadius: 12,
+    zIndex: 1001,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  notificationGradient: {
+    padding: 16,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

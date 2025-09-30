@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,15 @@ import {
   Switch,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { ArrowLeft, Camera, Save, Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { apiService } from '@/services/api';
+import { usePet } from '@/contexts/PetContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -36,9 +39,12 @@ interface AddPetForm {
 
 export default function AddPetScreen() {
   const router = useRouter();
+  const { addPet } = usePet();
   const [saving, setSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const notificationAnim = useRef(new Animated.Value(-100)).current;
   const [form, setForm] = useState<AddPetForm>({
     name: '',
     petTypeID: 1, // 1: Kedi, 2: Köpek
@@ -50,8 +56,27 @@ export default function AddPetScreen() {
     description: '',
     color: 'Beyaz',
     isActiveForMatching: true,
-    profilePictureURL: 'https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400',
+    profilePictureURL: null,
   });
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    Animated.sequence([
+      Animated.timing(notificationAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(3000),
+      Animated.timing(notificationAnim, {
+        toValue: -100,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setNotification(null);
+    });
+  };
 
   const petTypes = [
     { id: 1, name: 'Kedi' },
@@ -62,15 +87,16 @@ export default function AddPetScreen() {
     { id: 1, name: 'Scottish Fold' },
     { id: 2, name: 'British Shorthair' },
     { id: 4, name: 'Tekir' },
-    { id: 8, name: 'Golden Retriever' },
-    { id: 9, name: 'Labrador Retriever' },
-    { id: 10, name: 'Alman Kurdu' },
+    { id: 5, name: 'Van Kedisi' },
+    { id: 6, name: 'Persian' },
   ];
 
   const dogBreeds = [
-    { id: 8, name: 'Golden Retriever' },
-    { id: 9, name: 'Labrador Retriever' },
-    { id: 10, name: 'Alman Kurdu' },
+    { id: 7, name: 'Golden Retriever' },
+    { id: 8, name: 'Labrador' },
+    { id: 9, name: 'Alman Kurdu' },
+    { id: 10, name: 'Poodle' },
+    { id: 11, name: 'Beagle' },
   ];
 
   const getCurrentBreeds = () => {
@@ -91,16 +117,13 @@ export default function AddPetScreen() {
 
   const handlePetTypeChange = (petTypeID: number) => {
     const newBreeds = petTypeID === 1 ? catBreeds : dogBreeds;
-    const defaultImage = petTypeID === 1 
-      ? 'https://images.pexels.com/photos/1170986/pexels-photo-1170986.jpeg?auto=compress&cs=tinysrgb&w=400'
-      : 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400';
     
     setForm({
       ...form,
       petTypeID,
       breedID: newBreeds[0].id,
       breedName: newBreeds[0].name,
-      profilePictureURL: defaultImage,
+      // profilePictureURL'yi değiştirme, kullanıcı kendi fotoğrafını eklesin
     });
   };
   const calculateAge = (birthDate: Date): number => {
@@ -155,7 +178,7 @@ export default function AddPetScreen() {
         console.log('Seçilen resim:', selectedImage);
         
         try {
-          // Resmi API'ye yükle
+          // Resmi API'ye yükle (yeni pet için petId yok)
           console.log('Resim API\'ye yükleniyor...');
           const uploadResult = await apiService.uploadImage(selectedImage.uri);
           console.log('Resim yükleme sonucu:', uploadResult);
@@ -294,29 +317,25 @@ export default function AddPetScreen() {
         isNeutered: form.isNeutered,
         description: form.description.trim(), // UTF-8 encoding will be handled by axios
         color: form.color,
-        profilePictureURL: form.profilePictureURL,
+        profilePictureURL: form.profilePictureURL || null,
         isActiveForMatching: form.isActiveForMatching,
       };
       
       console.log('Pet data being sent to API:', petData);
       console.log('Color value being sent:', form.color);
       console.log('Adding pet with data:', petData);
-      const result = await apiService.createPet(petData);
+      const result = await addPet(petData);
       console.log('Add result:', result);
       
-      Alert.alert('Başarılı', 'Hayvan başarıyla eklendi.', [
-        { text: 'Tamam', onPress: () => router.back() }
-      ]);
+      if (result) {
+        showNotification('🎉 Hayvan başarıyla eklendi! Artık eşleşme yapabilirsiniz! 🎉', 'success');
+        setTimeout(() => {
+          router.push('/my-pets');
+        }, 2000);
+      }
     } catch (error: any) {
       console.error('Error adding pet:', error);
-      Alert.alert(
-        'Hata', 
-        'Hayvan eklenirken hata oluştu. Lütfen tekrar deneyin.',
-        [
-          { text: 'Tamam' },
-          { text: 'Tekrar Dene', onPress: handleSave }
-        ]
-      );
+      showNotification('❌ Hayvan eklenirken hata oluştu. Lütfen tekrar deneyin.', 'error');
     } finally {
       setSaving(false);
     }
@@ -412,6 +431,28 @@ export default function AddPetScreen() {
       <LinearGradient colors={['#F8FAFC', '#E2E8F0']} style={styles.container}>
         <StatusBar style="dark" />
         
+        {/* Notification */}
+        {notification && (
+          <Animated.View 
+            style={[
+              styles.notification,
+              { transform: [{ translateY: notificationAnim }] }
+            ]}
+          >
+            <LinearGradient
+              colors={notification.type === 'success' 
+                ? ['#10B981', '#059669'] 
+                : ['#EF4444', '#DC2626']
+              }
+              style={styles.notificationGradient}
+            >
+              <Text style={styles.notificationText}>
+                {notification.message}
+              </Text>
+            </LinearGradient>
+          </Animated.View>
+        )}
+        
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -433,10 +474,16 @@ export default function AddPetScreen() {
           {/* Profil Fotoğrafı */}
           <View style={styles.photoSection}>
             <View style={styles.photoContainer}>
-              <Image 
-                source={{ uri: form.profilePictureURL }} 
-                style={styles.photo} 
-              />
+              {form.profilePictureURL ? (
+                <Image 
+                  source={{ uri: form.profilePictureURL }} 
+                  style={styles.photo} 
+                />
+              ) : (
+                <View style={[styles.photo, styles.placeholderPhoto]}>
+                  <Text style={styles.placeholderPhotoText}>Fotoğraf Yok</Text>
+                </View>
+              )}
               <TouchableOpacity 
                 style={styles.cameraButton}
                 onPress={showImageOptions}
@@ -585,6 +632,31 @@ export default function AddPetScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  notification: {
+    position: 'absolute',
+    top: 100,
+    left: 20,
+    right: 20,
+    borderRadius: 12,
+    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  notificationGradient: {
+    padding: 16,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -811,5 +883,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  placeholderPhoto: {
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderPhotoText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontWeight: '500',
   },
 });

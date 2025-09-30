@@ -4,7 +4,9 @@
     "strict": true,
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types", "./types"]
   },
   "include": [
     "**/*.ts",
@@ -12,5 +14,9 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts"
+  ],
+  "exclude": [
+    "types.ts",
+    "node_modules"
   ]
 }

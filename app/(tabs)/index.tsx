@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { ChevronDown, User, Filter, Menu, Plus, Heart, X } from 'lucide-react-native';
+import { ChevronDown, User, Filter, Menu, Plus, Heart, X, Info } from 'lucide-react-native';
 import { PetCard } from '@/components/PetCard';
 import { PetDetailModal } from '@/components/PetDetailModal';
 import { Pet } from '@/types';
@@ -32,7 +32,6 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface Filters {
   distance: number | null; // null = mesafe sınırı yok
-  petType: 'all' | 'cat' | 'dog';
   neutered: 'all' | 'yes' | 'no';
   color: 'all' | string;
   breed: 'all' | string;
@@ -53,18 +52,17 @@ export default function ExploreScreen() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [filters, setFilters] = useState<Filters>({ 
     distance: null, // Mesafe sınırı yok
-    petType: 'all', 
     neutered: 'all', 
     color: 'all',
     breed: 'all'
   });
   
-  // Filters object'ini memoize et
-  const memoizedFilters = useMemo(() => filters, [filters.distance, filters.petType, filters.neutered, filters.color, filters.breed]);
+  // Filters object'ini memoize et - artık kullanmıyoruz, doğrudan filters kullanıyoruz
   const [isSwiping, setIsSwiping] = useState(false); // Swipe durumunu takip et
   const [notification, setNotification] = useState<{ message: string; type: 'like' | 'pass' } | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPetForDetails, setSelectedPetForDetails] = useState<Pet | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const position = useRef(new Animated.ValueXY()).current;
   const rotation = useRef(new Animated.Value(0)).current;
@@ -91,10 +89,6 @@ export default function ExploreScreen() {
     {
       title: 'Eşleşmelerim',
       onPress: () => { toggleDrawer(); router.push('/(tabs)/matches'); },
-    },
-    {
-      title: 'Sohbetlerim',
-      onPress: () => { toggleDrawer(); router.push('/(tabs)/chats'); },
     },
     {
       title: 'Profil',
@@ -129,11 +123,114 @@ export default function ExploreScreen() {
     );
   };
 
+  const loadPetsForMatching = useCallback(async (retryCount = 0) => {
+    const maxRetries = 2;
+    const retryDelay = 2000; // 2 saniye
+    console.log(`loadPetsForMatching çağrıldı - selectedPetId: ${selectedPetId}, pets.length: ${pets.length} (Deneme ${retryCount + 1}/${maxRetries + 1})`);
+    console.log('🔍 DEBUG: Mevcut filtreler:', filters);
+    console.log('🔍 DEBUG: Filtre değerleri - breed:', filters.breed, 'color:', filters.color, 'neutered:', filters.neutered, 'distance:', filters.distance);
+    console.log('🔍 DEBUG: API Token kontrolü:', apiService.getToken() ? 'VAR' : 'YOK');
+    console.log('🔍 DEBUG: User kontrolü:', user ? 'VAR' : 'YOK');
+
+    if (!selectedPetId) {
+      console.log('loadPetsForMatching: selectedPetId yok');
+      setPets([]);
+      setLoading(false);
+      return;
+    }
+
+    // Token kontrolü
+    if (!apiService.getToken()) {
+      console.log('loadPetsForMatching: Token yok, login gerekli');
+      setApiError('Giriş yapmanız gerekiyor. Lütfen tekrar giriş yapın.');
+      setLoading(false);
+      return;
+    }
+
+    // Seçili pet eşleşme için aktif değilse boş liste döndür
+    if (selectedPet && !selectedPet.isActive) {
+      console.log('loadPetsForMatching: Seçili pet eşleşme için aktif değil');
+      setPets([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('loadPetsForMatching: API çağrısı yapılıyor...');
+      // API'ye kullanıcının konumunu ve filtreleri gönder
+      const apiFilters = {
+        radiusInKm: filters.distance,
+        neutered: filters.neutered !== 'all' ? filters.neutered === 'yes' : undefined,
+        color: filters.color !== 'all' ? filters.color : undefined,
+        breed: filters.breed !== 'all' ? parseInt(filters.breed) : undefined,
+      };
+      
+      console.log('🔍 DEBUG: API filtreleri hazırlandı:', apiFilters);
+      
+      const petData = await apiService.getPetsForMatching(selectedPetId, apiFilters);
+      // Konum servisinden alınacak gerçek user location
+      // location: {
+      //   latitude: user.latitude,
+      //   longitude: user.longitude
+      // }
+      console.log('loadPetsForMatching: API yanıtı alındı, petData.length:', petData.length);
+      console.log('loadPetsForMatching: İlk kart:', petData.length > 0 ? petData[0].name : 'Yok');
+      setPets(petData);
+      petsRef.current = petData; // Ref'i de güncelle
+      setApiError(null); // Başarılı durumda hata state'ini temizle
+      console.log('loadPetsForMatching: pets state ve ref güncellendi');
+    } catch (error) {
+      console.error('loadPetsForMatching: Error loading pets for matching:', error);
+      console.error('loadPetsForMatching: Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        selectedPetId,
+        user: user?.id,
+        retryCount
+      });
+      
+      // Retry mekanizması - sadece 500 ve network hatalarında retry yap
+      if (retryCount < maxRetries && (error.response?.status >= 500 || !error.response)) {
+        console.log(`loadPetsForMatching: ${retryDelay}ms sonra tekrar denenecek... (${retryCount + 1}/${maxRetries})`);
+        setTimeout(() => {
+          loadPetsForMatching(retryCount + 1);
+        }, retryDelay);
+        return;
+      }
+      
+      // Hata durumunda pets state'ini temizle ama loading'i false yap
+      setPets([]);
+      petsRef.current = [];
+      
+      // Eğer kullanıcı değişmişse veya selectedPetId geçersizse, hata gösterme
+      if (!user || !selectedPetId) {
+        console.log('loadPetsForMatching: Kullanıcı veya selectedPetId yok, hata gösterilmiyor');
+        return;
+      }
+      
+      // API hata mesajını belirle
+      let errorMessage = 'Hayvanlar yüklenirken bir hata oluştu.';
+      if (error.response?.status === 500) {
+        errorMessage = 'Sunucuya ulaşılamıyor. Lütfen tekrar deneyin.';
+      } else if (!error.response) {
+        errorMessage = 'İnternet bağlantınızı kontrol edin.';
+      }
+      
+      setApiError(errorMessage);
+    } finally {
+      setLoading(false);
+      position.setValue({ x: 0, y: 0 });
+      rotation.setValue(0);
+    }
+  }, [selectedPetId, filters.distance, filters.neutered, filters.color, filters.breed]);
+
   useEffect(() => {
-    if (selectedPetId) {
+    // Sadece login olmuş kullanıcılar için API çağrısı yap
+    if (selectedPetId && user && apiService.getToken()) {
       loadPetsForMatching();
     }
-  }, [selectedPetId, memoizedFilters]); // Filtreler değiştiğinde de yeniden yükle
+  }, [selectedPetId, user, filters.distance, filters.neutered, filters.color, filters.breed, loadPetsForMatching]); // Filtreler değiştiğinde de yeniden yükle
 
   // Debug için pets state'ini takip et
   useEffect(() => {
@@ -144,46 +241,14 @@ export default function ExploreScreen() {
     }
   }, [pets]);
 
-  const loadPetsForMatching = useCallback(async () => {
-    console.log('loadPetsForMatching çağrıldı - selectedPetId:', selectedPetId, 'pets.length:', pets.length);
-
-    if (!selectedPetId) {
-      console.log('loadPetsForMatching: selectedPetId yok');
-      setPets([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      console.log('loadPetsForMatching: API çağrısı yapılıyor...');
-      // API'ye kullanıcının konumunu ve filtreleri gönder
-      const petData = await apiService.getPetsForMatching(selectedPetId, {
-        radiusInKm: memoizedFilters.distance,
-        petType: memoizedFilters.petType !== 'all' ? memoizedFilters.petType : undefined,
-        neutered: memoizedFilters.neutered !== 'all' ? memoizedFilters.neutered === 'yes' : undefined,
-        color: memoizedFilters.color !== 'all' ? memoizedFilters.color : undefined,
-        breed: memoizedFilters.breed !== 'all' ? memoizedFilters.breed : undefined,
-        // Konum servisinden alınacak gerçek user location
-        // location: {
-        //   latitude: user.latitude,
-        //   longitude: user.longitude
-        // }
-      });
-      console.log('loadPetsForMatching: API yanıtı alındı, petData.length:', petData.length);
-      console.log('loadPetsForMatching: İlk kart:', petData.length > 0 ? petData[0].name : 'Yok');
-      setPets(petData);
-      petsRef.current = petData; // Ref'i de güncelle
-      console.log('loadPetsForMatching: pets state ve ref güncellendi');
-    } catch (error) {
-      console.error('loadPetsForMatching: Error loading pets for matching:', error);
-      setPets([]);
-    } finally {
-      setLoading(false);
-      position.setValue({ x: 0, y: 0 });
-      rotation.setValue(0);
-    }
-  }, [selectedPetId, memoizedFilters.distance]);
+  // Kullanıcı değiştiğinde pets state'ini temizle
+  useEffect(() => {
+    console.log('🔍 Kullanıcı değişti, pets state temizleniyor...', user?.id);
+    setPets([]);
+    petsRef.current = [];
+    position.setValue({ x: 0, y: 0 });
+    rotation.setValue(0);
+  }, [user?.id]);
 
   // Eşleşmeler sekmesinden dönünce listeyi yenile
   useFocusEffect(
@@ -209,17 +274,21 @@ export default function ExploreScreen() {
     console.log('🔍 DEBUG: Info butonu tıklandı:', pet.name);
     setSelectedPetForDetails(pet);
     setModalVisible(true);
+    console.log('🔍 DEBUG: Modal state güncellendi - visible: true');
   };
   
   const showNotification = (message: string, type: 'like' | 'pass') => {
     setNotification({ message, type });
+    const isMatch = message.includes('EŞLEŞTİNİZ');
+    const delay = isMatch ? 4000 : 2000; // Eşleşme bildirimi daha uzun kalsın
+    
     Animated.sequence([
       Animated.timing(notificationAnim, {
         toValue: 0, // Filtre üstüne getir
         duration: 300,
         useNativeDriver: true,
       }),
-      Animated.delay(2000),
+      Animated.delay(delay),
       Animated.timing(notificationAnim, {
         toValue: -100, // Ekranın dışına çıkar
         duration: 300,
@@ -274,9 +343,15 @@ export default function ExploreScreen() {
         console.log('API yanıtı:', result);
         showNotification(`💖 ${petToInteract.name} beğenildi!`, 'like');
         if (result.isMatch) {
+          console.log('🎉 EŞLEŞME BULUNDU!', result);
           setMatchFound(true);
-          setTimeout(() => setMatchFound(false), 2000);
-          Alert.alert('🎉 Eşleştiniz!', `${petToInteract.name} ile eşleştiniz!`);
+          showNotification(`🎉 EŞLEŞTİNİZ! ${petToInteract.name} ile eşleştiniz! 🎉`, 'like');
+          
+          // 3 saniye sonra eşleşme uyarısını kapat
+          setTimeout(() => {
+            console.log('Eşleşme uyarısı kapatılıyor');
+            setMatchFound(false);
+          }, 3000);
         }
       } else {
         const result = await apiService.passPet(currentSelectedPetId, petToInteract.id);
@@ -320,7 +395,35 @@ export default function ExploreScreen() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => !isSwiping, // Swipe işlemi yoksa başlat
+      onStartShouldSetPanResponder: (evt, gestureState) => {
+        // Info butonunun alanını kontrol et
+        const { locationX, locationY } = evt.nativeEvent;
+        
+        // PetCard'daki gerçek boyutlar (screenWidth - 32)
+        const cardWidth = screenWidth - 32;
+        
+        // Info butonu sağ üst köşede, PetCard'daki gerçek konuma göre hesapla
+        const infoButtonArea = {
+          x: cardWidth - 70, // Sağdan 70px içeride
+          y: 10, // Üstten 10px
+          width: 60, // Buton genişliği
+          height: 60 // Buton yüksekliği
+        };
+        
+        console.log('🔍 DEBUG: Dokunma koordinatları:', { locationX, locationY });
+        console.log('🔍 DEBUG: Info buton alanı:', infoButtonArea);
+        
+        // Eğer dokunma info butonunun alanındaysa, PanResponder'ı devre dışı bırak
+        if (locationX >= infoButtonArea.x && 
+            locationX <= infoButtonArea.x + infoButtonArea.width &&
+            locationY >= infoButtonArea.y && 
+            locationY <= infoButtonArea.y + infoButtonArea.height) {
+          console.log('🔍 DEBUG: Dokunma info butonunun alanında, PanResponder devre dışı');
+          return false;
+        }
+        
+        return !isSwiping; // Swipe işlemi yoksa başlat
+      },
       onMoveShouldSetPanResponder: () => !isSwiping, // Swipe işlemi yoksa hareket et
       onPanResponderGrant: () => {
         // Kullanıcı dokunduğunda çağrılır
@@ -403,14 +506,27 @@ export default function ExploreScreen() {
         });
       }}
     >
-      <Image 
-        source={{ uri: item.photos?.[0] || '' }}
-        style={styles.petSelectorImage}
-      />
+      {item.photos && item.photos.length > 0 && item.photos[0] && item.photos[0].trim() !== '' ? (
+        <Image 
+          source={{ uri: item.photos[0] }}
+          style={styles.petSelectorImage}
+        />
+      ) : (
+        <View style={[styles.petSelectorImage, styles.placeholderImage]}>
+          <Text style={styles.placeholderText}>🐾</Text>
+        </View>
+      )}
       <View style={styles.petSelectorInfo}>
         <Text style={styles.petSelectorName}>{`${item.name}`}</Text>
         <Text style={styles.petSelectorBreed}>{`${item.breed}`}</Text>
       </View>
+      
+      {/* Seçili hayvan işareti */}
+      {selectedPetId === item.id && (
+        <View style={styles.selectedIndicator}>
+          <Text style={styles.selectedIndicatorText}>✓</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -427,7 +543,13 @@ export default function ExploreScreen() {
 
           <View style={styles.welcomeContainer}>
             <Text style={[styles.welcomeText, { color: theme.colors.textSecondary }]}>Hoşgeldiniz 👋</Text>
-            <Text style={[styles.userName, { color: theme.colors.text }]}>{`${user?.firstName || 'Kaşif'}`}</Text>
+                  <Text 
+                    style={[styles.userName, { color: theme.colors.text }]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {`${user?.firstName || 'Kaşif'}`}
+                  </Text>
           </View>
         </View>
 
@@ -438,10 +560,16 @@ export default function ExploreScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
             {selectedPet ? (
               <>
-                <Image
-                  source={{ uri: selectedPet.photos?.[0] || '' }}
-                  style={styles.selectedPetImage}
-                />
+                {selectedPet.photos && selectedPet.photos.length > 0 && selectedPet.photos[0] && selectedPet.photos[0].trim() !== '' ? (
+                  <Image
+                    source={{ uri: selectedPet.photos[0] }}
+                    style={styles.selectedPetImage}
+                  />
+                ) : (
+                  <View style={[styles.selectedPetImage, styles.placeholderImage]}>
+                    <Text style={[styles.placeholderText, { fontSize: 10 }]}>🐾</Text>
+                  </View>
+                )}
                 <Text
                   style={[styles.selectedPetName, { color: theme.colors.text }]}
                   numberOfLines={1}
@@ -473,17 +601,38 @@ export default function ExploreScreen() {
     </View>
   );
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>Şimdilik hepsi bu kadar!</Text>
-      <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
-        {`${selectedPet?.name || "Dostun"} için çevredeki tüm sevimli patileri gördün. Daha sonra tekrar kontrol et veya filtrelerini genişletmeyi dene!`}
-      </Text>
-      <TouchableOpacity style={styles.refreshButton} onPress={loadPetsForMatching}>
-        <Text style={styles.refreshButtonText}>Yeniden Dene</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderEmptyState = () => {
+    // Seçili pet eşleşme için aktif değilse özel mesaj göster
+    if (selectedPet && !selectedPet.isActive) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>Eşleşme Kapalı</Text>
+          <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+            {`${selectedPet.name} için eşleşme özelliği kapalı. Hayvanınızı düzenleyerek eşleşme özelliğini açabilirsiniz.`}
+          </Text>
+          <TouchableOpacity 
+            style={styles.refreshButton} 
+            onPress={() => router.push(`/edit-pet/${selectedPet.id}`)}
+          >
+            <Text style={styles.refreshButtonText}>Hayvanı Düzenle</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    // Normal boş durum mesajı
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>Şimdilik hepsi bu kadar!</Text>
+        <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+          {`${selectedPet?.name || "Dostun"} için çevredeki tüm sevimli patileri gördün. Daha sonra tekrar kontrol et veya filtrelerini genişletmeyi dene!`}
+        </Text>
+        <TouchableOpacity style={styles.refreshButton} onPress={loadPetsForMatching}>
+          <Text style={styles.refreshButtonText}>Yeniden Dene</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const currentPet = pets.length > 0 ? pets[0] : null;
 
@@ -492,6 +641,34 @@ export default function ExploreScreen() {
       <LinearGradient colors={theme.colors.gradient as [string, string, ...string[]]} style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Sevimli dostlar yükleniyor...</Text>
+      </LinearGradient>
+    );
+  }
+
+  // API hatası durumu
+  if (apiError) {
+    return (
+      <LinearGradient colors={theme.colors.gradient as [string, string, ...string[]]} style={styles.container}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        
+        <View style={styles.errorContainer}>
+          <View style={styles.errorIcon}>
+            <Text style={styles.errorIconText}>⚠️</Text>
+          </View>
+          <Text style={[styles.errorTitle, { color: theme.colors.text }]}>Bağlantı Hatası</Text>
+          <Text style={[styles.errorMessage, { color: theme.colors.textSecondary }]}>
+            {apiError}
+          </Text>
+          <TouchableOpacity 
+            style={styles.retryButton} 
+            onPress={() => {
+              setApiError(null);
+              loadPetsForMatching();
+            }}
+          >
+            <Text style={styles.retryButtonText}>Yeniden Dene</Text>
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
     );
   }
@@ -518,18 +695,27 @@ export default function ExploreScreen() {
           ]}
         >
           <LinearGradient
-            colors={notification.type === 'like' ? ['#EC4899', '#F97316'] : ['#F59E0B', '#D97706']}
+            colors={notification.message.includes('EŞLEŞTİNİZ') 
+              ? ['#10B981', '#059669', '#047857'] // Yeşil tonları eşleşme için
+              : notification.type === 'like' 
+                ? ['#EC4899', '#F97316'] 
+                : ['#F59E0B', '#D97706']
+            }
             style={styles.notificationGradient}
           >
-            <Text style={styles.notificationText}>{notification.message}</Text>
+            <Text style={[
+              styles.notificationText,
+              notification.message.includes('EŞLEŞTİNİZ') && styles.matchNotificationText
+            ]}>
+              {notification.message}
+            </Text>
           </LinearGradient>
         </Animated.View>
       )}
 
       {pets.length > 0 && currentPet ? (
         <View style={styles.cardContainer}>
-          {pets.map((pet, index) => {
-            if (index > 3) return null; // En fazla ilk dört kartı render et
+          {pets.slice(0, 4).map((pet, index) => {
 
             const isFirstCard = index === 0;
             const isSecondCard = index === 1;
@@ -581,18 +767,20 @@ export default function ExploreScreen() {
 
             return (
               <Animated.View
-                key={pet.id}
+                key={`pet-${pet.id}-${index}`}
                 style={[styles.animatedCard, cardStyle]}
                 {...(isFirstCard ? panResponder.panHandlers : {})}
               >
                 {pet.photos && pet.photos.length > 0 && pet.photos[0] ? (
-                  <PetCard
-                    pet={pet}
-                    likeOpacity={isFirstCard ? likeOpacity : undefined}
-                    passOpacity={isFirstCard ? passOpacity : undefined}
-                    distanceKm={pet.distanceKm ? Number(pet.distanceKm) : undefined}
-                    onInfoPress={() => handleInfoPress(pet)}
-                  />
+                  <>
+                    <PetCard
+                      pet={pet}
+                      likeOpacity={isFirstCard ? likeOpacity : undefined}
+                      passOpacity={isFirstCard ? passOpacity : undefined}
+                      distanceKm={pet.distanceKm ? Number(pet.distanceKm) : undefined}
+                      onInfoPress={() => handleInfoPress(pet)}
+                    />
+                  </>
                 ) : (
                   <View style={styles.emptyCard}>
                     <Text>Resim Yüklenemedi</Text>
@@ -650,7 +838,13 @@ export default function ExploreScreen() {
               style={styles.petSelectorList}
             />
             
-            <TouchableOpacity style={styles.addPetButton}>
+            <TouchableOpacity 
+              style={styles.addPetButton}
+              onPress={() => {
+                setShowPetSelector(false);
+                router.push('/add-pet');
+              }}
+            >
               <View style={styles.addPetIcon}>
                 <Plus size={20} color="#6366F1" />
               </View>
@@ -722,35 +916,6 @@ export default function ExploreScreen() {
                 </View>
               </View>
 
-              {/* Pet Türü Filtresi */}
-              <View style={styles.filterSection}>
-                <Text style={[styles.filterLabel, { color: theme.colors.text }]}>Pet Türü</Text>
-                <View style={styles.optionRow}>
-                  {[
-                    { value: 'all', label: 'Tümü' },
-                    { value: 'cat', label: 'Kedi' },
-                    { value: 'dog', label: 'Köpek' }
-                  ].map((option) => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        styles.optionButton,
-                        { backgroundColor: theme.colors.background },
-                        filters.petType === option.value && styles.selectedOption,
-                      ]}
-                      onPress={() => setFilters(prev => ({ ...prev, petType: option.value as any }))}
-                    >
-                      <Text style={[
-                        styles.optionText,
-                        { color: theme.colors.text },
-                        filters.petType === option.value && styles.selectedOptionText,
-                      ]}>
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
 
               {/* Cins Filtresi */}
               <View style={styles.filterSection}>
@@ -762,29 +927,36 @@ export default function ExploreScreen() {
                     
                     const breeds = petType === 'cat' ? [
                       { value: 'all', label: 'Tümü' },
-                      { value: 'Scottish Fold', label: 'Scottish Fold' },
-                      { value: 'British Shorthair', label: 'British Shorthair' },
-                      { value: 'Tekir', label: 'Tekir' },
-                      { value: 'Van Kedisi', label: 'Van Kedisi' },
-                      { value: 'Persian', label: 'Persian' }
+                      { value: '1', label: 'Scottish Fold' },
+                      { value: '2', label: 'British Shorthair' },
+                      { value: '4', label: 'Tekir' },
+                      { value: '5', label: 'Van Kedisi' },
+                      { value: '6', label: 'Persian' }
                     ] : [
                       { value: 'all', label: 'Tümü' },
-                      { value: 'Golden Retriever', label: 'Golden Retriever' },
-                      { value: 'Labrador Retriever', label: 'Labrador' },
-                      { value: 'Poodle', label: 'Poodle' },
-                      { value: 'Alman Kurdu', label: 'Alman Kurdu' },
-                      { value: 'Beagle', label: 'Beagle' }
+                      { value: '7', label: 'Golden Retriever' },
+                      { value: '9', label: 'Labrador' },
+                      { value: '10', label: 'Alman Kurdu' },
+                      { value: '11', label: 'Poodle' },
+                      { value: '12', label: 'Beagle' }
                     ];
                     
-                    return breeds.map((option) => (
+                    return breeds.map((option, index) => (
                       <TouchableOpacity
-                        key={option.value}
+                        key={`breed-${petType}-${option.value}-${index}`}
                         style={[
                           styles.optionButton,
                           { backgroundColor: theme.colors.background },
                           filters.breed === option.value && styles.selectedOption,
                         ]}
-                        onPress={() => setFilters(prev => ({ ...prev, breed: option.value }))}
+                        onPress={() => {
+                          console.log('🔍 DEBUG: Breed seçildi:', option.value);
+                          setFilters(prev => {
+                            const newFilters = { ...prev, breed: option.value };
+                            console.log('🔍 DEBUG: Yeni filtreler:', newFilters);
+                            return newFilters;
+                          });
+                        }}
                       >
                         <Text style={[
                           styles.optionText,
@@ -815,7 +987,10 @@ export default function ExploreScreen() {
                         { backgroundColor: theme.colors.background },
                         filters.neutered === option.value && styles.selectedOption,
                       ]}
-                      onPress={() => setFilters(prev => ({ ...prev, neutered: option.value as any }))}
+                      onPress={() => {
+                        console.log('🔍 DEBUG: Neutered seçildi:', option.value);
+                        setFilters(prev => ({ ...prev, neutered: option.value as any }));
+                      }}
                     >
                       <Text style={[
                         styles.optionText,
@@ -848,7 +1023,10 @@ export default function ExploreScreen() {
                         { backgroundColor: theme.colors.background },
                         filters.color === option.value && styles.selectedOption,
                       ]}
-                      onPress={() => setFilters(prev => ({ ...prev, color: option.value }))}
+                      onPress={() => {
+                        console.log('🔍 DEBUG: Renk seçildi:', option.value);
+                        setFilters(prev => ({ ...prev, color: option.value }));
+                      }}
                     >
                       <Text style={[
                         styles.optionText,
@@ -868,8 +1046,10 @@ export default function ExploreScreen() {
               <TouchableOpacity
                 style={[styles.applyFilterButton, { backgroundColor: theme.colors.primary }]}
                 onPress={() => {
+                  console.log('🔍 Filtreler uygulanıyor:', filters);
+                  console.log('🔍 Seçili pet ID:', selectedPetId);
                   setShowFilterModal(false);
-                  // Filtreler zaten state'te güncelleniyor, useEffect tetiklenecek
+                  loadPetsForMatching(); // Manuel olarak yükle
                 }}
               >
                 <Text style={styles.applyFilterText}>Filtreleri Uygula</Text>
@@ -943,11 +1123,11 @@ const styles = StyleSheet.create({
   },
   notification: {
     position: 'absolute',
-    top: 90, // Filtre yazısı üzerine
+    top: 50, // Filtre ekranının üstünde, header'ın hemen altında
     left: 20,
     right: 20,
     borderRadius: 12,
-    zIndex: 1001, // Diğer her şeyin üzerinde
+    zIndex: 1002, // Filtre modal'ından da yüksek
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -955,7 +1135,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   notificationGradient: {
-    padding: 8,
+    padding: 10, // 8'den 10'a çıkarıldı
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -967,6 +1147,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 6,
+  },
+  matchNotificationText: {
+    fontSize: 16,
+    fontWeight: '900',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   loadingContainer: {
     flex: 1,
@@ -1014,14 +1202,15 @@ const styles = StyleSheet.create({
   welcomeContainer: {
     alignItems: 'flex-start',
     marginLeft: 4, // Hamburger menüye çok yakın
-    maxWidth: 200, // Uzun isimler için sınır
+    maxWidth: 150, // Uzun isimler için sınır
+    flex: 1, // Kalan alanı kapla
   },
   welcomeText: {
     fontSize: 16,
     marginBottom: 4,
   },
   userName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   petSelector: {
@@ -1073,6 +1262,16 @@ const styles = StyleSheet.create({
   },
   animatedCard: {
     position: 'absolute',
+  },
+  externalInfoButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 25,
+    padding: 12,
+    zIndex: 10000, // En üstte
+    elevation: 15, // Android için
   },
   emptyCard: {
     width: screenWidth * 0.9, // Use screenWidth for full width
@@ -1191,6 +1390,37 @@ const styles = StyleSheet.create({
   petSelectorBreed: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  placeholderImage: {
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontWeight: '500',
+  },
+  selectedIndicator: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  selectedIndicatorText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   addPetButton: {
     flexDirection: 'row',
@@ -1580,5 +1810,54 @@ const styles = StyleSheet.create({
   },
   filterIcon: {
     marginLeft: 8,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  errorIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  errorIconText: {
+    fontSize: 40,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  retryButton: {
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 25,
+    shadowColor: '#6366F1',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

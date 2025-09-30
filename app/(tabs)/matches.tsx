@@ -62,7 +62,7 @@ const PetDetailModal = ({ pet, visible, onClose, theme }: { pet: Pet | null, vis
               </View>
               <View style={styles.detailRow}>
                 <Calendar size={18} color={theme.colors.primary} />
-                <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>Yaş: {pet.age} yaşında</Text>
+                <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>Yaş: {pet.birthDate ? Math.floor((new Date().getTime() - new Date(pet.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : '?'} yaşında</Text>
               </View>
               <View style={styles.detailRow}>
                 <Heart size={18} color={theme.colors.primary} />
@@ -105,19 +105,32 @@ export default function MatchesScreen() {
 
   // Sekme değişiminde verileri yenile
   useEffect(() => {
+    console.log('Matches: useEffect çağrıldı - selectedPetId:', selectedPetId, 'activeTab:', activeTab);
     if (selectedPetId) {
       const fetchData = async () => {
         setLoading(true);
         try {
           switch (activeTab) {
             case 'matches':
+              console.log('Matches: getMatches çağrılıyor - selectedPetId:', selectedPetId);
               const matchData = await apiService.getMatches(selectedPetId);
+              console.log('Matches: getMatches yanıtı:', matchData);
               const matchesWithPets = matchData
-                .filter(match => match.matchedPet && match.status === 'matched')
+                .filter(match => match.otherPet && match.chatId > 0)
                 .map(match => ({
                   ...match,
-                  matchedPet: match.matchedPet
+                  matchedPet: match.otherPet || {
+                    id: 'unknown',
+                    name: 'Bilinmeyen Hayvan',
+                    breed: 'Bilinmiyor',
+                    age: 0,
+                    gender: 'male',
+                    photos: [],
+                    location: '',
+                    description: ''
+                  }
                 }));
+              console.log('Matches: Filtrelenmiş eşleşmeler:', matchesWithPets);
               setMatches(matchesWithPets);
               break;
             
@@ -130,9 +143,22 @@ export default function MatchesScreen() {
               const passedPets = await apiService.getPassedPets(selectedPetId);
               setPasses(passedPets);
               break;
+            
           }
         } catch (error) {
           console.error('Error fetching data:', error);
+          // Hata durumunda boş array set et
+          switch (activeTab) {
+            case 'matches':
+              setMatches([]);
+              break;
+            case 'likes':
+              setLikes([]);
+              break;
+            case 'passes':
+              setPasses([]);
+              break;
+          }
         } finally {
           setLoading(false);
         }
@@ -152,6 +178,41 @@ export default function MatchesScreen() {
       return;
     }
     
+    // Eşleşme varsa uyarı ver
+    const existingMatch = matches.find(match => match.matchedPetId === petIdToRemove);
+    if (existingMatch) {
+      Alert.alert(
+        'Eşleşme Silinecek',
+        'Bu hayvanla eşleşmeniz var. Beğeniyi kaldırırsanız eşleşme ve sohbet de silinecek. Devam etmek istiyor musunuz?',
+        [
+          {
+            text: 'İptal',
+            style: 'cancel'
+          },
+          {
+            text: 'Sil',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                // Önce eşleşmeyi sil
+                await apiService.deleteMatch(existingMatch.id);
+                // Sonra beğeniyi kaldır
+                await apiService.unlikePet(selectedPetId, petIdToRemove);
+                
+                // State'leri güncelle
+                setMatches(prev => prev.filter(match => match.id !== existingMatch.id));
+                setLikes(prev => prev.filter(pet => pet.id !== petIdToRemove));
+              } catch (error) {
+                console.error('Error removing match and like:', error);
+                Alert.alert('Hata', 'İşlem sırasında bir hata oluştu');
+              }
+            }
+          }
+        ]
+      );
+      return;
+    }
+    
     try {
       if (listType === 'likes') {
         await apiService.unlikePet(selectedPetId, petIdToRemove);
@@ -166,8 +227,12 @@ export default function MatchesScreen() {
   };
 
   const handleChatPress = (match: MatchWithPet) => {
-    console.log('Chat açılıyor:', match.matchedPet.name);
-    router.push('/(tabs)/chats');
+    console.log('Chat açılıyor:', match.matchedPet.name, 'Chat ID:', match.chatId);
+    if (match.chatId) {
+      router.push(`/chat/${match.chatId}`);
+    } else {
+      Alert.alert('Hata', 'Sohbet ID bulunamadı');
+    }
   };
 
   const handleDetailsPress = (pet: Pet) => {
@@ -199,17 +264,31 @@ export default function MatchesScreen() {
         )}
       </View>
       
-      <TouchableOpacity
-        onPress={() => handleChatPress(item)}
-        style={styles.actionButton}
-      >
-        <LinearGradient
-          colors={['#6366F1', '#8B5CF6']}
-          style={styles.actionButtonGradient}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          onPress={() => handleDetailsPress(item.matchedPet)}
+          style={[styles.smallActionButton, styles.infoButton]}
         >
-          <MessageCircle size={20} color="#FFFFFF" />
-        </LinearGradient>
-      </TouchableOpacity>
+          <LinearGradient
+            colors={['#10B981', '#059669']}
+            style={styles.smallActionButtonGradient}
+          >
+            <Info size={16} color="#FFFFFF" />
+          </LinearGradient>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          onPress={() => handleChatPress(item)}
+          style={styles.actionButton}
+        >
+          <LinearGradient
+            colors={['#6366F1', '#8B5CF6']}
+            style={styles.actionButtonGradient}
+          >
+            <MessageCircle size={20} color="#FFFFFF" />
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -226,7 +305,7 @@ export default function MatchesScreen() {
             <Text style={styles.petName}>{item.name}</Text>{'\n'}
             <Text style={styles.petBreed}>{item.breed}</Text>{'\n'}
             <Text style={styles.petDetails}>
-              {item.age} yaşında • {item.gender === 'male' ? 'Erkek' : 'Dişi'}
+              {item.birthDate ? Math.floor((new Date().getTime() - new Date(item.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : '?'} yaşında • {item.gender === 'male' ? 'Erkek' : 'Dişi'}
             </Text>
           </Text>
           
@@ -243,7 +322,12 @@ export default function MatchesScreen() {
             onPress={() => handleDetailsPress(item)}
             style={[styles.smallActionButton, styles.infoButton]}
           >
-            <Info size={20} color="#FFFFFF" />
+            <LinearGradient
+              colors={['#10B981', '#059669']}
+              style={styles.smallActionButtonGradient}
+            >
+              <Info size={16} color="#FFFFFF" />
+            </LinearGradient>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={(e) => {
@@ -252,12 +336,18 @@ export default function MatchesScreen() {
             }}
             style={[styles.smallActionButton, styles.deleteButton]}
           >
-            <X size={20} color="#FFFFFF" />
+            <LinearGradient
+              colors={['#EF4444', '#DC2626']}
+              style={styles.smallActionButtonGradient}
+            >
+              <X size={16} color="#FFFFFF" />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
     );
   };
+
 
   const getTabData = () => {
     const selectedPet = userPets.find(p => p.id === selectedPetId);
@@ -365,6 +455,7 @@ export default function MatchesScreen() {
             Geçtiklerim
           </Text>
         </TouchableOpacity>
+
       </View>
 
       {data.length === 0 ? (
@@ -466,6 +557,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+    minHeight: 100,
   },
   petImage: {
     width: 80,
@@ -519,24 +611,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonContainer: {
-    flexDirection: 'row', // Butonları yan yana getir
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    paddingRight: 12,
+    paddingVertical: 8,
   },
   smallActionButton: {
-    width: 44, // Butonları büyüt
-    height: 44, // Butonları büyüt
-    borderRadius: 22, // Tam daire yap
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  smallActionButtonGradient: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 5, // Aralarına boşluk koy
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
   },
   infoButton: {
-    backgroundColor: '#3B82F6', // Mavi
+    // Info butonu için özel stil
   },
   deleteButton: {
     backgroundColor: '#EF4444', // Kırmızı
@@ -633,5 +727,66 @@ const styles = StyleSheet.create({
   modalDescription: {
     fontSize: 16,
     lineHeight: 24,
+  },
+  // Chat Styles
+  chatCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  chatImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 16,
+  },
+  chatInfo: {
+    flex: 1,
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  chatName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    flex: 1,
+  },
+  chatTime: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  chatLastMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  unreadBadge: {
+    backgroundColor: '#6366F1',
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+  },
+  unreadCount: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
